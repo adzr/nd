@@ -1,5 +1,9 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -21,31 +25,15 @@
  * SOFTWARE.
  */
 
-using System;
-using Xunit;
+using Nd.Core.Factories;
+using Nd.ValueObjects.Identities;
 
-namespace Nd.ValueObjects.Tests
+namespace Nd.Aggregates.Events
 {
-    internal enum SampleEnum
+    public sealed record class EventId : Identity<EventId>, IEventId
     {
-        ValidEnumValue = 0,
-        InvalidEnumValue = 1
-    }
+        public EventId(Guid value) : base(value) { }
 
-    internal class SampleSingleValueEnum : SingleValueObject<SampleEnum>
-    {
-        public SampleSingleValueEnum(SampleEnum value) : base(value) { }
-    }
-
-    public class SingleValueObjectTests
-    {
-        [Fact]
-        public void CanHaveValidValue() => Assert.Equal(SampleEnum.ValidEnumValue, new SampleSingleValueEnum(SampleEnum.ValidEnumValue).Value);
-
-        [Fact]
-        public void FailsOnInvalidValue() => Assert.Throws<ArgumentException>(() => new SampleSingleValueEnum((SampleEnum)2));
-
-        [Fact]
-        public void CanBeConvertedToValidString() => Assert.Equal(SampleEnum.ValidEnumValue.ToString(), new SampleSingleValueEnum(SampleEnum.ValidEnumValue).ToString());
+        public EventId(IGuidFactory factory) : base(factory) { }
     }
 }

@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,22 +21,19 @@
  * SOFTWARE.
  */
 
-using Nd.Core.VersionedTypes;
-using Nd.Entities;
+using Nd.ValueObjects.Common;
+using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Events
 {
-    public interface IAggregateEvent : IVersionedType
+    public abstract record class Event<TAggregate, TIdentity, TState>
+        (
+            IEventMetaData<TAggregate, TIdentity, TState> EventMetaData
+        ) : ValueObject, IEvent<TAggregate, TIdentity, TState>
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TState : AggregateState<TState, TAggregate, TIdentity>
     {
-        IIdentity GetAggregateIdentity();
-    }
-
-    public interface IAggregateEvent<TAggregate, TIdentity> : IAggregateEvent
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity
-    {
-        TIdentity AggregateIdentity { get; }
-
-        new IIdentity GetAggregateIdentity() => AggregateIdentity;
+        IEventMetaData IEvent.EventMetaData => EventMetaData;
     }
 }

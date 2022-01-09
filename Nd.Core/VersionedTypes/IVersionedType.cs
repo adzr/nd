@@ -29,5 +29,6 @@ namespace Nd.Core.VersionedTypes
 {
     public interface IVersionedType
     {
+        public uint Version { get; }
     }
 }

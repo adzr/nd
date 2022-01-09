@@ -25,15 +25,17 @@
  * SOFTWARE.
  */
 
+using Nd.ValueObjects.Identities;
+
 namespace Nd.Entities
 {
     public interface IEntity
     {
-        IIdentity GetIdentity();
+        IIdentity Identity { get; }
     }
 
     public interface IEntity<out TIdentity> : IEntity where TIdentity : IIdentity
     {
-        TIdentity Identity { get; }
+        new TIdentity Identity { get; }
     }
 }

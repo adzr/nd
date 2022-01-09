@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,36 +21,10 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
-using System.Diagnostics;
-
-namespace Nd.Entities
+namespace Nd.Core.NamedTypes
 {
-    [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-    public abstract class Entity<TIdentity> : IEntity<TIdentity>
-        where TIdentity : IIdentity
+    public interface INamedType
     {
-        protected Entity(TIdentity identity)
-        {
-            if (identity is null)
-            {
-                throw new ArgumentNullException(nameof(identity));
-            }
-
-            Identity = identity;
-        }
-
-        public TIdentity Identity { get; }
-
-        IIdentity IEntity.Identity => Identity;
-
-        public override bool Equals(object? obj) => obj is Entity<TIdentity> entity &&
-                   EqualityComparer<TIdentity>.Default.Equals(Identity, entity.Identity);
-
-        public override int GetHashCode() => HashCode.Combine(Identity);
-
-        private string GetDebuggerDisplay() => ToString() ?? string.Empty;
-
-        public override string? ToString() => Identity?.ToString();
+        public string Name { get; }
     }
 }

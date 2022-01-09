@@ -28,22 +28,22 @@
  * SOFTWARE.
  */
 
-using Nd.Entities;
+using Nd.Core.NamedTypes;
+using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates
 {
-    public interface IAggregateRoot
+    public interface IAggregateRoot : INamedType
     {
-        IIdentity GetIdentity();
-        IAggregateName Name { get; }
-        ulong Version { get; }
+        IIdentity Identity { get; }
+        uint Version { get; }
         bool IsNew { get; }
     }
 
     public interface IAggregateRoot<out TIdentity> : IAggregateRoot
         where TIdentity : IIdentity
     {
-        TIdentity Identity { get; }
+        new TIdentity Identity { get; }
     }
 
     public interface IAggregateRoot<out TIdentity, out TState> : IAggregateRoot<TIdentity>

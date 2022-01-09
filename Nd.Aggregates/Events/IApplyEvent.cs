@@ -25,11 +25,11 @@ namespace Nd.Aggregates.Events
 {
     public interface IApplyEvent
     {
-        void On(IAggregateEvent @event);
+        void On(IEvent @event);
     }
 
     public interface IApplyEvent<TEvent> : IApplyEvent
-        where TEvent : IAggregateEvent
+        where TEvent : IEvent
     {
         void On(TEvent @event);
     }

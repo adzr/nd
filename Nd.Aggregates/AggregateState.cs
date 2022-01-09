@@ -27,34 +27,32 @@
 
 using Nd.Aggregates.Events;
 using Nd.Core.Extensions;
-using Nd.Entities;
+using Nd.ValueObjects.Identities;
 using System.Reflection;
 
 namespace Nd.Aggregates
 {
-    public abstract class AggregateState<TAggregate, TIdentity, TEventApplier> : IEventApplier<TAggregate, TIdentity>
-        where TEventApplier : class, IEventApplier<TAggregate, TIdentity>
-        where TAggregate : IAggregateRoot<TIdentity, TEventApplier>
+    public abstract class AggregateState<TState, TAggregate, TIdentity> : IEventApplier<TAggregate, TIdentity>, IApplyEvent
+        where TState : class, IEventApplier<TAggregate, TIdentity>
+        where TAggregate : IAggregateRoot<TIdentity, TState>
         where TIdentity : IIdentity
     {
         private static readonly IReadOnlyDictionary<Type, MethodInfo> StateMutationMethods;
 
-        static AggregateState() => StateMutationMethods = typeof(TEventApplier)
+        static AggregateState() => StateMutationMethods = typeof(TState)
                 .GetInterfacesOfType<IApplyEvent>()
-                .Where(t => t.GetGenericTypeArgumentsOfType<IAggregateEvent>().Any())
+                .Where(t => t.GetGenericTypeArgumentsOfType<IEvent>().Any())
                 .Select(t =>
                 {
-                    var type = t.GetGenericTypeArgumentsOfType<IAggregateEvent>().First();
+                    var type = t.GetGenericTypeArgumentsOfType<IEvent>().First();
                     return (Type: type, Method: t.GetMethodWithSingleParameterOfType(nameof(IApplyEvent.On), type));
                 })
                 .ToDictionary(r => r.Type, r => r.Method);
 
-        protected AggregateState() => _ = this as TEventApplier ?? throw new InvalidOperationException(
-                $"Event applier of type '{GetType().ToPrettyString()}' has a wrong generic argument '{typeof(TEventApplier).ToPrettyString()}'");
+        protected AggregateState() => _ = this as TState ?? throw new InvalidOperationException(
+                $"Event applier of type '{GetType().ToPrettyString()}' has a wrong generic argument '{typeof(TState).ToPrettyString()}'");
 
-        public void Apply(IAggregateEvent @event) => On(@event);
-
-        public void On(IAggregateEvent @event)
+        public void Apply(IEvent @event)
         {
             if (!StateMutationMethods.ContainsKey(@event.GetType()))
             {
@@ -63,5 +61,7 @@ namespace Nd.Aggregates
 
             StateMutationMethods[@event.GetType()].Invoke(this, new object[] { @event });
         }
+
+        void IApplyEvent.On(IEvent @event) => Apply(@event);
     }
 }

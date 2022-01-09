@@ -25,22 +25,28 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using Nd.Entities;
+using Nd.Core.NamedTypes;
+using Nd.Core.VersionedTypes;
+using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Events
 {
-    public abstract class AggregateEvent<TAggregate, TIdentity> : IAggregateEvent<TAggregate, TIdentity>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity
+    public interface IEventMetaData : IComparable, INamedType, IVersionedType
     {
-        public TIdentity AggregateIdentity { get; }
+        ISourceId SourceId { get; }
+        IIdentity AggregateId { get; }
+        uint AggregateVersion { get; }
+        string AggregateName { get; }
+        IEventId EventId { get; }
+        DateTimeOffset Timestamp { get; }
+        long TimestampEpochInMillis { get; }
+    }
 
-        public IIdentity GetAggregateIdentity() => AggregateIdentity;
-
-        public override string ToString() =>
-            $"{typeof(TAggregate).ToPrettyString()}/{GetType().ToPrettyString()}";
-
-        protected AggregateEvent(TIdentity aggregateIdentity) => AggregateIdentity = aggregateIdentity;
+    public interface IEventMetaData<TAggregate, TIdentity, TState> : IEventMetaData
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TState : AggregateState<TState, TAggregate, TIdentity>
+    {
+        new TIdentity AggregateId { get; }
     }
 }

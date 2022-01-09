@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2015 - 2021 Rasmus Mikkelsen
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
@@ -25,10 +25,12 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates
+namespace Nd.ValueObjects.Identities
 {
-    public interface IAggregateName
+    public interface IIdentity : IComparable
     {
         string Value { get; }
     }
+
+    public interface IIdentity<T> : IIdentity, IComparable where T : IIdentity<T> { }
 }

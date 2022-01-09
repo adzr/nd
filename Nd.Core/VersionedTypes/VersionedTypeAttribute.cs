@@ -27,24 +27,18 @@
 
 namespace Nd.Core.VersionedTypes
 {
-    public abstract class VersionedTypeAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class VersionedTypeAttribute : Attribute, IVersionedType
     {
-        public string Name { get; }
-        public ulong Version { get; }
+        public uint Version { get; }
 
-        protected VersionedTypeAttribute(string name, ulong version)
+        protected VersionedTypeAttribute(uint version)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (version == 0)
             {
-                throw new ArgumentNullException(nameof(name));
+                throw new ArgumentOutOfRangeException(nameof(version), "must be greater than 0");
             }
 
-            if (version <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(version), "Version must be positive");
-            }
-
-            Name = name;
             Version = version;
         }
     }

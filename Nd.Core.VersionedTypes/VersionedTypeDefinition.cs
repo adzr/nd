@@ -25,36 +25,13 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using Nd.ValueObjects;
-using System.Reflection;
+using Nd.ValueObjects.Common;
 
 namespace Nd.Core.VersionedTypes
 {
-    public abstract class VersionedTypeDefinition : ValueObject
-    {
-        public int Version { get; }
-        public Type Type { get; }
-        public string Name { get; }
-
-        protected VersionedTypeDefinition(
-            int version,
-            Type type,
-            string name)
-        {
-            Version = version;
-            Type = type;
-            Name = name;
-        }
-
-        public override string ToString() =>
-            $"{Name} v{Version} ({Type.GetTypeInfo().Assembly.GetName().Name} - {Type.ToPrettyString()})";
-
-        protected override IEnumerable<object> GetEqualityAttributes()
-        {
-            yield return Version;
-            yield return Type;
-            yield return Name;
-        }
-    }
+    public abstract record class VersionedTypeDefinition(
+        string Name,
+        Type Type,
+        uint Version
+    ) : ValueObject;
 }

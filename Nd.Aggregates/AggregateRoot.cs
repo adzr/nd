@@ -28,20 +28,21 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Extensions;
 using Nd.Core.Extensions;
-using Nd.Entities;
+using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates
 {
     public abstract class AggregateRoot<TAggregate, TIdentity, TState> : IAggregateRoot<TIdentity, TState>
-        where TState : AggregateState<TAggregate, TIdentity, TState>
+        where TState : AggregateState<TState, TAggregate, TIdentity>
         where TAggregate : AggregateRoot<TAggregate, TIdentity, TState>
         where TIdentity : IIdentity
     {
-        private static readonly IAggregateName AggregateName = typeof(TAggregate).GetAggregateName();
+        private static readonly string AggregateName = typeof(TAggregate).GetName();
         private static readonly string StateInitializationExceptionString =
             $"Unable to activate AggregateState of Type \"{typeof(TState).ToPrettyString()}\" for AggregateRoot of Name \"{AggregateName}\".";
+
+        //private readonly ConcurrentQueue<IUncommittedEvent> _uncommittedEvents = new();
 
         protected AggregateRoot(TIdentity identity)
         {
@@ -68,12 +69,47 @@ namespace Nd.Aggregates
 
         public TIdentity Identity { get; }
 
-        public IAggregateName Name => AggregateName;
+        IIdentity IAggregateRoot.Identity => Identity;
 
-        public ulong Version { get; private set; }
+        public string Name => AggregateName;
+
+        public uint Version { get; private set; }
 
         public bool IsNew => Version == 0;
 
-        public IIdentity GetIdentity() => Identity;
+
+        //protected virtual void Emit<TEvent>(TEvent @event, IPropertiesValueObject? metadata = default, Func<DateTimeOffset>? currentTimestampProvider = default)
+        //    where TEvent : IEvent<TAggregate, TIdentity, TState>
+        //{
+        //    if (@event == null)
+        //    {
+        //        throw new ArgumentNullException(nameof(@event));
+        //    }
+
+        //    var aggregateSequenceNumber = Version + 1;
+        //    var eventId = DeterministicGuidFactory.Instance(IEvent.NamespaceIdentifier, $"{Identity.Value}-v{aggregateSequenceNumber}");
+        //    var timestamp = currentTimestampProvider?.Invoke() ?? DateTimeOffset.Now;
+        //    var eventMetadata = new Metadata
+        //    {
+        //        Timestamp = timestamp,
+        //        AggregateSequenceNumber = aggregateSequenceNumber,
+        //        AggregateName = Name.Value,
+        //        AggregateId = Identity.Value,
+        //        EventId = eventId
+        //    };
+        //    eventMetadata.Add(MetadataKeys.TimestampEpoch, timestamp.ToUnixTime().ToString());
+        //    if (metadata != null)
+        //    {
+        //        eventMetadata.AddRange(metadata);
+        //    }
+
+        //    var uncommittedEvent = new UncommittedEvent(@event, eventMetadata);
+
+        //    lock (_uncommittedEvents)
+        //    {
+        //        _uncommittedEvents.Enqueue(uncommittedEvent);
+        //        State.Apply(@event);
+        //    }
+        //}
     }
 }

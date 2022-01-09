@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,32 +21,21 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using System.Collections.Concurrent;
-using System.Reflection;
-
-namespace Nd.Aggregates.Extensions
+namespace Nd.Core.NamedTypes
 {
-    public static class TypeExtensions
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class NamedTypeAttribute : Attribute
     {
-        private static readonly ConcurrentDictionary<Type, AggregateName> AggregateNamesCache = new();
+        public string Name { get; }
 
-        public static AggregateName GetAggregateName(
-            this Type aggregateType)
+        protected NamedTypeAttribute(string name)
         {
-            return AggregateNamesCache.GetOrAdd(
-                aggregateType,
-                t =>
-                {
-                    if (!typeof(IAggregateRoot).GetTypeInfo().IsAssignableFrom(aggregateType))
-                    {
-                        throw new ArgumentException($"Type \"{aggregateType.ToPrettyString()}\" is not an aggregate root");
-                    }
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
 
-                    return new AggregateName(
-                        t.GetTypeInfo().GetCustomAttributes<AggregateNameAttribute>().SingleOrDefault()?.Name ??
-                        t.Name);
-                });
+            Name = name;
         }
     }
 }

@@ -25,7 +25,7 @@
  * SOFTWARE.
  */
 
-using Nd.Entities;
+using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Events
 {
@@ -33,6 +33,6 @@ namespace Nd.Aggregates.Events
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity
     {
-        void Apply(IAggregateEvent @event);
+        void Apply(IEvent @event);
     }
 }

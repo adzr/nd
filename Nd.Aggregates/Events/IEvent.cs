@@ -21,27 +21,22 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using Nd.Core.Factories;
-using Nd.ValueObjects;
+using Nd.ValueObjects.Identities;
 
-namespace Nd.Entities
+namespace Nd.Aggregates.Events
 {
-    public abstract class Identity<T> : SingleValueObject<Guid>, IIdentity where T : Identity<T>
+    public interface IEvent
     {
-        private readonly string _identifier;
+        public static readonly Guid NamespaceIdentifier = Guid.ParseExact("8a563c72-5604-4ca2-9d5f-bb6eb7f960c7", "D");
 
-        public static readonly string TypeName = typeof(T).Name;
+        IEventMetaData EventMetaData { get; }
+    }
 
-        protected Identity(Guid value) : base(value)
-        {
-            _identifier = $"{TypeName.ToSnakeCase().TrimEnd("_id")}-{value.ToString("N").ToLowerInvariant()}";
-        }
-
-        protected Identity(IGuidFactory factory) : this(factory.Create()) { }
-
-        public string Identifier => _identifier;
-
-        public override string ToString() => _identifier;
+    public interface IEvent<TAggregate, TIdentity, TState> : IEvent
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TState : AggregateState<TState, TAggregate, TIdentity>
+    {
+        new IEventMetaData<TAggregate, TIdentity, TState> EventMetaData { get; }
     }
 }

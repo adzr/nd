@@ -25,50 +25,12 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using System.Reflection;
+using Nd.ValueObjects.Identities;
 
-namespace Nd.ValueObjects
+namespace Nd.Aggregates.Events
 {
-    public abstract class SingleValueObject<T> : ValueObject, IComparable, ISingleValueObject where T : IComparable
+    public interface IEventId : IIdentity
     {
-        private static readonly Type Type = typeof(T);
-        private static readonly TypeInfo TypeInfo = typeof(T).GetTypeInfo();
-
-        public T Value { get; }
-
-        public object GetValue() => Value;
-
-        public int CompareTo(object? obj)
-        {
-            if (obj is null)
-            {
-                throw new ArgumentNullException(nameof(obj));
-            }
-
-            if (obj is not SingleValueObject<T> other)
-            {
-                throw new ArgumentException($"Cannot compare '{GetType().ToPrettyString()}' and '{obj.GetType().ToPrettyString()}'");
-            }
-
-            return Value.CompareTo(other.Value);
-        }
-
-        protected override IEnumerable<object?> GetEqualityAttributes()
-        {
-            yield return Value;
-        }
-
-        public override string ToString() => Value?.ToString() ?? string.Empty;
-
-        protected SingleValueObject(T value)
-        {
-            if (TypeInfo.IsEnum && !Enum.IsDefined(Type, value))
-            {
-                throw new ArgumentException($"Undefined value '{value}' in enum '{Type.ToPrettyString()}'");
-            }
-
-            Value = value;
-        }
+        new Guid Value { get; }
     }
 }

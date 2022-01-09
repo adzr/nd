@@ -28,6 +28,8 @@
 using Nd.Core.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Xunit;
 
 namespace Nd.Core.Tests.Extensions
@@ -45,5 +47,70 @@ namespace Nd.Core.Tests.Extensions
         [InlineData(typeof(KeyValuePair<KeyValuePair<bool, long>, KeyValuePair<bool, long>>), "KeyValuePair<KeyValuePair<Boolean,Int64>,KeyValuePair<Boolean,Int64>>")]
         public void CanConvertToPrettyString(Type type, string expectedPrettyString) =>
             Assert.Equal(expectedPrettyString, type.ToPrettyString());
+
+        [Fact]
+        public void CanGetInterfacesOfSpecificTypeOfAType()
+        {
+            var result = typeof(TypeTest).GetInterfacesOfType<IA>();
+
+            Assert.Equal(6, result.Length);
+            Assert.Contains(typeof(IA<ID>), result);
+            Assert.Contains(typeof(IA), result);
+            Assert.Contains(typeof(IB), result);
+            Assert.Contains(typeof(IA<IE>), result);
+            Assert.Contains(typeof(IC), result);
+            Assert.Contains(typeof(IA<IF>), result);
+        }
+
+        [Fact]
+        public void CanGetGenericTypeArgumentsOfAType()
+        {
+            var result = typeof(TypeTest)
+                .GetTypeInfo()
+                .GetInterfaces()
+                .SelectMany(i => i.GetGenericTypeArgumentsOfType<ID>())
+                .ToArray();
+
+            Assert.Equal(3, result.Length);
+            Assert.Contains(typeof(ID), result);
+            Assert.Contains(typeof(IE), result);
+            Assert.Contains(typeof(IF), result);
+        }
+
+        [Fact]
+        public void CanNotGetGenericTypeArgumentsOfAType() =>
+            Assert.Empty(typeof(TypeTest).GetTypeInfo().GetInterface(nameof(ID))?.GetGenericTypeArgumentsOfType<ID>() ?? Array.Empty<Type>());
+
+        [Fact]
+        public void CanGetMethodWithSingleParameterOfAType() =>
+            Assert.NotNull(typeof(TypeTest).GetMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(string)));
+
+        [Fact]
+        public void CanNotGetMethodWithSingleWrongParameterOfAType() =>
+            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(int)));
+
+        [Fact]
+        public void CanNotGetAbsentMethodWithSingleParameterOfAType() =>
+            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithSingleParameterOfType("IDoNotExist", typeof(int)));
+    }
+
+    internal interface IA { }
+
+    internal interface IA<T> : IA where T : ID { }
+
+    internal interface IB : IA<IE> { }
+
+    internal interface IC : IA<IF> { }
+
+    internal interface ID { }
+
+    internal interface IE : ID { }
+
+    internal interface IF : ID { }
+
+    internal class TypeTest : IA<ID>, IB, IC, ID
+    {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
+        public void DoNothingWith(string _) { }
     }
 }

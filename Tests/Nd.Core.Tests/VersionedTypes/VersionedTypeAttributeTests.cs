@@ -27,33 +27,21 @@ using Xunit;
 
 namespace Nd.Core.Tests.VersionedTypes
 {
-    public class SampleVersionedTypeAttribute : VersionedTypeAttribute
+    internal class SampleVersionedTypeAttribute : VersionedTypeAttribute
     {
-        public SampleVersionedTypeAttribute(string name, ulong version) : base(name, version) { }
-
-        public (string, ulong) ToRecord() => (Name, Version);
+        public SampleVersionedTypeAttribute(uint version) : base(version) { }
     }
 
     public class VersionedTypeAttributeTests
     {
-        public const string DefaultName = "Name";
-        public const ulong DefaultVersion = 1;
-
         [Theory]
-        [InlineData("Name", 1)]
-        [InlineData("Another Name", 2)]
-        public void CanHaveValidInput(string name, ulong version) =>
-            Assert.Equal((name, version), new SampleVersionedTypeAttribute(name, version).ToRecord());
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData(" ")]
-        public void FailsOnInvalidName(string name) =>
-            Assert.Throws<ArgumentNullException>(() => new SampleVersionedTypeAttribute(name, DefaultVersion));
+        [InlineData(1)]
+        [InlineData(2)]
+        public void CanHaveValidInput(uint version) =>
+            Assert.Equal(version, new SampleVersionedTypeAttribute(version).Version);
 
         [Fact]
         public void FailsOnInvalidVersion() =>
-            Assert.Throws<ArgumentOutOfRangeException>(() => new SampleVersionedTypeAttribute(DefaultName, 0));
+                    Assert.Throws<ArgumentOutOfRangeException>(() => new SampleVersionedTypeAttribute(0));
     }
 }

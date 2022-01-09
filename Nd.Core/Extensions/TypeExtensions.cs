@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+using Nd.Core.NamedTypes;
+using Nd.Core.VersionedTypes;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -67,12 +69,6 @@ namespace Nd.Core.Extensions
 
         private static string[] GetTypeNameFragments(Type type) => type.Name.Split('`');
 
-        public static Type[] GetInterfaces<T>(this Type type) => type
-            .GetTypeInfo()
-            .GetInterfaces()
-            .Where(t => typeof(T).IsAssignableFrom(t))
-            .ToArray();
-
         public static Type[] GetInterfacesOfType<T>(this Type type) => type
             .GetTypeInfo()
             .GetInterfaces()
@@ -90,5 +86,20 @@ namespace Nd.Core.Extensions
             .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 new[] { param }) ?? throw new NotSupportedException(
                     $"Failed to find method with name \"{name}\" in type \"{type.ToPrettyString()}\" that takes a single parameter of type \"{param.ToPrettyString()}\"");
+
+        public static string GetName(this Type type) =>
+            type?
+            .GetTypeInfo()
+            .GetCustomAttributes<NamedTypeAttribute>()
+            .FirstOrDefault()?.Name ??
+            type?.AssemblyQualifiedName ??
+            throw new ArgumentNullException(nameof(type));
+
+        public static uint GetVersion(this Type type) =>
+            type?
+            .GetTypeInfo()
+            .GetCustomAttributes<VersionedTypeAttribute>()
+            .FirstOrDefault()?.Version ??
+            throw new ArgumentNullException(nameof(type));
     }
 }

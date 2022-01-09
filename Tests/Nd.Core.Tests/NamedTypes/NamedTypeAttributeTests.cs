@@ -1,8 +1,4 @@
-﻿/* 
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
+﻿/*
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,10 +21,30 @@
  * SOFTWARE.
  */
 
-namespace Nd.Entities
+using Nd.Core.NamedTypes;
+using System;
+using Xunit;
+
+namespace Nd.Core.Tests.VersionedTypes
 {
-    public interface IIdentity
+    internal class SampleNamedTypeAttribute : NamedTypeAttribute
     {
-        string Identifier { get; }
+        public SampleNamedTypeAttribute(string name) : base(name) { }
+    }
+
+    public class NamedTypeAttributeTests
+    {
+        [Theory]
+        [InlineData("ValidName")]
+        [InlineData("Named With Spaces")]
+        public void CanHaveValidInput(string name) =>
+            Assert.Equal(name, new SampleNamedTypeAttribute(name).Name);
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        public void FailsOnInvalidName(string name) =>
+            Assert.Throws<ArgumentNullException>(() => new SampleNamedTypeAttribute(name));
     }
 }

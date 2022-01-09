@@ -21,12 +21,13 @@
  * SOFTWARE.
  */
 
+using Nd.ValueObjects.Identities;
 using System;
 using Xunit;
 
 namespace Nd.Entities.Tests
 {
-    internal class SampleId : Identity<SampleId>
+    internal record class SampleId : Identity<SampleId>
     {
         public SampleId(Guid value) : base(value) { }
     }

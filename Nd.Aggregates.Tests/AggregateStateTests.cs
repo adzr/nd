@@ -22,17 +22,17 @@
  */
 
 using Nd.Aggregates.Events;
-using Nd.Entities;
+using Nd.Core.Factories;
+using Nd.ValueObjects.Identities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Xunit;
 
 namespace Nd.Aggregates.Tests
 {
-    internal sealed class SampleId : Identity<SampleId>
+    internal sealed record class SampleId : Identity<SampleId>
     {
         public SampleId(Guid value) : base(value) { }
     }
@@ -41,14 +41,14 @@ namespace Nd.Aggregates.Tests
     {
         public SampleAggregateRoot(SampleId identity) : base(identity) { }
     }
-    internal sealed class SampleAggregateState : AggregateState<SampleAggregateRoot, SampleId, SampleAggregateState>,
+    internal sealed class SampleAggregateState : AggregateState<SampleAggregateState, SampleAggregateRoot, SampleId>,
         IApplyEvent<SampleEventA>,
         IApplyEvent<SampleEventB>,
         IApplyEvent<SampleEventC>
     {
-        private readonly ConcurrentQueue<IAggregateEvent<SampleAggregateRoot, SampleId>> _events = new();
+        private readonly ConcurrentQueue<IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>> _events = new();
 
-        public IReadOnlyCollection<IAggregateEvent<SampleAggregateRoot, SampleId>> Events { get => _events; }
+        public IReadOnlyCollection<IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>> Events { get => _events; }
 
         public void On(SampleEventA @event) => _events.Enqueue(@event);
 
@@ -57,41 +57,53 @@ namespace Nd.Aggregates.Tests
         public void On(SampleEventC @event) => _events.Enqueue(@event);
     }
 
-    internal sealed class SampleEventA : AggregateEvent<SampleAggregateRoot, SampleId>
+    internal sealed record class SampleEventA : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
     {
-        public SampleEventA(SampleId identity) : base(identity) { }
+        public SampleEventA(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
     }
 
-    internal sealed class SampleEventB : AggregateEvent<SampleAggregateRoot, SampleId>
+    internal sealed record class SampleEventB : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
     {
-        public SampleEventB(SampleId identity) : base(identity) { }
+        public SampleEventB(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
     }
 
-    internal sealed class SampleEventC : AggregateEvent<SampleAggregateRoot, SampleId>
+    internal sealed record class SampleEventC : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
     {
-        public SampleEventC(SampleId identity) : base(identity) { }
+        public SampleEventC(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
     }
 
-    internal sealed class SampleEventD : AggregateEvent<SampleAggregateRoot, SampleId>
+    internal sealed record class SampleEventD : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
     {
-        public SampleEventD(SampleId identity) : base(identity) { }
+        public SampleEventD(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
     }
 
     public class AggregateStateTests
     {
+        private static IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> CreateEventMeta<T>(SampleId id) =>
+            new EventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState>(
+                    new EventId(RandomGuidFactory.Instance),
+                    typeof(T).Name,
+                    0,
+                    new SourceId(RandomGuidFactory.Instance),
+                    id,
+                    0,
+                    DateTimeOffset.UtcNow,
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                );
+
         [Fact]
         public void CanApplyCorrectEventsBasedOnEventType()
         {
             var id = new SampleId(Guid.NewGuid());
             var state = new SampleAggregateState();
 
-            var events = new IAggregateEvent<SampleAggregateRoot, SampleId>[] {
-                new SampleEventC(id),
-                new SampleEventA(id),
-                new SampleEventB(id),
-                new SampleEventA(id),
-                new SampleEventC(id),
-                new SampleEventB(id),
+            var events = new IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>[] {
+                new SampleEventC(CreateEventMeta<SampleEventC>(id)),
+                new SampleEventA(CreateEventMeta<SampleEventA>(id)),
+                new SampleEventB(CreateEventMeta<SampleEventB>(id)),
+                new SampleEventA(CreateEventMeta<SampleEventA>(id)),
+                new SampleEventC(CreateEventMeta<SampleEventC>(id)),
+                new SampleEventB(CreateEventMeta<SampleEventB>(id))
             };
 
             foreach (var e in events)
@@ -99,7 +111,7 @@ namespace Nd.Aggregates.Tests
                 state.Apply(e);
             }
 
-            Assert.True(events.SequenceEqual(state.Events, new EventComparer()));
+            Assert.True(events.SequenceEqual(state.Events));
         }
 
         [Fact]
@@ -108,10 +120,10 @@ namespace Nd.Aggregates.Tests
             var id = new SampleId(Guid.NewGuid());
             var state = new SampleAggregateState();
 
-            var events = new IAggregateEvent<SampleAggregateRoot, SampleId>[] {
-                new SampleEventD(id),
-                new SampleEventD(id),
-                new SampleEventD(id),
+            var events = new IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>[] {
+                new SampleEventD(CreateEventMeta<SampleEventD>(id)),
+                new SampleEventD(CreateEventMeta<SampleEventD>(id)),
+                new SampleEventD(CreateEventMeta<SampleEventD>(id))
             };
 
             foreach (var e in events)
@@ -121,36 +133,5 @@ namespace Nd.Aggregates.Tests
 
             Assert.False(state.Events.Any());
         }
-    }
-
-    internal class EventComparer : IEqualityComparer<IAggregateEvent<SampleAggregateRoot, SampleId>>
-    {
-        public bool Equals(IAggregateEvent<SampleAggregateRoot, SampleId>? x, IAggregateEvent<SampleAggregateRoot, SampleId>? y)
-        {
-            if (x == null && y == null)
-            {
-                return true;
-            }
-            else if (x == null)
-            {
-                return false;
-            }
-            else if (y == null)
-            {
-                return false;
-            }
-
-            var result = x.GetType().Equals(y.GetType());
-
-            if (!result)
-            {
-                return false;
-            }
-
-            return x.AggregateIdentity.Equals(y.AggregateIdentity);
-        }
-
-        public int GetHashCode([DisallowNull] IAggregateEvent<SampleAggregateRoot, SampleId> obj) =>
-            new object[] { obj.GetType(), obj.AggregateIdentity }.Aggregate(17, (current, obj) => current * 23 + (obj?.GetHashCode() ?? 0));
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2015 - 2021 Rasmus Mikkelsen
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
@@ -25,21 +25,14 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates
+using Nd.Core.Factories;
+
+namespace Nd.ValueObjects.Identities
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class AggregateNameAttribute : Attribute
+    public sealed record class SourceId : Identity<SourceId>, ISourceId
     {
-        public string Name { get; }
+        public SourceId(Guid value) : base(value) { }
 
-        public AggregateNameAttribute(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            Name = name;
-        }
+        public SourceId(IGuidFactory factory) : base(factory) { }
     }
 }

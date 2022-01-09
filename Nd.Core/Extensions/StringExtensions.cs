@@ -31,7 +31,11 @@ namespace Nd.Core.Extensions
         public static string ToSnakeCase(this string value, string separator = "_") =>
             string.Join(separator, CamelCasePattern.Matches(value).Select(g => g.Value.ToLowerInvariant()));
 
-        public static string TrimEnd(this string value, string trimString) =>
-            value.EndsWith(trimString) ? value[..^trimString.Length] : value;
+        public static string TrimEnd(this string value, params string[] trimStrings)
+        {
+            var trim = trimStrings?.FirstOrDefault((s) => value.EndsWith(s));
+
+            return !string.IsNullOrEmpty(trim) ? value[..^trim.Length] : value;
+        }
     }
 }

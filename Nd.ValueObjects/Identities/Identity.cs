@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,12 +21,30 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects;
+using Nd.Core.Extensions;
+using Nd.Core.Factories;
+using Nd.ValueObjects.Common;
 
-namespace Nd.Aggregates
+namespace Nd.ValueObjects.Identities
 {
-    public class AggregateName : SingleValueObject<string>, IAggregateName
+    public abstract record class Identity<T> : ValueObject, IIdentity<T> where T : IIdentity<T>
     {
-        public AggregateName(string value) : base(value) { }
+        public static readonly string TypeName = typeof(T).Name;
+
+        private readonly string _stringValue;
+
+        public Guid Value { get; }
+
+        protected Identity(Guid value)
+        {
+            Value = value;
+            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd("_id", "_identity")}-{value.ToString("N").ToLowerInvariant()}";
+        }
+
+        protected Identity(IGuidFactory factory) : this(factory.Create()) { }
+
+        string IIdentity.Value => _stringValue;
+
+        public sealed override string ToString() => _stringValue;
     }
 }
