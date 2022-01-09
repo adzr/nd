@@ -22,6 +22,7 @@
  */
 
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Identities;
 using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 using System;

@@ -27,7 +27,7 @@
 
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Identities
 {
     public interface IEventId : IIdentity
     {

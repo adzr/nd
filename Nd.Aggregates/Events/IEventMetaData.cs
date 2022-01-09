@@ -25,6 +25,7 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Core.NamedTypes;
 using Nd.Core.VersionedTypes;
 using Nd.ValueObjects.Identities;

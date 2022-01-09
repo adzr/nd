@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
 using Nd.ValueObjects.Common;
 using Nd.ValueObjects.Identities;

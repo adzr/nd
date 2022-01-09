@@ -28,7 +28,7 @@
 using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Identities
 {
     public sealed record class EventId : Identity<EventId>, IEventId
     {
