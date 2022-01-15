@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -23,6 +27,7 @@
 using Nd.Core.NamedTypes;
 using Nd.Core.VersionedTypes;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Nd.Core.Extensions
@@ -83,9 +88,12 @@ namespace Nd.Core.Extensions
 
         public static MethodInfo GetMethodWithSingleParameterOfType(this Type type, string name, Type param) => type
             .GetTypeInfo()
-            .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-                new[] { param }) ?? throw new NotSupportedException(
+            .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, new[] { param }) ?? throw new NotSupportedException(
                     $"Failed to find method with name \"{name}\" in type \"{type.ToPrettyString()}\" that takes a single parameter of type \"{param.ToPrettyString()}\"");
+
+        public static bool HasMethodWithSingleParameterOfType(this Type type, string name, Type param) => type
+            .GetTypeInfo()
+            .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, new[] { param }) is not null;
 
         public static string GetName(this Type type) =>
             type?
@@ -99,7 +107,77 @@ namespace Nd.Core.Extensions
             type?
             .GetTypeInfo()
             .GetCustomAttributes<VersionedTypeAttribute>()
-            .FirstOrDefault()?.Version ??
+            .FirstOrDefault()?.TypeVersion ??
             throw new ArgumentNullException(nameof(type));
+
+
+        public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)
+        {
+            var genericArguments = typeof(T).GetTypeInfo().GetGenericArguments();
+            var methodArgumentList = methodInfo.GetParameters().Select(p => p.ParameterType).ToList();
+            var funcArgumentList = genericArguments.Skip(1).Take(methodArgumentList.Count).ToList();
+
+            if (funcArgumentList.Count != methodArgumentList.Count)
+            {
+                throw new ArgumentException("Incorrect number of arguments");
+            }
+
+            var instanceArgument = Expression.Parameter(genericArguments.First());
+
+            var argumentPairs = funcArgumentList.Zip(methodArgumentList, (s, d) => new { Source = s, Destination = d }).ToList();
+
+            if (argumentPairs.All(a => a.Source == a.Destination))
+            {
+                // No need to do anything fancy, the types are the same.
+                var parameters = funcArgumentList.Select(Expression.Parameter).ToList();
+                return Expression.Lambda<T>(
+                    Expression.Call(instanceArgument, methodInfo, parameters),
+                    new[] { instanceArgument }.Concat(parameters)
+                ).Compile();
+            }
+
+            var lambdaArgument = new List<ParameterExpression> { instanceArgument };
+
+            var type = methodInfo.DeclaringType ?? throw new NullReferenceException($"Method info \"{methodInfo.Name}\" missing declaring type");
+
+            var instanceVariable = Expression.Variable(type);
+
+            var blockVariables = new List<ParameterExpression> { instanceVariable };
+
+            var blockExpressions = new List<Expression> { Expression.Assign(instanceVariable, Expression.ConvertChecked(instanceArgument, type)) };
+
+            var callArguments = new List<ParameterExpression>();
+
+            foreach (var a in argumentPairs)
+            {
+                if (a.Source == a.Destination)
+                {
+                    var sourceParameter = Expression.Parameter(a.Source);
+                    lambdaArgument.Add(sourceParameter);
+                    callArguments.Add(sourceParameter);
+                }
+                else
+                {
+                    var sourceParameter = Expression.Parameter(a.Source);
+                    var destinationVariable = Expression.Variable(a.Destination);
+                    var assignToDestination = Expression.Assign(destinationVariable, Expression.Convert(sourceParameter, a.Destination));
+
+                    lambdaArgument.Add(sourceParameter);
+                    callArguments.Add(destinationVariable);
+                    blockVariables.Add(destinationVariable);
+                    blockExpressions.Add(assignToDestination);
+                }
+            }
+
+            var callExpression = Expression.Call(instanceVariable, methodInfo, callArguments);
+
+            blockExpressions.Add(callExpression);
+
+            var block = Expression.Block(blockVariables, blockExpressions);
+
+            var lambdaExpression = Expression.Lambda<T>(block, lambdaArgument);
+
+            return lambdaExpression.Compile();
+        }
     }
 }

@@ -22,21 +22,38 @@
 
 namespace Nd.Core.Extensions
 {
+    /// <summary>
+    /// Contains extension methods for <see cref="IEnumerable{T}"/>.
+    /// </summary>
     public static class IEnumerableExtensions
     {
+        /// <summary>
+        /// Compares two <see cref="IEnumerable{T}"/> collections first based on length then based on each individual element in sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of the element in the <see cref="IEnumerable{T}"/>, given an element can be null.</typeparam>
+        /// <typeparam name="TEnumerable{T}">The type of this <see cref="IEnumerable{T}"/>.</typeparam>
+        /// <param name="left">This given as a left-side operand for comparison.</param>
+        /// <param name="right">The right-side operand for comparison.</param>
+        /// <returns></returns>
         public static int CompareTo<T, TEnumerable>(this TEnumerable left, IEnumerable<T?> right)
             where TEnumerable : IEnumerable<T?>
         {
+            // Conversion to arrays for multiple iterations.
             var leftArray = left.ToArray();
             var rightArray = right.ToArray();
 
+            // First compare based on size/length.
             var compareSizeResult = leftArray.Length.CompareTo(rightArray.Length);
 
+            // If they don't match then return result.
             if (compareSizeResult != 0)
             {
                 return compareSizeResult;
             }
 
+            // Else compare each element in the left array against
+            // its corresponding element in the right one,
+            // and return once a difference is found.
             for (var i = 0; i < leftArray.Length; i++)
             {
                 var l = leftArray[i];

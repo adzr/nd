@@ -21,10 +21,30 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Exceptions;
+using Nd.Core.Extensions;
+
+namespace Nd.Aggregates
 {
-    public interface INamedType
+    public interface IAggregateStateFactory<TState>
     {
-        public string TypeName { get; }
+        TState Create();
+    }
+
+    public class AggregateStateFactory<TState> : IAggregateStateFactory<TState>
+    {
+        private static readonly string AggregateStateTypeString = typeof(TState).ToPrettyString();
+
+        public TState Create()
+        {
+            try
+            {
+                return (TState?)Activator.CreateInstance(typeof(TState)) ?? throw new NullReferenceException(nameof(Activator.CreateInstance));
+            }
+            catch (Exception exception)
+            {
+                throw new AggregateStateCreationException(AggregateStateTypeString, exception);
+            }
+        }
     }
 }

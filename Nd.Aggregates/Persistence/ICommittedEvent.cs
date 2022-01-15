@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,10 +21,13 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Events;
+
+namespace Nd.Aggregates.Persistence
 {
-    public interface INamedType
+    public interface ICommittedEvent
     {
-        public string TypeName { get; }
+        public IAggregateEvent Event { get; }
+        public IAggregateEventMetaData MetaData { get; }
     }
 }

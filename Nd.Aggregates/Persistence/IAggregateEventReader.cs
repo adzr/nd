@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,15 +21,13 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Identities
+namespace Nd.Aggregates.Persistence
 {
-    public sealed record class EventId : Identity<EventId>, IEventId
+    public interface IAggregateEventReader
     {
-        public EventId(Guid value) : base(value) { }
-
-        public EventId(IGuidFactory factory) : base(factory) { }
+        Task<IEnumerable<ICommittedEvent>> ReadAsync<TIdentity>(TIdentity aggregateId, CancellationToken cancellation)
+            where TIdentity : IIdentity<TIdentity>;
     }
 }

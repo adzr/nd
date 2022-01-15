@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,19 +25,17 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Common;
+using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Identities
 {
-    public abstract record class Event<TAggregate, TIdentity, TState>
-        (
-            IEventMetaData<TAggregate, TIdentity, TState> EventMetaData
-        ) : ValueObject, IEvent<TAggregate, TIdentity, TState>
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TState : AggregateState<TState, TAggregate, TIdentity>
+    public sealed record class AggregateEventId : Identity<AggregateEventId>, IAggregateEventId
     {
-        IEventMetaData IEvent.EventMetaData => EventMetaData;
+        public static readonly Guid NamespaceIdentifier = Guid.ParseExact("8a563c72-5604-4ca2-9d5f-bb6eb7f960c7", "D");
+
+        public AggregateEventId(Guid value) : base(value) { }
+
+        public AggregateEventId(IGuidFactory factory) : base(factory) { }
     }
 }

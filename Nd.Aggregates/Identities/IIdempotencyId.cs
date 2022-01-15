@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+namespace Nd.ValueObjects.Identities
 {
-    public interface INamedType
+    public interface IIdempotencyId : IIdentity
     {
-        public string TypeName { get; }
+        new Guid Value { get; }
     }
 }

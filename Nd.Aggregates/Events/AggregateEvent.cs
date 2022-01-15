@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,14 +21,25 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Extensions;
+using Nd.ValueObjects.Common;
 using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Events
 {
-    public interface IEventApplier<TAggregate, TIdentity>
+    public abstract record class AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier> :
+        ValueObject, IAggregateEvent<TAggregate, TIdentity, TEventApplier>
+        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
         where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
     {
-        void Apply(IEvent @event);
+        private static readonly string EventTypeName = typeof(TEvent).GetName();
+
+        private static readonly uint EventTypeVersion = typeof(TEvent).GetVersion();
+
+        public string TypeName => EventTypeName;
+
+        public uint TypeVersion => EventTypeVersion;
     }
 }

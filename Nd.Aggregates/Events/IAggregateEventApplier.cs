@@ -27,10 +27,12 @@
 
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Identities
+namespace Nd.Aggregates.Events
 {
-    public interface IEventId : IIdentity
+    public interface IAggregateEventApplier<TAggregate, TIdentity>
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity
     {
-        new Guid Value { get; }
+        void Apply(IAggregateEvent @event);
     }
 }

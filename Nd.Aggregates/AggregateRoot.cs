@@ -28,23 +28,33 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
+using Nd.Aggregates.Identities;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Extensions;
+using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates
 {
-    public abstract class AggregateRoot<TAggregate, TIdentity, TState> : IAggregateRoot<TIdentity, TState>
-        where TState : AggregateState<TState, TAggregate, TIdentity>
-        where TAggregate : AggregateRoot<TAggregate, TIdentity, TState>
-        where TIdentity : IIdentity
+    public abstract class AggregateRoot<TAggregate, TIdentity, TEventApplier, TState> : IAggregateRoot<TIdentity, TState>
+        where TAggregate : AggregateRoot<TAggregate, TIdentity, TEventApplier, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
     {
-        private static readonly string AggregateName = typeof(TAggregate).GetName();
-        private static readonly string StateInitializationExceptionString =
-            $"Unable to activate AggregateState of Type \"{typeof(TState).ToPrettyString()}\" for AggregateRoot of Name \"{AggregateName}\".";
+        private static readonly string AggregateTypeName = typeof(TAggregate).GetName();
+        private static readonly IAggregateStateFactory<TEventApplier> DefaultEventApplierFactory = new AggregateStateFactory<TEventApplier>();
 
-        //private readonly ConcurrentQueue<IUncommittedEvent> _uncommittedEvents = new();
+        private readonly object _uncommittedEventsLock = new();
 
-        protected AggregateRoot(TIdentity identity)
+        private readonly List<IUncommittedEvent> _uncommittedEvents = new();
+
+        private readonly List<IIdempotencyId> _idempotencyCheckList = new();
+
+        private readonly TEventApplier _eventApplier;
+
+        protected AggregateRoot(TIdentity identity, TEventApplier? eventApplier = default)
         {
             if (this is not TAggregate)
             {
@@ -52,64 +62,111 @@ namespace Nd.Aggregates
                     $"Aggregate '{GetType().ToPrettyString()}' specifies '{typeof(TAggregate).ToPrettyString()}' as generic argument, it should be its own type");
             }
 
-            try
-            {
-                State = Activator.CreateInstance(typeof(TState)) as TState ?? throw new NullReferenceException(StateInitializationExceptionString);
-            }
-            catch (Exception exception)
-            {
-                throw new SystemException(StateInitializationExceptionString, exception);
-            }
+            _eventApplier = eventApplier ?? EventApplierFactory.Create();
 
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
             Version = 0;
         }
 
-        public TState State { get; }
+        protected virtual IAggregateStateFactory<TEventApplier> EventApplierFactory => DefaultEventApplierFactory;
+
+        public TState State => _eventApplier;
 
         public TIdentity Identity { get; }
 
         IIdentity IAggregateRoot.Identity => Identity;
 
-        public string Name => AggregateName;
+        public string TypeName => AggregateTypeName;
 
-        public uint Version { get; private set; }
+        public uint Version { get; protected set; }
 
         public bool IsNew => Version == 0;
 
+        protected virtual void Emit<TEvent>(TEvent @event, IAggregateEventMetaData? metaData = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
+            where TEvent : AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier>
+        {
+            if (@event == null)
+            {
+                throw new ArgumentNullException(nameof(@event));
+            }
 
-        //protected virtual void Emit<TEvent>(TEvent @event, IPropertiesValueObject? metadata = default, Func<DateTimeOffset>? currentTimestampProvider = default)
-        //    where TEvent : IEvent<TAggregate, TIdentity, TState>
-        //{
-        //    if (@event == null)
-        //    {
-        //        throw new ArgumentNullException(nameof(@event));
-        //    }
+            if (metaData is not null && _idempotencyCheckList.Contains(metaData.IdempotencyId))
+            {
+                if (failOnDuplicates)
+                {
+                    throw new DuplicateAggregateEventException(@event, metaData);
+                }
 
-        //    var aggregateSequenceNumber = Version + 1;
-        //    var eventId = DeterministicGuidFactory.Instance(IEvent.NamespaceIdentifier, $"{Identity.Value}-v{aggregateSequenceNumber}");
-        //    var timestamp = currentTimestampProvider?.Invoke() ?? DateTimeOffset.Now;
-        //    var eventMetadata = new Metadata
-        //    {
-        //        Timestamp = timestamp,
-        //        AggregateSequenceNumber = aggregateSequenceNumber,
-        //        AggregateName = Name.Value,
-        //        AggregateId = Identity.Value,
-        //        EventId = eventId
-        //    };
-        //    eventMetadata.Add(MetadataKeys.TimestampEpoch, timestamp.ToUnixTime().ToString());
-        //    if (metadata != null)
-        //    {
-        //        eventMetadata.AddRange(metadata);
-        //    }
+                return;
+            }
 
-        //    var uncommittedEvent = new UncommittedEvent(@event, eventMetadata);
+            // Creating event meta-data to be stored along side the event.
+            var meta = new AggregateEventMetaData<TAggregate, TIdentity>
+            (
+                metaData?.IdempotencyId ?? new IdempotencyId(RandomGuidFactory.Instance),
+                metaData?.CorrelationId ?? new CorrelationId(RandomGuidFactory.Instance),
+                new AggregateEventId(DeterministicGuidFactory.Instance(AggregateEventId.NamespaceIdentifier, $"{Identity.Value}-v{Version + 1}")),
+                @event.TypeName,
+                @event.TypeVersion,
+                Identity,
+                Version + 1,
+                currentTimestampProvider?.Invoke() ?? DateTimeOffset.UtcNow
+            );
 
-        //    lock (_uncommittedEvents)
-        //    {
-        //        _uncommittedEvents.Enqueue(uncommittedEvent);
-        //        State.Apply(@event);
-        //    }
-        //}
+            lock (_uncommittedEventsLock)
+            {
+                _eventApplier.Apply(@event);
+                _idempotencyCheckList.Add(meta.IdempotencyId);
+                _uncommittedEvents.Add(new UncommittedEvent(@event, meta));
+                Version++;
+            }
+        }
+
+        public virtual async Task CommitAsync(IAggregateEventWriter writer, CancellationToken cancellation)
+        {
+            // Creating a list for the events about to be stored.
+            var outgoingEvents = new List<IUncommittedEvent>();
+            var outgoingIdempotencyIds = new List<IIdempotencyId>();
+
+            // Freezing the aggregate event-list and copying all
+            // of its events into the new list just created,
+            // then clearing the event-list and de-freezing it.
+            lock (_uncommittedEventsLock)
+            {
+                outgoingEvents.AddRange(_uncommittedEvents);
+                outgoingIdempotencyIds.AddRange(_idempotencyCheckList);
+                _uncommittedEvents.Clear();
+                _idempotencyCheckList.Clear();
+            }
+
+            try
+            {
+                // Trying to store all of the events copied from
+                // the aggregate event-list.
+                await writer.WriteAsync(outgoingEvents, cancellation);
+            }
+            catch (Exception ex)
+            {
+                // In case of a failure, freeze the aggregate
+                // event-list again and put back the
+                // failed-to-store events into the beginning
+                // of the event-list then de-freeze.
+                lock (_uncommittedEventsLock)
+                {
+                    var incomingEvents = new List<IUncommittedEvent>(_uncommittedEvents);
+                    _uncommittedEvents.Clear();
+                    _uncommittedEvents.AddRange(outgoingEvents);
+                    _uncommittedEvents.AddRange(incomingEvents);
+
+                    var incomingIdempotencyIds = new List<IIdempotencyId>(_idempotencyCheckList);
+                    _idempotencyCheckList.Clear();
+                    _idempotencyCheckList.AddRange(outgoingIdempotencyIds);
+                    _idempotencyCheckList.AddRange(incomingIdempotencyIds);
+                }
+
+                // Wrap the exception and throw it.
+                throw new AggregatePersistenceException(AggregateTypeName, Identity, ex);
+            }
+        }
     }
 }

@@ -21,16 +21,19 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Events
-{
-    public interface IApplyEvent
-    {
-        void On(IEvent @event);
-    }
+using Nd.Aggregates.Events;
+using Nd.ValueObjects.Identities;
 
-    public interface IApplyEvent<TEvent> : IApplyEvent
-        where TEvent : IEvent
+namespace Nd.Aggregates.Persistence
+{
+    public interface IAggregateReader
     {
-        void On(TEvent @event);
+        Task<TAggregate> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId,
+                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
+                IAggregateStateFactory<TEventApplier>? aggregateStateFactory = default,
+                CancellationToken cancellation = default)
+            where TAggregate : IAggregateRoot<TIdentity, TState>
+            where TIdentity : IIdentity<TIdentity>
+            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState;
     }
 }

@@ -38,7 +38,7 @@ namespace Nd.Core.Tests.VersionedTypes
         [InlineData(1)]
         [InlineData(2)]
         public void CanHaveValidInput(uint version) =>
-            Assert.Equal(version, new SampleVersionedTypeAttribute(version).Version);
+            Assert.Equal(version, new SampleVersionedTypeAttribute(version).TypeVersion);
 
         [Fact]
         public void FailsOnInvalidVersion() =>

@@ -21,10 +21,21 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Events;
+
+namespace Nd.Aggregates.Exceptions
 {
-    public interface INamedType
+    [Serializable]
+    public class DuplicateAggregateEventException : Exception
     {
-        public string TypeName { get; }
+        public IAggregateEvent Event { get; }
+        public IAggregateEventMetaData MetaData { get; }
+
+        public DuplicateAggregateEventException(IAggregateEvent @event, IAggregateEventMetaData metaData) :
+            base($"Aggregate event has already been emitted with idempotency id {metaData.IdempotencyId}.")
+        {
+            Event = @event;
+            MetaData = metaData;
+        }
     }
 }

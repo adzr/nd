@@ -21,10 +21,35 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Identities;
+using Nd.Core.Extensions;
+using Nd.ValueObjects.Common;
+using Nd.ValueObjects.Identities;
+
+namespace Nd.Aggregates.Events
 {
-    public interface INamedType
+    public record class AggregateEventMetaData
+        (
+            IIdempotencyId IdempotencyId,
+            ICorrelationId CorrelationId
+        ) : ValueObject, IAggregateEventMetaData;
+
+    public sealed record class AggregateEventMetaData<TAggregate, TIdentity>
+        (
+            IIdempotencyId SourceId,
+            ICorrelationId CorrelationId,
+            IAggregateEventId EventId,
+            string TypeName,
+            uint TypeVersion,
+            TIdentity AggregateId,
+            uint AggregateVersion,
+            DateTimeOffset Timestamp
+        ) : AggregateEventMetaData(SourceId, CorrelationId), IAggregateEventMetaData<TAggregate, TIdentity>
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
     {
-        public string TypeName { get; }
+        private static readonly string EventAggregateName = typeof(TAggregate).GetName();
+
+        public string AggregateName => EventAggregateName;
     }
 }

@@ -24,13 +24,28 @@ using System.Text.RegularExpressions;
 
 namespace Nd.Core.Extensions
 {
+    /// <summary>
+    /// Contains extension methods for <see cref="string"/>.
+    /// </summary>
     public static class StringExtensions
     {
         private static readonly Regex CamelCasePattern = new(@"(([A-Z]+[a-z]*)|([0-9]+)|([a-z]+))", RegexOptions.Compiled);
 
+        /// <summary>
+        /// Converts this <see cref="string"/> into a snake case notation.
+        /// </summary>
+        /// <param name="value">The value of the given <see cref="string"/>.</param>
+        /// <param name="separator">An optional separator to use for overridinng the default '_'.</param>
+        /// <returns>A lower case <see cref="string"/> where words are separated using the specified separator, defaults to '_'.</returns>
         public static string ToSnakeCase(this string value, string separator = "_") =>
             string.Join(separator, CamelCasePattern.Matches(value).Select(g => g.Value.ToLowerInvariant()));
 
+        /// <summary>
+        /// Trims the end of this <see cref="string"/> of the first matching value of the given arrays.
+        /// </summary>
+        /// <param name="value">The value of the given <see cref="string"/>.</param>
+        /// <param name="trimStrings">A <see cref="string"/> array that contains the values to be trimmed of the end of the given <see cref="string"/>.</param>
+        /// <returns>An end-trimmed <see cref="string"/> of the first value match found in the given array.</returns>
         public static string TrimEnd(this string value, params string[] trimStrings)
         {
             var trim = trimStrings?.FirstOrDefault((s) => value.EndsWith(s));

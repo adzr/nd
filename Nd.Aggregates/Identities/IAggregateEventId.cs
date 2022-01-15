@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,10 +25,12 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.ValueObjects.Identities;
+
+namespace Nd.Aggregates.Identities
 {
-    public interface INamedType
+    public interface IAggregateEventId : IIdentity
     {
-        public string TypeName { get; }
+        new Guid Value { get; }
     }
 }

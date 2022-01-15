@@ -1,8 +1,4 @@
-﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,29 +21,14 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
-using Nd.Core.NamedTypes;
-using Nd.Core.VersionedTypes;
-using Nd.ValueObjects.Identities;
+using Nd.Core.Factories;
 
-namespace Nd.Aggregates.Events
+namespace Nd.ValueObjects.Identities
 {
-    public interface IEventMetaData : IComparable, INamedType, IVersionedType
+    public sealed record class CorrelationId : Identity<CorrelationId>, ICorrelationId
     {
-        ISourceId SourceId { get; }
-        IIdentity AggregateId { get; }
-        uint AggregateVersion { get; }
-        string AggregateName { get; }
-        IEventId EventId { get; }
-        DateTimeOffset Timestamp { get; }
-        long TimestampEpochInMillis { get; }
-    }
+        public CorrelationId(Guid value) : base(value) { }
 
-    public interface IEventMetaData<TAggregate, TIdentity, TState> : IEventMetaData
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TState : AggregateState<TState, TAggregate, TIdentity>
-    {
-        new TIdentity AggregateId { get; }
+        public CorrelationId(IGuidFactory factory) : base(factory) { }
     }
 }

@@ -21,10 +21,18 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Events;
+using Nd.ValueObjects.Identities;
+
+namespace Nd.Aggregates
 {
-    public interface INamedType
+    public interface IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState>
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
     {
-        public string TypeName { get; }
+        TAggregate Create(TIdentity identity);
+        TAggregate Create(TIdentity identity, TEventApplier state);
+        TAggregate Create(TIdentity identity, IAggregateStateFactory<TEventApplier> factory);
     }
 }

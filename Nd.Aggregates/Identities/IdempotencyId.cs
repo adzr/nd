@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,32 +21,14 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
-using Nd.Core.Extensions;
-using Nd.ValueObjects.Common;
-using Nd.ValueObjects.Identities;
+using Nd.Core.Factories;
 
-namespace Nd.Aggregates.Events
+namespace Nd.ValueObjects.Identities
 {
-    public sealed record class EventMetaData<TAggregate, TIdentity, TState>
-        (
-            IEventId EventId,
-            string Name,
-            uint Version,
-            ISourceId SourceId,
-            TIdentity AggregateId,
-            uint AggregateVersion,
-            DateTimeOffset Timestamp,
-            long TimestampEpochInMillis
-        ) : ValueObject, IEventMetaData<TAggregate, TIdentity, TState>
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TState : AggregateState<TState, TAggregate, TIdentity>
+    public sealed record class IdempotencyId : Identity<IdempotencyId>, IIdempotencyId
     {
-        private static readonly string EventAggregateName = typeof(TAggregate).GetName();
+        public IdempotencyId(Guid value) : base(value) { }
 
-        public string AggregateName => EventAggregateName;
-
-        IIdentity IEventMetaData.AggregateId => AggregateId;
+        public IdempotencyId(IGuidFactory factory) : base(factory) { }
     }
 }

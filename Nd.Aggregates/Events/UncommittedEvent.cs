@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+namespace Nd.Aggregates.Events
 {
-    public interface INamedType
-    {
-        public string TypeName { get; }
-    }
+    internal sealed record class UncommittedEvent(
+        IAggregateEvent Event,
+        IAggregateEventMetaData MetaData
+    ) : IUncommittedEvent;
 }

@@ -22,8 +22,6 @@
  */
 
 using Nd.Aggregates.Events;
-using Nd.Aggregates.Identities;
-using Nd.Core.Factories;
 using Nd.ValueObjects.Identities;
 using System;
 using System.Collections.Concurrent;
@@ -38,18 +36,35 @@ namespace Nd.Aggregates.Tests
         public SampleId(Guid value) : base(value) { }
     }
 
-    internal sealed class SampleAggregateRoot : AggregateRoot<SampleAggregateRoot, SampleId, SampleAggregateState>
+    internal interface ISampleAggregateState
+    {
+
+    }
+
+    internal sealed class SampleAggregateRoot : AggregateRoot<SampleAggregateRoot, SampleId, SampleAggregateEventApplier, ISampleAggregateState>
     {
         public SampleAggregateRoot(SampleId identity) : base(identity) { }
     }
-    internal sealed class SampleAggregateState : AggregateState<SampleAggregateState, SampleAggregateRoot, SampleId>,
-        IApplyEvent<SampleEventA>,
-        IApplyEvent<SampleEventB>,
-        IApplyEvent<SampleEventC>
-    {
-        private readonly ConcurrentQueue<IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>> _events = new();
 
-        public IReadOnlyCollection<IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>> Events { get => _events; }
+    internal abstract record class SampleAggregateEvent<TEvent>
+        : AggregateEvent<TEvent, SampleAggregateRoot, SampleId, SampleAggregateEventApplier>
+        where TEvent : AggregateEvent<TEvent, SampleAggregateRoot, SampleId, SampleAggregateEventApplier>;
+
+    internal interface IApplySampleAggregateEvent<TEvent> : IAggregateEventHandler<TEvent, SampleAggregateRoot, SampleId, SampleAggregateEventApplier>
+            where TEvent : SampleAggregateEvent<TEvent>
+    {
+
+    }
+
+    internal sealed class SampleAggregateEventApplier : AggregateEventApplier<SampleAggregateEventApplier, SampleAggregateRoot, SampleId>,
+        IApplySampleAggregateEvent<SampleEventA>,
+        IApplySampleAggregateEvent<SampleEventB>,
+        IApplySampleAggregateEvent<SampleEventC>,
+        ISampleAggregateState
+    {
+        private readonly ConcurrentQueue<IAggregateEvent<SampleAggregateRoot, SampleId, SampleAggregateEventApplier>> _events = new();
+
+        public IReadOnlyCollection<IAggregateEvent<SampleAggregateRoot, SampleId, SampleAggregateEventApplier>> Events { get => _events; }
 
         public void On(SampleEventA @event) => _events.Enqueue(@event);
 
@@ -58,53 +73,28 @@ namespace Nd.Aggregates.Tests
         public void On(SampleEventC @event) => _events.Enqueue(@event);
     }
 
-    internal sealed record class SampleEventA : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
-    {
-        public SampleEventA(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
-    }
+    internal sealed record class SampleEventA : SampleAggregateEvent<SampleEventA> { }
 
-    internal sealed record class SampleEventB : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
-    {
-        public SampleEventB(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
-    }
+    internal sealed record class SampleEventB : SampleAggregateEvent<SampleEventB> { }
 
-    internal sealed record class SampleEventC : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
-    {
-        public SampleEventC(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
-    }
+    internal sealed record class SampleEventC : SampleAggregateEvent<SampleEventC> { }
 
-    internal sealed record class SampleEventD : Event<SampleAggregateRoot, SampleId, SampleAggregateState>
-    {
-        public SampleEventD(IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> EventMetaData) : base(EventMetaData) { }
-    }
+    internal sealed record class SampleEventD : SampleAggregateEvent<SampleEventD> { }
 
     public class AggregateStateTests
     {
-        private static IEventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState> CreateEventMeta<T>(SampleId id) =>
-            new EventMetaData<SampleAggregateRoot, SampleId, SampleAggregateState>(
-                    new EventId(RandomGuidFactory.Instance),
-                    typeof(T).Name,
-                    0,
-                    new SourceId(RandomGuidFactory.Instance),
-                    id,
-                    0,
-                    DateTimeOffset.UtcNow,
-                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                );
-
         [Fact]
         public void CanApplyCorrectEventsBasedOnEventType()
         {
-            var id = new SampleId(Guid.NewGuid());
-            var state = new SampleAggregateState();
+            var state = new SampleAggregateEventApplier();
 
-            var events = new IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>[] {
-                new SampleEventC(CreateEventMeta<SampleEventC>(id)),
-                new SampleEventA(CreateEventMeta<SampleEventA>(id)),
-                new SampleEventB(CreateEventMeta<SampleEventB>(id)),
-                new SampleEventA(CreateEventMeta<SampleEventA>(id)),
-                new SampleEventC(CreateEventMeta<SampleEventC>(id)),
-                new SampleEventB(CreateEventMeta<SampleEventB>(id))
+            var events = new IAggregateEvent<SampleAggregateRoot, SampleId, SampleAggregateEventApplier>[] {
+                new SampleEventC(),
+                new SampleEventA(),
+                new SampleEventB(),
+                new SampleEventA(),
+                new SampleEventC(),
+                new SampleEventB()
             };
 
             foreach (var e in events)
@@ -118,13 +108,12 @@ namespace Nd.Aggregates.Tests
         [Fact]
         public void CanIgnoreEventsWithNoImplementation()
         {
-            var id = new SampleId(Guid.NewGuid());
-            var state = new SampleAggregateState();
+            var state = new SampleAggregateEventApplier();
 
-            var events = new IEvent<SampleAggregateRoot, SampleId, SampleAggregateState>[] {
-                new SampleEventD(CreateEventMeta<SampleEventD>(id)),
-                new SampleEventD(CreateEventMeta<SampleEventD>(id)),
-                new SampleEventD(CreateEventMeta<SampleEventD>(id))
+            var events = new IAggregateEvent<SampleAggregateRoot, SampleId, SampleAggregateEventApplier>[] {
+                new SampleEventD(),
+                new SampleEventD(),
+                new SampleEventD()
             };
 
             foreach (var e in events)

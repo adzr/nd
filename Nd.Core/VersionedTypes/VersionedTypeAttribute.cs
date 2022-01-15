@@ -30,7 +30,7 @@ namespace Nd.Core.VersionedTypes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public abstract class VersionedTypeAttribute : Attribute, IVersionedType
     {
-        public uint Version { get; }
+        public uint TypeVersion { get; }
 
         protected VersionedTypeAttribute(uint version)
         {
@@ -39,7 +39,7 @@ namespace Nd.Core.VersionedTypes
                 throw new ArgumentOutOfRangeException(nameof(version), "must be greater than 0");
             }
 
-            Version = version;
+            TypeVersion = version;
         }
     }
 }

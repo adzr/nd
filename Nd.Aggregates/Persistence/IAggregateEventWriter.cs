@@ -21,10 +21,12 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Events;
+
+namespace Nd.Aggregates.Persistence
 {
-    public interface INamedType
+    public interface IAggregateEventWriter
     {
-        public string TypeName { get; }
+        Task WriteAsync<T>(IEnumerable<T> events, CancellationToken cancellation) where T : IUncommittedEvent;
     }
 }

@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,22 +25,27 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
+using Nd.Core.NamedTypes;
+using Nd.Core.VersionedTypes;
 using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Events
 {
-    public interface IEvent
+    public interface IAggregateEventMetaData : IComparable
     {
-        public static readonly Guid NamespaceIdentifier = Guid.ParseExact("8a563c72-5604-4ca2-9d5f-bb6eb7f960c7", "D");
-
-        IEventMetaData EventMetaData { get; }
+        IIdempotencyId IdempotencyId { get; }
+        ICorrelationId CorrelationId { get; }
     }
 
-    public interface IEvent<TAggregate, TIdentity, TState> : IEvent
-        where TAggregate : IAggregateRoot<TIdentity, TState>
+    public interface IAggregateEventMetaData<TAggregate, TIdentity> : IAggregateEventMetaData, INamedType, IVersionedType
+        where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
-        where TState : AggregateState<TState, TAggregate, TIdentity>
     {
-        new IEventMetaData<TAggregate, TIdentity, TState> EventMetaData { get; }
+        uint AggregateVersion { get; }
+        string AggregateName { get; }
+        IAggregateEventId EventId { get; }
+        DateTimeOffset Timestamp { get; }
+        TIdentity AggregateId { get; }
     }
 }

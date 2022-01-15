@@ -21,10 +21,17 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+namespace Nd.Aggregates.Exceptions
 {
-    public interface INamedType
+    [Serializable]
+    public class AggregateStateCreationException : Exception
     {
-        public string TypeName { get; }
+        public AggregateStateCreationException(string aggregateStateTypeString, Exception? exception = default)
+            : base("Aggregate state must expose a public default constructor, unable to create aggregate state of Type: {aggregateStateTypeString}", exception)
+        {
+            AggregateStateTypeString = aggregateStateTypeString;
+        }
+
+        public string AggregateStateTypeString { get; }
     }
 }

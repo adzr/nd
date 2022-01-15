@@ -76,8 +76,4 @@ namespace Nd.ValueObjects.Common
 
         private string GetDebuggerDisplay() => ToString();
     }
-
-    public record class NumberValueObject(int Number) : ValueObject;
-
-    public record class SValueObject<T>(T Value) : ValueObject;
 }
