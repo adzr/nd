@@ -81,7 +81,7 @@ namespace Nd.Aggregates.Tests
 
     internal sealed record class SampleEventD : SampleAggregateEvent<SampleEventD> { }
 
-    public class AggregateStateTests
+    public class AggregateEventApplierTests
     {
         [Fact]
         public void CanApplyCorrectEventsBasedOnEventType()

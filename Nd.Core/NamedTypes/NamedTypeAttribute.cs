@@ -26,7 +26,7 @@ namespace Nd.Core.NamedTypes
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public abstract class NamedTypeAttribute : Attribute
     {
-        public string Name { get; }
+        public string TypeName { get; }
 
         protected NamedTypeAttribute(string name)
         {
@@ -35,7 +35,7 @@ namespace Nd.Core.NamedTypes
                 throw new ArgumentNullException(nameof(name));
             }
 
-            Name = name;
+            TypeName = name;
         }
     }
 }

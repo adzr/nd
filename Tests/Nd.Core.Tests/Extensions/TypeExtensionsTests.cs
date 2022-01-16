@@ -26,6 +26,8 @@
  */
 
 using Nd.Core.Extensions;
+using Nd.Core.NamedTypes;
+using Nd.Core.VersionedTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,6 +94,28 @@ namespace Nd.Core.Tests.Extensions
         [Fact]
         public void CanNotGetAbsentMethodWithSingleParameterOfAType() =>
             Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithSingleParameterOfType("IDoNotExist", typeof(int)));
+
+        [Fact]
+        public void CanCheckIfHasMethodWithSingleParameterOfAType() =>
+            Assert.True(typeof(TypeTest).HasMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(string)));
+
+        [Fact]
+        public void CanCheckIfHasNoMethodWithSingleParameterOfAType() =>
+            Assert.False(typeof(TypeTest).HasMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(int)));
+
+        [Fact]
+        public void CanGetNamedTypeName() =>
+            Assert.Equal("test-Test", typeof(TypeTest).GetName());
+
+        [Fact]
+        public void CanGetVersionedTypeVersion() =>
+            Assert.Equal(1u, typeof(TypeTest).GetVersion());
+
+        [Fact]
+        public void CanCompileMethodInvocation() =>
+            Assert.Equal("Something", typeof(TypeTest)
+                .GetMethod(nameof(TypeTest.ReturnArg))?
+                .CompileMethodInvocation<Func<TypeTest, string, string>>()(new TypeTest(), "Something") ?? "");
     }
 
     internal interface IA { }
@@ -108,9 +132,24 @@ namespace Nd.Core.Tests.Extensions
 
     internal interface IF : ID { }
 
+    [NamedTypeTest("Test")]
+    [VersionedTypeTest(1)]
     internal class TypeTest : IA<ID>, IB, IC, ID
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
         public void DoNothingWith(string _) { }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
+        public string ReturnArg(string arg) => arg;
+    }
+
+    internal sealed class NamedTypeTestAttribute : NamedTypeAttribute
+    {
+        public NamedTypeTestAttribute(string name) : base($"test-{name}") { }
+    }
+
+    internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
+    {
+        public VersionedTypeTestAttribute(uint version) : base(version) { }
     }
 }

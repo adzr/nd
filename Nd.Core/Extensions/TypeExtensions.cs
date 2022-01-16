@@ -99,7 +99,7 @@ namespace Nd.Core.Extensions
             type?
             .GetTypeInfo()
             .GetCustomAttributes<NamedTypeAttribute>()
-            .FirstOrDefault()?.Name ??
+            .FirstOrDefault()?.TypeName ??
             type?.AssemblyQualifiedName ??
             throw new ArgumentNullException(nameof(type));
 

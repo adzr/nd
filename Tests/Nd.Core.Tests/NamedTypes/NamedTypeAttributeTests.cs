@@ -38,7 +38,7 @@ namespace Nd.Core.Tests.VersionedTypes
         [InlineData("ValidName")]
         [InlineData("Named With Spaces")]
         public void CanHaveValidInput(string name) =>
-            Assert.Equal(name, new SampleNamedTypeAttribute(name).Name);
+            Assert.Equal(name, new SampleNamedTypeAttribute(name).TypeName);
 
         [Theory]
         [InlineData(null)]
