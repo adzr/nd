@@ -25,14 +25,16 @@
  * SOFTWARE.
  */
 
+using Nd.Core.NamedTypes;
+
 namespace Nd.Core.VersionedTypes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedTypeAttribute : Attribute, IVersionedType
+    public abstract class VersionedTypeAttribute : NamedTypeAttribute, IVersionedType
     {
         public uint TypeVersion { get; }
 
-        protected VersionedTypeAttribute(uint version)
+        protected VersionedTypeAttribute(string name, uint version) : base(name)
         {
             if (version == 0)
             {

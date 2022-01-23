@@ -26,7 +26,6 @@
  */
 
 using Nd.Core.Extensions;
-using Nd.Core.NamedTypes;
 using Nd.Core.VersionedTypes;
 using System;
 using System.Collections.Generic;
@@ -105,11 +104,11 @@ namespace Nd.Core.Tests.Extensions
 
         [Fact]
         public void CanGetNamedTypeName() =>
-            Assert.Equal("test-Test", typeof(TypeTest).GetName());
+            Assert.Equal("Test", typeof(TypeTest).GetName());
 
         [Fact]
         public void CanGetVersionedTypeVersion() =>
-            Assert.Equal(1u, typeof(TypeTest).GetVersion());
+            Assert.Equal(("Test", 1u), typeof(TypeTest).GetNameAndVersion());
 
         [Fact]
         public void CanCompileMethodInvocation() =>
@@ -132,8 +131,7 @@ namespace Nd.Core.Tests.Extensions
 
     internal interface IF : ID { }
 
-    [NamedTypeTest("Test")]
-    [VersionedTypeTest(1)]
+    [VersionedTypeTest("Test", 1)]
     internal class TypeTest : IA<ID>, IB, IC, ID
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
@@ -143,13 +141,8 @@ namespace Nd.Core.Tests.Extensions
         public string ReturnArg(string arg) => arg;
     }
 
-    internal sealed class NamedTypeTestAttribute : NamedTypeAttribute
-    {
-        public NamedTypeTestAttribute(string name) : base($"test-{name}") { }
-    }
-
     internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
     {
-        public VersionedTypeTestAttribute(uint version) : base(version) { }
+        public VersionedTypeTestAttribute(string name, uint version) : base(name, version) { }
     }
 }

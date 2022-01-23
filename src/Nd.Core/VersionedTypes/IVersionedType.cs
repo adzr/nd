@@ -25,10 +25,14 @@
  * SOFTWARE.
  */
 
+using Nd.Core.NamedTypes;
+
 namespace Nd.Core.VersionedTypes
 {
-    public interface IVersionedType
+    public interface IVersionedType : INamedType
     {
         public uint TypeVersion { get; }
+
+        public Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(null);
     }
 }

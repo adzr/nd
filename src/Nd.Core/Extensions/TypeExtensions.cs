@@ -98,15 +98,21 @@ namespace Nd.Core.Extensions
         public static string GetName(this Type type) =>
             type?
             .GetTypeInfo()
-            .GetCustomAttributes<NamedTypeAttribute>()
+            .GetCustomAttributes<NamedTypeAttribute>(true)
             .FirstOrDefault()?.TypeName ??
             type?.AssemblyQualifiedName ?? string.Empty;
 
-        public static uint GetVersion(this Type type) =>
-            type?
+        public static (string Name, uint Version) GetNameAndVersion(this Type type)
+        {
+            var record = type?
             .GetTypeInfo()
-            .GetCustomAttributes<VersionedTypeAttribute>()
-            .FirstOrDefault()?.TypeVersion ?? 0;
+            .GetCustomAttributes<VersionedTypeAttribute>(true)
+            .FirstOrDefault();
+
+            return record is null ?
+                (type?.GetName() ?? string.Empty, 0u) :
+                (record.TypeName, record.TypeVersion);
+        }
 
 
         public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)

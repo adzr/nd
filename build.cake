@@ -4,6 +4,7 @@
 
 var target = Argument("target", "Test");
 var configuration = Argument("configuration", "Release");
+var sln = Argument("sln", "./nd.sln");
 
 //////////////////////////////////////////////////////////////////////
 // TASKS
@@ -36,14 +37,14 @@ Task("Restore")
     .Does(() =>
 {
     Information("Restoring dependencies...");
-    DotNetRestore("./nd.sln");
+    DotNetRestore(sln);
 });
 
 Task("Build")
     .IsDependentOn("Restore")
     .Does(() =>
 {
-    DotNetBuild("./nd.sln", new DotNetCoreBuildSettings
+    DotNetBuild(sln, new DotNetCoreBuildSettings
     {
         Configuration = configuration,
     });
@@ -53,7 +54,7 @@ Task("Test")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    DotNetTest("./nd.sln", new DotNetCoreTestSettings
+    DotNetTest(sln, new DotNetCoreTestSettings
     {
         Configuration = configuration,
         NoBuild = true,

@@ -27,21 +27,23 @@ using Xunit;
 
 namespace Nd.Core.Tests.VersionedTypes
 {
-    internal class SampleVersionedTypeAttribute : VersionedTypeAttribute
+    internal class TestVersionedTypeAttribute : VersionedTypeAttribute
     {
-        public SampleVersionedTypeAttribute(uint version) : base(version) { }
+        public TestVersionedTypeAttribute(string name, uint version) : base(name, version) { }
     }
 
     public class VersionedTypeAttributeTests
     {
         [Theory]
-        [InlineData(1)]
-        [InlineData(2)]
-        public void CanHaveValidInput(uint version) =>
-            Assert.Equal(version, new SampleVersionedTypeAttribute(version).TypeVersion);
+        [InlineData("ValidName", 1)]
+        [InlineData("Named With Spaces", 1)]
+        [InlineData("ValidName", 2)]
+        [InlineData("Named With Spaces", 2)]
+        public void CanHaveValidInput(string name, uint version) =>
+            Assert.Equal(version, new TestVersionedTypeAttribute(name, version).TypeVersion);
 
         [Fact]
         public void FailsOnInvalidVersion() =>
-                    Assert.Throws<ArgumentOutOfRangeException>(() => new SampleVersionedTypeAttribute(0));
+                    Assert.Throws<ArgumentOutOfRangeException>(() => new TestVersionedTypeAttribute("ValidName", 0));
     }
 }

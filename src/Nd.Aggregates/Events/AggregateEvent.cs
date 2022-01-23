@@ -34,12 +34,10 @@ namespace Nd.Aggregates.Events
         where TIdentity : IIdentity<TIdentity>
         where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
     {
-        private static readonly string EventTypeName = typeof(TEvent).GetName();
+        private static readonly (string Name, uint Version) TypeNameAndVersion = typeof(TEvent).GetNameAndVersion();
 
-        private static readonly uint EventTypeVersion = typeof(TEvent).GetVersion();
+        public string TypeName => TypeNameAndVersion.Name;
 
-        public string TypeName => EventTypeName;
-
-        public uint TypeVersion => EventTypeVersion;
+        public uint TypeVersion => TypeNameAndVersion.Version;
     }
 }
