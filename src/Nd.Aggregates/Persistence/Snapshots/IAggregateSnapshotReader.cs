@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,25 +21,18 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Persistence.Snapshots
 {
-    public interface IAggregateEventMetaData : IComparable
+    public interface IAggregateSnapshotReader
     {
-        IIdempotencyIdentity IdempotencyIdentity { get; }
-        ICorrelationIdentity CorrelationIdentity { get; }
-        uint AggregateVersion => 0u;
-    }
+        Task<IAggregateSnapshot<TIdentity, TState>> ReadAsync<TIdentity, TState>(TIdentity aggregateId, CancellationToken cancellation = default)
+            where TIdentity : IIdentity<TIdentity>
+            where TState : class => ReadAsync<TIdentity, TState>(aggregateId, 0u, cancellation);
 
-    public interface IAggregateEventMetaData<TAggregate, TIdentity> : IAggregateEventMetaData
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-    {
-        string AggregateName { get; }
-        IAggregateEventIdentity EventIdentity { get; }
-        DateTimeOffset Timestamp { get; }
-        TIdentity AggregateIdentity { get; }
+        Task<IAggregateSnapshot<TIdentity, TState>> ReadAsync<TIdentity, TState>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
+            where TIdentity : IIdentity<TIdentity>
+            where TState : class;
     }
 }

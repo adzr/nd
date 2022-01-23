@@ -33,7 +33,7 @@ namespace Nd.Aggregates
         where TState : class
     {
         TAggregate Create(TIdentity identity);
-        TAggregate Create(TIdentity identity, TEventApplier state);
-        TAggregate Create(TIdentity identity, IAggregateEventApplierFactory<TEventApplier> factory);
+        TAggregate Create(TIdentity identity, TEventApplier state, uint version);
+        TAggregate Create(TIdentity identity, IAggregateEventApplierFactory<TEventApplier> factory, uint version);
     }
 }

@@ -27,6 +27,6 @@ namespace Nd.Aggregates.Persistence
 {
     public interface IAggregateEventWriter
     {
-        Task WriteAsync<T>(IEnumerable<T> events, CancellationToken cancellation) where T : IUncommittedEvent;
+        Task WriteAsync<T>(IEnumerable<T> events, CancellationToken cancellation = default) where T : IUncommittedEvent;
     }
 }

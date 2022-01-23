@@ -22,28 +22,45 @@
  */
 
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
+using Nd.Core.Extensions;
 using Nd.ValueObjects.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateReader
+    public static class Aggregates
     {
-        Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId,
-                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
-                IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
-                CancellationToken cancellation = default)
+        public static (TAggregate Aggregate, TEventApplier State) CreateAggregateAndState<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId, uint version, IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory, IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory)
             where TAggregate : IAggregateRoot<TIdentity, TState>
             where TIdentity : IIdentity<TIdentity>
             where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class => ReadAsync(aggregateId, 0u, aggregateFactory, aggregateStateFactory, cancellation);
+            where TState : class
+        {
+            TEventApplier state;
 
-        Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId, uint version,
-                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
-                IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
-                CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IIdentity<TIdentity>
-            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class;
+            try
+            {
+                state = (aggregateStateFactory ?? new AggregateEventApplierFactory<TEventApplier>()).Create() ??
+                    throw new NullReferenceException(nameof(state));
+            }
+            catch (Exception exception)
+            {
+                throw new AggregateStateCreationException(typeof(TEventApplier).ToPrettyString(), exception);
+            }
+
+            TAggregate aggregate;
+
+            try
+            {
+                aggregate = aggregateFactory.Create(aggregateId, state, version) ??
+                    throw new NullReferenceException(nameof(aggregate));
+            }
+            catch (Exception exception)
+            {
+                throw new AggregateCreationException(typeof(TAggregate).GetName(), exception);
+            }
+
+            return (aggregate, state);
+        }
     }
 }

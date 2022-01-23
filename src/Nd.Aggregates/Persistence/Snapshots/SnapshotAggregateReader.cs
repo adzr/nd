@@ -24,20 +24,27 @@
 using Nd.Aggregates.Events;
 using Nd.ValueObjects.Identities;
 
-namespace Nd.Aggregates.Persistence
+namespace Nd.Aggregates.Persistence.Snapshots
 {
-    public sealed class AggregateReader : IAggregateReader
+    public sealed class SnapshotAggregateReader : IAggregateReader
     {
         private readonly IAggregateEventReader _eventReader;
+        private readonly IAggregateSnapshotReader _snapshotReader;
 
-        public AggregateReader(IAggregateEventReader eventReader)
+        public SnapshotAggregateReader(IAggregateEventReader eventReader, IAggregateSnapshotReader snapshotReader)
         {
             if (eventReader is null)
             {
                 throw new ArgumentNullException(nameof(eventReader));
             }
 
+            if (snapshotReader is null)
+            {
+                throw new ArgumentNullException(nameof(snapshotReader));
+            }
+
             _eventReader = eventReader;
+            _snapshotReader = snapshotReader;
         }
 
         public async Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId,
@@ -54,8 +61,15 @@ namespace Nd.Aggregates.Persistence
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await _eventReader.ReadAsync(aggregateId, version, cancellation)
-                .ConfigureAwait(false);
+            List<ICommittedEvent> events = new();
+
+            var snapshot = await _snapshotReader.ReadAsync<TIdentity, TState>(aggregateId, version, cancellation);
+
+            events.AddRange(await _eventReader.ReadAsync(
+                aggregateId,
+                snapshot is null ? 0 : snapshot.AggregateVersion + 1,
+                version,
+                cancellation).ConfigureAwait(false));
 
             if (!events.Any())
             {
@@ -64,6 +78,11 @@ namespace Nd.Aggregates.Persistence
 
             (TAggregate aggregate, TEventApplier state) = Aggregates
                 .CreateAggregateAndState(aggregateId, events.Max(e => e.MetaData.AggregateVersion), aggregateFactory, aggregateStateFactory);
+
+            if (snapshot is not null && state is ICanConsumeState<TState> stateConsumer)
+            {
+                stateConsumer.ConsumeState(snapshot.State);
+            }
 
             foreach (var @event in events)
             {

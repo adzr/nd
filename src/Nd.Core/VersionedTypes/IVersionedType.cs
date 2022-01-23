@@ -33,6 +33,6 @@ namespace Nd.Core.VersionedTypes
     {
         public uint TypeVersion { get; }
 
-        public Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(null);
+        public Task<T> UpgradeAsync<T>(CancellationToken cancellationToken) where T : IVersionedType => Task.FromResult((T)this);
     }
 }
