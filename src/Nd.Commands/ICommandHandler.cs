@@ -1,4 +1,11 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
+ * Copyright © 2018 - 2021 Lutando Ngqakaza
+ * Modified from original source https://github.com/Lutando/Akkatecture
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,27 +28,20 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Types.Versions;
+using Nd.Aggregates;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Snapshots
+namespace Nd.Commands
 {
-    public interface IAggregateSnapshot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TState : class, IVersionedType
+    public interface ICommandHandler
     {
-        TState State { get; }
-
-        uint AggregateVersion { get; }
-
-        TIdentity AggregateIdentity { get; }
-
-        string AggregateName { get; }
     }
 
-    public interface ICanConsumeState<TState>
-        where TState : class, IVersionedType
+    public interface ICommandHandler<in TAggregate, TIdentity, out TResult, in TCommand> : ICommandHandler
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
+        where TCommand : ICommand<TAggregate, TIdentity>
     {
-        public void ConsumeState(TState state);
+        TResult HandleCommand(TCommand command, TAggregate aggregate);
     }
 }

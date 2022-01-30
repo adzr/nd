@@ -29,7 +29,7 @@ namespace Nd.Aggregates.Events
 {
     public abstract record class AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier> :
         ValueObject, IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
+        where TEvent : AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier>
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
         where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>

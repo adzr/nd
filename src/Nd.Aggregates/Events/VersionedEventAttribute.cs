@@ -21,21 +21,13 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
+using Nd.Core.Types.Versions;
 
 namespace Nd.Aggregates.Events
 {
-    public interface IAggregateEventHandler
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class VersionedEventAttribute : VersionedTypeAttribute
     {
-        void On(IAggregateEvent @event);
-    }
-
-    public interface IAggregateEventHandler<in TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-        void On(TEvent @event);
+        protected VersionedEventAttribute(string name, uint version) : base($"{name}Event", version) { }
     }
 }

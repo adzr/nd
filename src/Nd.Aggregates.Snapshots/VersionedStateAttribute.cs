@@ -21,15 +21,13 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
+namespace Nd.Aggregates
 {
-    public interface IAggregateSnapshotWriter<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class VersionedStateAttribute : VersionedTypeAttribute
     {
-        Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : class, IVersionedType;
+        protected VersionedStateAttribute(string name, uint version) : base($"{name}State", version) { }
     }
 }

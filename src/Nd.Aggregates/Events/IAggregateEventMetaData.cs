@@ -37,7 +37,7 @@ namespace Nd.Aggregates.Events
         uint AggregateVersion => 0u;
     }
 
-    public interface IAggregateEventMetaData<TAggregate, TIdentity> : IAggregateEventMetaData
+    public interface IAggregateEventMetaData<TAggregate, out TIdentity> : IAggregateEventMetaData
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
     {

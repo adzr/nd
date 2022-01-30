@@ -29,13 +29,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates.Tests", "src\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "L03-Commands", "L03-Commands", "{8E8238A0-4217-4D01-917A-617553CF06E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands", "Nd.Commands\Nd.Commands.csproj", "{481290AB-E457-4389-AD86-D9DADD9D5362}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands", "src\Nd.Commands\Nd.Commands.csproj", "{481290AB-E457-4389-AD86-D9DADD9D5362}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities", "Nd.Identities\Nd.Identities.csproj", "{52B8678D-BB58-4949-B6B2-6537F3F81D5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities", "src\Nd.Identities\Nd.Identities.csproj", "{52B8678D-BB58-4949-B6B2-6537F3F81D5A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities.Tests", "Nd.Identities.Tests\Nd.Identities.Tests.csproj", "{629612CB-3F31-420C-8FF4-B5ED21CAE7C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities.Tests", "src\Nd.Identities.Tests\Nd.Identities.Tests.csproj", "{629612CB-3F31-420C-8FF4-B5ED21CAE7C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Aggregates.Snapshots", "Nd.Aggregates.Snapshots\Nd.Aggregates.Snapshots.csproj", "{26F09407-9528-4BE7-8530-E1377612FE45}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Aggregates.Snapshots", "src\Nd.Aggregates.Snapshots\Nd.Aggregates.Snapshots.csproj", "{26F09407-9528-4BE7-8530-E1377612FE45}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

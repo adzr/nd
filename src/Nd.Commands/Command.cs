@@ -1,4 +1,11 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
+ * Copyright © 2018 - 2021 Lutando Ngqakaza
+ * Modified from original source https://github.com/Lutando/Akkatecture
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,21 +28,28 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates;
+using Nd.Aggregates.Identities;
+using Nd.Core.Extensions;
 using Nd.Identities;
+using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Commands
 {
-    public interface IAggregateEventHandler
-    {
-        void On(IAggregateEvent @event);
-    }
-
-    public interface IAggregateEventHandler<in TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
+    public abstract record class Command<TCommand, TAggregate, TIdentity>
+        (
+            IIdempotencyIdentity IdempotencyIdentity,
+            ICorrelationIdentity CorrelationIdentity,
+            TIdentity AggregateIdentity
+        ) : ValueObject, ICommand<TAggregate, TIdentity>
+        where TCommand : Command<TCommand, TAggregate, TIdentity>
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
     {
-        void On(TEvent @event);
+        private static readonly (string Name, uint Version) TypeNameAndVersion = typeof(TCommand).GetNameAndVersion();
+
+        public string TypeName => TypeNameAndVersion.Name;
+
+        public uint TypeVersion => TypeNameAndVersion.Version;
     }
 }

@@ -26,7 +26,7 @@ using Nd.Identities;
 
 namespace Nd.Aggregates
 {
-    public interface IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState>
+    public interface IAggregateFactory<out TAggregate, in TIdentity, in TEventApplier, TState>
         where TAggregate : IAggregateRoot<TIdentity, TState>
         where TIdentity : IIdentity<TIdentity>
         where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState

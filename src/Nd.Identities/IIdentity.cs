@@ -1,4 +1,8 @@
-﻿/*
+﻿/* 
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,21 +25,12 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
-
-namespace Nd.Aggregates.Events
+namespace Nd.Identities
 {
-    public interface IAggregateEventHandler
+    public interface IIdentity : IComparable
     {
-        void On(IAggregateEvent @event);
+        string Value { get; }
     }
 
-    public interface IAggregateEventHandler<in TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-        void On(TEvent @event);
-    }
+    public interface IIdentity<out T> : IIdentity, IComparable where T : IIdentity<T> { }
 }

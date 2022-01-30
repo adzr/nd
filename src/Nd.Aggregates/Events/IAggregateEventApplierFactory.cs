@@ -23,7 +23,7 @@
 
 namespace Nd.Aggregates.Events
 {
-    public interface IAggregateEventApplierFactory<TEventApplier>
+    public interface IAggregateEventApplierFactory<out TEventApplier>
     {
         TEventApplier Create();
     }

@@ -1,8 +1,4 @@
-﻿/* 
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
+﻿/*
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,12 +21,13 @@
  * SOFTWARE.
  */
 
-namespace Nd.Identities
-{
-    public interface IIdentity : IComparable
-    {
-        string Value { get; }
-    }
+using Nd.Core.Types.Versions;
 
-    public interface IIdentity<T> : IIdentity, IComparable where T : IIdentity<T> { }
+namespace Nd.Commands
+{
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class VersionedCommandAttribute : VersionedTypeAttribute
+    {
+        protected VersionedCommandAttribute(string name, uint version) : base($"{name}Command", version) { }
+    }
 }

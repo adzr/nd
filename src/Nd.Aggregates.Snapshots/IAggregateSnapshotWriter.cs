@@ -21,21 +21,15 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Snapshots;
+using Nd.Core.Types.Versions;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateEventHandler
-    {
-        void On(IAggregateEvent @event);
-    }
-
-    public interface IAggregateEventHandler<in TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
+    public interface IAggregateSnapshotWriter<in TIdentity>
         where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
     {
-        void On(TEvent @event);
+        Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : class, IVersionedType;
     }
 }
