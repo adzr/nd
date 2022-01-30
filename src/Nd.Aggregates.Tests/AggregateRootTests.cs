@@ -21,18 +21,18 @@
  * SOFTWARE.
  */
 
+using FakeItEasy;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Nd.Aggregates.Tests
@@ -40,14 +40,14 @@ namespace Nd.Aggregates.Tests
     public class AggregateRootTests
     {
         #region Test types definitions
-        internal sealed record class TestIdentity : Identity<TestIdentity>
+        public sealed record class TestIdentity : Identity<TestIdentity>
         {
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
         }
 
-        internal abstract record class TestAggregateEvent<TEvent>
+        public abstract record class TestAggregateEvent<TEvent>
             : AggregateEvent<TEvent, TestAggregateRoot, TestIdentity, TestAggregateEventApplier>
             where TEvent : TestAggregateEvent<TEvent>;
 
@@ -55,7 +55,7 @@ namespace Nd.Aggregates.Tests
                 where TEvent : TestAggregateEvent<TEvent>
         { }
 
-        internal record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier, TestAggregateRoot, TestIdentity>,
+        public record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier, TestAggregateRoot, TestIdentity>,
             IApplyTestAggregateEvent<TestEventA>,
             IApplyTestAggregateEvent<TestEventB>,
             IApplyTestAggregateEvent<TestEventC>
@@ -71,15 +71,15 @@ namespace Nd.Aggregates.Tests
             public void On(TestEventC _) => _events.Enqueue(new TestEventC());
         }
 
-        internal sealed record class TestEventA(string Value) : TestAggregateEvent<TestEventA>;
+        public sealed record class TestEventA(string Value) : TestAggregateEvent<TestEventA>;
 
-        internal sealed record class TestEventB : TestAggregateEvent<TestEventB>;
+        public sealed record class TestEventB : TestAggregateEvent<TestEventB>;
 
-        internal sealed record class TestEventC : TestAggregateEvent<TestEventC>;
+        public sealed record class TestEventC : TestAggregateEvent<TestEventC>;
 
-        internal sealed record class TestEventD : TestAggregateEvent<TestEventD>;
+        public sealed record class TestEventD : TestAggregateEvent<TestEventD>;
 
-        internal class TestAggregateRoot : AggregateRoot<TestAggregateRoot, TestIdentity, TestAggregateEventApplier, TestAggregateEventApplier>
+        public class TestAggregateRoot : AggregateRoot<TestAggregateRoot, TestIdentity, TestAggregateEventApplier, TestAggregateEventApplier>
         {
             public TestAggregateRoot(TestIdentity identity) : base(identity) { }
 
@@ -100,24 +100,6 @@ namespace Nd.Aggregates.Tests
 
             public IAggregateEvent Yield() => _events.TryDequeue(out var e) ? e :
                 throw new IndexOutOfRangeException($"{typeof(QueueTestAggregateEventApplier)} is expected to contain elements but it's empty");
-        }
-
-        internal class QueueAggregateEventWriter : IAggregateEventWriter
-        {
-            private readonly Queue<IUncommittedEvent> _events = new();
-
-            public Task WriteAsync<T>(IEnumerable<T> events, CancellationToken cancellation) where T : IUncommittedEvent
-            {
-                foreach (var @event in events)
-                {
-                    _events.Enqueue(@event);
-                }
-
-                return Task.CompletedTask;
-            }
-
-            public (IAggregateEvent Event, IAggregateEventMetaData MetaData) Yield() => _events.TryDequeue(out var e) ? (@e.Event, e.MetaData) :
-                throw new IndexOutOfRangeException($"{typeof(QueueAggregateEventWriter)} is expected to contain elements but it's empty");
         }
         #endregion
 
@@ -229,7 +211,6 @@ namespace Nd.Aggregates.Tests
             var state = new QueueTestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var aggregate = new TestAggregateRoot(identity, state);
-            var writer = new QueueAggregateEventWriter();
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -246,6 +227,8 @@ namespace Nd.Aggregates.Tests
                 events.Add(new TestEventA($"{Message} {i}"));
             }
 
+            var writer = A.Fake<IAggregateEventWriter<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>>();
+
             foreach (var (@event, meta) in events.Zip(metas))
             {
                 aggregate.LetThisHappen(@event, meta);
@@ -258,14 +241,22 @@ namespace Nd.Aggregates.Tests
 
             aggregate.CommitAsync(writer, CancellationToken.None).GetAwaiter().GetResult();
 
-            Assert.False(aggregate.HasPendingChanges);
+            A.CallTo(() => writer.WriteAsync(A<IEnumerable<IUncommittedEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>>>._, A<CancellationToken>._))
+                .Invokes((IEnumerable<IUncommittedEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> uncommittedEvents, CancellationToken cancellation) =>
+                {
+                    foreach (var (Expected, Actual) in events
+                        .Zip(metas)
+                        .Select(r => (Event: r.First, MetaData: r.Second))
+                        .Zip(uncommittedEvents)
+                        .Select(r => (Expected: r.First, Actual: r.Second)))
+                    {
+                        Assert.Equal(Expected.Event, Actual.Event);
+                        Assert.Equal(Expected.MetaData, new AggregateEventMetaData(Actual.MetaData.IdempotencyIdentity, Actual.MetaData.CorrelationIdentity));
+                    }
+                })
+                .MustHaveHappenedOnceExactly();
 
-            foreach (var (e, m) in events.Zip(metas).Select(r => (r.First, r.Second)))
-            {
-                var (Event, MetaData) = writer.Yield();
-                Assert.Equal(e, Event);
-                Assert.Equal(m, new AggregateEventMetaData(MetaData.IdempotencyIdentity, MetaData.CorrelationIdentity));
-            }
+            Assert.False(aggregate.HasPendingChanges);
         }
     }
 }

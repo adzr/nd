@@ -25,9 +25,9 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
-using Nd.Core.VersionedTypes;
-using Nd.ValueObjects.Identities;
+using Nd.Core.Types.Names;
+using Nd.Core.Types.Versions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Events
 {

@@ -22,7 +22,7 @@
  */
 
 using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 using System;
 using Xunit;
 

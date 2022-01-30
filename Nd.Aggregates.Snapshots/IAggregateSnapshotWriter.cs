@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,15 +21,15 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Aggregates.Snapshots;
+using Nd.Core.Types.Versions;
+using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
+namespace Nd.Aggregates.Persistence
 {
-    public sealed record class CorrelationIdentity : Identity<CorrelationIdentity>, ICorrelationIdentity
+    public interface IAggregateSnapshotWriter<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
     {
-        public CorrelationIdentity(Guid value) : base(value) { }
-
-        public CorrelationIdentity(IGuidFactory factory) : base(factory) { }
+        Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : class, IVersionedType;
     }
 }

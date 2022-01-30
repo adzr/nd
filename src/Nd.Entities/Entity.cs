@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 using System.Diagnostics;
 
 namespace Nd.Entities

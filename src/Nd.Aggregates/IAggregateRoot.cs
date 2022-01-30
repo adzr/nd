@@ -28,8 +28,8 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
-using Nd.ValueObjects.Identities;
+using Nd.Core.Types.Names;
+using Nd.Identities;
 
 namespace Nd.Aggregates
 {

@@ -26,7 +26,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace Nd.ValueObjects.Common
+namespace Nd.ValueObjects
 {
     [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public abstract record class ValueObject : IComparable

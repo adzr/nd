@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,8 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Nd.Identities\Nd.Identities.csproj" />
-    <ProjectReference Include="..\Nd.Core\Nd.Core.csproj" />
+    <ProjectReference Include="..\src\Nd.Aggregates\Nd.Aggregates.csproj" />
   </ItemGroup>
 
 </Project>

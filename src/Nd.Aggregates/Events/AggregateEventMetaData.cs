@@ -23,8 +23,8 @@
 
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
-using Nd.ValueObjects.Common;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
+using Nd.ValueObjects;
 
 namespace Nd.Aggregates.Events
 {

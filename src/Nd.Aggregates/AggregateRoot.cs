@@ -34,7 +34,7 @@ using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates
 {
@@ -45,11 +45,11 @@ namespace Nd.Aggregates
         where TState : class
     {
         private static readonly string AggregateTypeName = typeof(TAggregate).GetName();
-        private static readonly IAggregateEventApplierFactory<TEventApplier> DefaultEventApplierFactory = new AggregateEventApplierFactory<TEventApplier>();
+        private static readonly IAggregateEventApplierFactory<TEventApplier> DefaultEventApplierFactory = new DefaultAggregateEventApplierFactory<TEventApplier>();
 
         private readonly object _uncommittedEventsLock = new();
 
-        private readonly List<IUncommittedEvent> _uncommittedEvents = new();
+        private readonly List<IUncommittedEvent<TAggregate, TIdentity, TEventApplier>> _uncommittedEvents = new();
 
         private readonly List<IIdempotencyIdentity> _idempotencyCheckList = new();
 
@@ -120,15 +120,15 @@ namespace Nd.Aggregates
             {
                 _eventApplier.Apply(@event);
                 _idempotencyCheckList.Add(meta.IdempotencyIdentity);
-                _uncommittedEvents.Add(new UncommittedEvent(@event, meta));
+                _uncommittedEvents.Add(new UncommittedEvent<TAggregate, TIdentity, TEventApplier>(@event, meta));
                 Version++;
             }
         }
 
-        public virtual async Task CommitAsync(IAggregateEventWriter writer, CancellationToken cancellation)
+        public virtual async Task CommitAsync(IAggregateEventWriter<TAggregate, TIdentity, TEventApplier> writer, CancellationToken cancellation = default)
         {
             // Creating a list for the events about to be stored.
-            var outgoingEvents = new List<IUncommittedEvent>();
+            var outgoingEvents = new List<IUncommittedEvent<TAggregate, TIdentity, TEventApplier>>();
             var outgoingIdempotencyIds = new List<IIdempotencyIdentity>();
 
             // Freezing the aggregate event-list and copying all
@@ -157,7 +157,7 @@ namespace Nd.Aggregates
                 // of the event-list then de-freeze.
                 lock (_uncommittedEventsLock)
                 {
-                    var incomingEvents = new List<IUncommittedEvent>(_uncommittedEvents);
+                    var incomingEvents = new List<IUncommittedEvent<TAggregate, TIdentity, TEventApplier>>(_uncommittedEvents);
                     _uncommittedEvents.Clear();
                     _uncommittedEvents.AddRange(outgoingEvents);
                     _uncommittedEvents.AddRange(incomingEvents);

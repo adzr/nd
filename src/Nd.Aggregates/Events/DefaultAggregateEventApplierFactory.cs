@@ -21,21 +21,25 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.NamedTypes
+using Nd.Aggregates.Exceptions;
+using Nd.Core.Extensions;
+
+namespace Nd.Aggregates.Events
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class NamedTypeAttribute : Attribute
+    public class DefaultAggregateEventApplierFactory<TEventApplier> : IAggregateEventApplierFactory<TEventApplier>
     {
-        public string TypeName { get; }
+        private static readonly string AggregateStateTypeString = typeof(TEventApplier).ToPrettyString();
 
-        protected NamedTypeAttribute(string name)
+        public TEventApplier Create()
         {
-            if (string.IsNullOrWhiteSpace(name))
+            try
             {
-                throw new ArgumentNullException(nameof(name));
+                return (TEventApplier?)Activator.CreateInstance(typeof(TEventApplier)) ?? throw new NullReferenceException(nameof(Activator.CreateInstance));
             }
-
-            TypeName = name;
+            catch (Exception exception)
+            {
+                throw new AggregateStateCreationException(AggregateStateTypeString, exception);
+            }
         }
     }
 }

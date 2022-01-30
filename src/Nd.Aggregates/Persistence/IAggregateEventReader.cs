@@ -21,11 +21,15 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
+using Nd.Aggregates.Events;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateEventReader
+    public interface IAggregateEventReader<TAggregate, TIdentity, TEventApplier>
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
     {
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified.
@@ -34,8 +38,8 @@ namespace Nd.Aggregates.Persistence
         /// <param name="aggregateId">The aggregate identity, must never be null.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<ICommittedEvent>> ReadAsync<TIdentity>(TIdentity aggregateId, CancellationToken cancellation = default)
-            where TIdentity : IIdentity<TIdentity> => ReadAsync(aggregateId, 0u, cancellation);
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, CancellationToken cancellation = default)
+            where TEvent : ICommittedEvent<TAggregate, TIdentity, TEventApplier> => ReadAsync<TEvent>(aggregateId, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified up to the specified aggregate version.
@@ -45,8 +49,8 @@ namespace Nd.Aggregates.Persistence
         /// <param name="version">The aggregate version, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<ICommittedEvent>> ReadAsync<TIdentity>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
-            where TIdentity : IIdentity<TIdentity> => ReadAsync(aggregateId, 0u, 0u, cancellation);
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
+            where TEvent : ICommittedEvent<TAggregate, TIdentity, TEventApplier> => ReadAsync<TEvent>(aggregateId, 0u, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified within the specified aggregate version range inclusive.
@@ -57,7 +61,7 @@ namespace Nd.Aggregates.Persistence
         /// <param name="versionEnd">The aggregate version upper range bound, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<ICommittedEvent>> ReadAsync<TIdentity>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TIdentity : IIdentity<TIdentity>;
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
+            where TEvent : ICommittedEvent<TAggregate, TIdentity, TEventApplier>;
     }
 }

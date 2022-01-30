@@ -21,15 +21,12 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
-    public sealed record class IdempotencyIdentity : Identity<IdempotencyIdentity>, IIdempotencyIdentity
+    public interface ICorrelationIdentity : IIdentity
     {
-        public IdempotencyIdentity(Guid value) : base(value) { }
-
-        public IdempotencyIdentity(IGuidFactory factory) : base(factory) { }
+        new Guid Value { get; }
     }
 }

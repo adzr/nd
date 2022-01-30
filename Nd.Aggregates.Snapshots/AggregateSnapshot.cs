@@ -21,25 +21,19 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Exceptions;
-using Nd.Core.Extensions;
+using Nd.Aggregates.Snapshots;
+using Nd.Core.Types.Versions;
+using Nd.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates
 {
-    public class AggregateEventApplierFactory<TEventApplier> : IAggregateEventApplierFactory<TEventApplier>
-    {
-        private static readonly string AggregateStateTypeString = typeof(TEventApplier).ToPrettyString();
-
-        public TEventApplier Create()
-        {
-            try
-            {
-                return (TEventApplier?)Activator.CreateInstance(typeof(TEventApplier)) ?? throw new NullReferenceException(nameof(Activator.CreateInstance));
-            }
-            catch (Exception exception)
-            {
-                throw new AggregateStateCreationException(AggregateStateTypeString, exception);
-            }
-        }
-    }
+    internal record class AggregateSnapshot<TIdentity, TState>
+        (
+            TState State,
+            uint AggregateVersion,
+            TIdentity AggregateIdentity,
+            string AggregateName
+        ) : IAggregateSnapshot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TState : class, IVersionedType;
 }

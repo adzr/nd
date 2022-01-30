@@ -28,7 +28,7 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Exceptions
 {

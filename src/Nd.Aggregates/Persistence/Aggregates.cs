@@ -24,7 +24,7 @@
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Core.Extensions;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
@@ -40,7 +40,7 @@ namespace Nd.Aggregates.Persistence
 
             try
             {
-                state = (aggregateStateFactory ?? new AggregateEventApplierFactory<TEventApplier>()).Create() ??
+                state = (aggregateStateFactory ?? new DefaultAggregateEventApplierFactory<TEventApplier>()).Create() ??
                     throw new NullReferenceException(nameof(state));
             }
             catch (Exception exception)

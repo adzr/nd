@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,30 +25,23 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using Nd.Core.Factories;
-using Nd.ValueObjects.Common;
+using Nd.Core.Types.Names;
 
-namespace Nd.ValueObjects.Identities
+namespace Nd.Core.Types.Versions
 {
-    public abstract record class Identity<T> : ValueObject, IIdentity<T> where T : IIdentity<T>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class VersionedTypeAttribute : NamedTypeAttribute, IVersionedType
     {
-        public static readonly string TypeName = typeof(T).Name;
+        public uint TypeVersion { get; }
 
-        private readonly string _stringValue;
-
-        public Guid Value { get; }
-
-        protected Identity(Guid value)
+        protected VersionedTypeAttribute(string name, uint version) : base(name)
         {
-            Value = value;
-            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd("_id", "_identity")}-{value.ToString("N").ToLowerInvariant()}";
+            if (version == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(version), "must be greater than 0");
+            }
+
+            TypeVersion = version;
         }
-
-        protected Identity(IGuidFactory factory) : this(factory.Create()) { }
-
-        string IIdentity.Value => _stringValue;
-
-        public sealed override string ToString() => _stringValue;
     }
 }

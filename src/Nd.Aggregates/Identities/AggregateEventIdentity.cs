@@ -26,7 +26,7 @@
  */
 
 using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {

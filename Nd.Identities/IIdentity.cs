@@ -1,4 +1,8 @@
 ﻿/* 
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,12 +25,12 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
-
-namespace Nd.Aggregates.Identities
+namespace Nd.Identities
 {
-    public interface ICorrelationIdentity : IIdentity
+    public interface IIdentity : IComparable
     {
-        new Guid Value { get; }
+        string Value { get; }
     }
+
+    public interface IIdentity<T> : IIdentity, IComparable where T : IIdentity<T> { }
 }

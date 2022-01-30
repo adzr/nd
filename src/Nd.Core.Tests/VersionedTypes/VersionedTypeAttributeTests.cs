@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-using Nd.Core.VersionedTypes;
+using Nd.Core.Types.Versions;
 using System;
 using Xunit;
 

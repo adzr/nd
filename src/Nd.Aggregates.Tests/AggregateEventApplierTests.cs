@@ -23,7 +23,7 @@
 
 using Nd.Aggregates.Events;
 using Nd.Core.Factories;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

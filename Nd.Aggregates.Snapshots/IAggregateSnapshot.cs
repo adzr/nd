@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,12 +21,27 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
+using Nd.Core.Types.Versions;
+using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
+namespace Nd.Aggregates.Snapshots
 {
-    public interface IIdempotencyIdentity : IIdentity
+    public interface IAggregateSnapshot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TState : class, IVersionedType
     {
-        new Guid Value { get; }
+        TState State { get; }
+
+        uint AggregateVersion { get; }
+
+        TIdentity AggregateIdentity { get; }
+
+        string AggregateName { get; }
+    }
+
+    public interface ICanConsumeState<TState>
+        where TState : class, IVersionedType
+    {
+        public void ConsumeState(TState state);
     }
 }

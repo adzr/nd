@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,23 +21,10 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
-
-namespace Nd.Core.VersionedTypes
+namespace Nd.Core.Types.Names
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedTypeAttribute : NamedTypeAttribute, IVersionedType
+    public interface INamedType
     {
-        public uint TypeVersion { get; }
-
-        protected VersionedTypeAttribute(string name, uint version) : base(name)
-        {
-            if (version == 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(version), "must be greater than 0");
-            }
-
-            TypeVersion = version;
-        }
+        public string TypeName { get; }
     }
 }

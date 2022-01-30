@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,21 +21,15 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Factories;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Aggregates.Identities
 {
-    public interface IAggregateEventHandler
+    public record class CorrelationIdentity : Identity<CorrelationIdentity>, ICorrelationIdentity
     {
-        void On(IAggregateEvent @event);
-    }
+        public CorrelationIdentity(Guid value) : base(value) { }
 
-    public interface IAggregateEventHandler<TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-        void On(TEvent @event);
+        public CorrelationIdentity(IGuidFactory factory) : base(factory) { }
     }
 }

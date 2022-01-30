@@ -1,8 +1,4 @@
-﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
+﻿/* 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,14 +21,12 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
+using Nd.Identities;
 
-namespace Nd.Core.VersionedTypes
+namespace Nd.Aggregates.Identities
 {
-    public interface IVersionedType : INamedType
+    public interface IIdempotencyIdentity : IIdentity
     {
-        public uint TypeVersion { get; }
-
-        public Task<T> UpgradeAsync<T>(CancellationToken cancellationToken) where T : IVersionedType => Task.FromResult((T)this);
+        new Guid Value { get; }
     }
 }

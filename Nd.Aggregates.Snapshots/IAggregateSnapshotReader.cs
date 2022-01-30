@@ -21,25 +21,20 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
-using Nd.Core.VersionedTypes;
+using Nd.Aggregates.Snapshots;
+using Nd.Core.Types.Versions;
+using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence.Snapshots
+namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateSnapshot<TIdentity, TState> : INamedType, IVersionedType
-        where TState : class
+    public interface IAggregateSnapshotReader<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
     {
-        TState State { get; }
+        Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, CancellationToken cancellation = default)
+            where TState : class, IVersionedType
+            => ReadAsync<TState>(aggregateId, 0u, cancellation);
 
-        uint AggregateVersion { get; }
-
-        TIdentity AggregateIdentity { get; }
-
-        string AggregateName { get; }
-    }
-
-    public interface ICanConsumeState<TState>
-    {
-        public void ConsumeState(TState state);
+        Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
+            where TState : class, IVersionedType;
     }
 }

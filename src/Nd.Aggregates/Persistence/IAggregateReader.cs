@@ -22,28 +22,27 @@
  */
 
 using Nd.Aggregates.Events;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateReader
+    public interface IAggregateReader<TAggregate, TIdentity, TEventApplier, TState>
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
+        where TState : class
     {
-        Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId,
+        Task<TAggregate?> ReadAsync(TIdentity aggregateId,
+                IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
                 IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
                 IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
                 CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IIdentity<TIdentity>
-            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class => ReadAsync(aggregateId, 0u, aggregateFactory, aggregateStateFactory, cancellation);
+             => ReadAsync(aggregateId, 0u, eventReader, aggregateFactory, aggregateStateFactory, cancellation);
 
-        Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId, uint version,
+        Task<TAggregate?> ReadAsync(TIdentity aggregateId, uint version,
+                IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
                 IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
                 IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
-                CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IIdentity<TIdentity>
-            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class;
+                CancellationToken cancellation = default);
     }
 }

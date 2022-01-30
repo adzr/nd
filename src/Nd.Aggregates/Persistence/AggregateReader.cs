@@ -22,39 +22,30 @@
  */
 
 using Nd.Aggregates.Events;
-using Nd.ValueObjects.Identities;
+using Nd.Core.Extensions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public sealed class AggregateReader : IAggregateReader
+    public abstract class AggregateReader<TAggregate, TIdentity, TEventApplier, TState> :
+        IAggregateReader<TAggregate, TIdentity, TEventApplier, TState>
+        where TAggregate : IAggregateRoot<TIdentity, TState>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
+        where TState : class
     {
-        private readonly IAggregateEventReader _eventReader;
-
-        public AggregateReader(IAggregateEventReader eventReader)
-        {
-            if (eventReader is null)
-            {
-                throw new ArgumentNullException(nameof(eventReader));
-            }
-
-            _eventReader = eventReader;
-        }
-
-        public async Task<TAggregate?> ReadAsync<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId,
-                uint version, IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
+        public async Task<TAggregate?> ReadAsync(TIdentity aggregateId,
+                uint version, IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
+                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
                 IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
                 CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IIdentity<TIdentity>
-            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class
         {
             if (aggregateId is null)
             {
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await _eventReader.ReadAsync(aggregateId, version, cancellation)
+            var events = await eventReader.ReadAsync<ICommittedEvent<TAggregate, TIdentity, TEventApplier>>(aggregateId, version, cancellation)
                 .ConfigureAwait(false);
 
             if (!events.Any())
@@ -67,7 +58,7 @@ namespace Nd.Aggregates.Persistence
 
             foreach (var @event in events)
             {
-                state.Apply(await @event.Event.UpgradeAsync<IAggregateEvent>(cancellation));
+                state.Apply(await @event.Event.UpgradeRecursiveAsync<IAggregateEvent>(cancellation));
             }
 
             return aggregate;

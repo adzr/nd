@@ -26,7 +26,7 @@
  */
 
 using Nd.Aggregates.Identities;
-using Nd.ValueObjects.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Events
 {

@@ -1,7 +1,10 @@
-﻿/* 
+﻿/*
  * Copyright © 2015 - 2021 Rasmus Mikkelsen
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
+ * 
+ * Copyright © 2018 - 2021 Lutando Ngqakaza
+ * Modified from original source https://github.com/Lutando/Akkatecture
  * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
@@ -25,12 +28,25 @@
  * SOFTWARE.
  */
 
-namespace Nd.ValueObjects.Identities
+using Nd.Aggregates;
+using Nd.Aggregates.Identities;
+using Nd.Core.Types.Names;
+using Nd.Identities;
+
+namespace Nd.Commands
 {
-    public interface IIdentity : IComparable
+    public interface ICommand : INamedType
     {
-        string Value { get; }
+        IIdempotencyIdentity IdempotencyIdentity { get; }
+        ICorrelationIdentity CorrelationIdentity { get; }
     }
 
-    public interface IIdentity<T> : IIdentity, IComparable where T : IIdentity<T> { }
+    public interface ICommand<TAggregate, TIdentity> : INamedType
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
+    {
+        IIdempotencyIdentity IdempotencyIdentity { get; }
+        ICorrelationIdentity CorrelationIdentity { get; }
+        TIdentity AggregateIdentity { get; }
+    }
 }

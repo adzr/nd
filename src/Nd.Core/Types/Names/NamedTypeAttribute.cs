@@ -21,18 +21,21 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Identities;
-
-namespace Nd.Aggregates.Persistence.Snapshots
+namespace Nd.Core.Types.Names
 {
-    public interface IAggregateSnapshotReader
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public abstract class NamedTypeAttribute : Attribute
     {
-        Task<IAggregateSnapshot<TIdentity, TState>> ReadAsync<TIdentity, TState>(TIdentity aggregateId, CancellationToken cancellation = default)
-            where TIdentity : IIdentity<TIdentity>
-            where TState : class => ReadAsync<TIdentity, TState>(aggregateId, 0u, cancellation);
+        public string TypeName { get; }
 
-        Task<IAggregateSnapshot<TIdentity, TState>> ReadAsync<TIdentity, TState>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
-            where TIdentity : IIdentity<TIdentity>
-            where TState : class;
+        protected NamedTypeAttribute(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            TypeName = name;
+        }
     }
 }

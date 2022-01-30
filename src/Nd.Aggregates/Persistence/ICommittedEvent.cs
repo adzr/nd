@@ -22,6 +22,7 @@
  */
 
 using Nd.Aggregates.Events;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
@@ -29,5 +30,16 @@ namespace Nd.Aggregates.Persistence
     {
         public IAggregateEvent Event { get; }
         public IAggregateEventMetaData MetaData { get; }
+    }
+
+    public interface ICommittedEvent<TAggregate, TIdentity, TEventApplier> : ICommittedEvent
+        where TAggregate : IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
+        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
+    {
+        public new IAggregateEvent<TAggregate, TIdentity, TEventApplier> Event { get; }
+        public new IAggregateEventMetaData<TAggregate, TIdentity> MetaData { get; }
+        IAggregateEvent ICommittedEvent.Event => Event;
+        IAggregateEventMetaData ICommittedEvent.MetaData => MetaData;
     }
 }

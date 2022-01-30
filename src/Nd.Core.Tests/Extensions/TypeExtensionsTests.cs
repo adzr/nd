@@ -26,7 +26,7 @@
  */
 
 using Nd.Core.Extensions;
-using Nd.Core.VersionedTypes;
+using Nd.Core.Types.Versions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

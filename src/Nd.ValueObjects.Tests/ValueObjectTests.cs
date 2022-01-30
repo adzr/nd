@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 
-using Nd.ValueObjects.Common;
 using Xunit;
 
 namespace Nd.ValueObjects.Tests

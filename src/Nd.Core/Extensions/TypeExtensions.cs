@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-using Nd.Core.NamedTypes;
-using Nd.Core.VersionedTypes;
+using Nd.Core.Types.Names;
+using Nd.Core.Types.Versions;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -114,6 +114,17 @@ namespace Nd.Core.Extensions
                 (record.TypeName, record.TypeVersion);
         }
 
+        public static async Task<TBase> UpgradeRecursiveAsync<TBase>(this TBase type, CancellationToken cancellationToken = default) where TBase : IVersionedType
+        {
+            var upgraded = await type.UpgradeAsync<TBase>(cancellationToken);
+
+            if (upgraded is null)
+            {
+                return type;
+            }
+
+            return await UpgradeRecursiveAsync(upgraded, cancellationToken);
+        }
 
         public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)
         {
