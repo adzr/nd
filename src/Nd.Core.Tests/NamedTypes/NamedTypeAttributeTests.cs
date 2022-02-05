@@ -21,30 +21,24 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Extensions;
 using Nd.Core.Types.Names;
 using System;
 using Xunit;
 
 namespace Nd.Core.Tests.NamedTypes
 {
-    internal class SampleNamedTypeAttribute : NamedTypeAttribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public class NamedTestAttribute : NamedTypeAttribute
     {
-        public SampleNamedTypeAttribute(string name) : base(name) { }
+        public NamedTestAttribute(string name) : base(name) { }
     }
 
+    [NamedTest(nameof(NamedTypeAttributeTests))]
     public class NamedTypeAttributeTests
     {
-        [Theory]
-        [InlineData("ValidName")]
-        [InlineData("Named With Spaces")]
-        public void CanHaveValidInput(string name) =>
-            Assert.Equal(name, new SampleNamedTypeAttribute(name).TypeName);
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData(" ")]
-        public void FailsOnInvalidName(string name) =>
-            Assert.Throws<ArgumentNullException>(() => new SampleNamedTypeAttribute(name));
+        [Fact]
+        public void CanHaveAttributedName() =>
+            Assert.Equal(nameof(NamedTypeAttributeTests), typeof(NamedTypeAttributeTests).GetName());
     }
 }

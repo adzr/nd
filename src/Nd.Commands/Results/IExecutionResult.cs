@@ -25,25 +25,50 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates;
 using Nd.Aggregates.Identities;
-using Nd.Commands.Results;
-using Nd.Core.Types.Versions;
-using Nd.Identities;
+using Nd.ValueObjects;
 
-namespace Nd.Commands
+namespace Nd.Commands.Results
 {
-    public interface ICommand : IVersionedType
+    public interface IExecutionResult
     {
+        bool IsSuccess { get; }
+
         IIdempotencyIdentity IdempotencyIdentity { get; }
+
         ICorrelationIdentity CorrelationIdentity { get; }
     }
 
-    public interface ICommand<TAggregate, TIdentity, TResult> : ICommand
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TResult : IExecutionResult
+    public static class ExecutionResults
     {
-        TIdentity AggregateIdentity { get; }
+        private record class SuccessExecutionResult
+        (
+            IIdempotencyIdentity IdempotencyIdentity,
+            ICorrelationIdentity CorrelationIdentity
+        ) : ValueObject, IExecutionResult
+        {
+            public bool IsSuccess => true;
+
+            public override string ToString() => $"Successful execution: ({IdempotencyIdentity}, {CorrelationIdentity})";
+        }
+
+        private record class FailureExecutionResult
+        (
+            IIdempotencyIdentity IdempotencyIdentity,
+            ICorrelationIdentity CorrelationIdentity
+        ) : ValueObject, IExecutionResult
+        {
+            public bool IsSuccess => false;
+        }
+
+        public static IExecutionResult Success(
+            IIdempotencyIdentity idempotencyIdentity,
+            ICorrelationIdentity correlationIdentity) =>
+            new SuccessExecutionResult(idempotencyIdentity, correlationIdentity);
+
+        public static IExecutionResult Failure(
+            IIdempotencyIdentity idempotencyIdentity,
+            ICorrelationIdentity correlationIdentity) =>
+            new FailureExecutionResult(idempotencyIdentity, correlationIdentity);
     }
 }

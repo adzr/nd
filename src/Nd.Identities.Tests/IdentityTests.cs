@@ -28,6 +28,7 @@ using Xunit;
 
 namespace Nd.ValueObjects.Tests
 {
+    [NamedIdentity("sample")]
     internal record class SampleIdentity : Identity<SampleIdentity>
     {
         public SampleIdentity(Guid value) : base(value) { }

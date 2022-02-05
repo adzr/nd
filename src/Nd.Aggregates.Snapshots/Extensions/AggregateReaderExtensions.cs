@@ -22,6 +22,7 @@
  */
 
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Snapshots;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
@@ -65,13 +66,27 @@ namespace Nd.Aggregates.Persistence
 
             if (storedSnapshot is not null)
             {
-                var upgradedState = await storedSnapshot.State.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false);
 
-                snapshot = new AggregateSnapshot<TIdentity, TState>(
-                    upgradedState,
-                    storedSnapshot.AggregateVersion,
-                    storedSnapshot.AggregateIdentity,
-                    storedSnapshot.AggregateName);
+
+                try
+                {
+                    if (await storedSnapshot.State.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is TState upgradedState)
+                    {
+                        snapshot = new AggregateSnapshot<TIdentity, TState>(
+                            upgradedState,
+                            storedSnapshot.AggregateVersion,
+                            storedSnapshot.AggregateIdentity,
+                            storedSnapshot.AggregateName);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Failed to cast upgraded version of state '{storedSnapshot.State.TypeName}' to type '{typeof(TState).Name}'");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new StateUpgradeException(storedSnapshot.State.TypeName, ex);
+                }
             }
 
             events.AddRange(await eventReader.ReadAsync<ICommittedEvent<TAggregate, TIdentity, TEventApplier>>(
@@ -103,7 +118,21 @@ namespace Nd.Aggregates.Persistence
 
             foreach (var @event in events)
             {
-                state.Apply(await @event.Event.UpgradeRecursiveAsync(cancellation));
+                try
+                {
+                    if (await @event.Event.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e)
+                    {
+                        state.Apply(e);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Failed to cast upgraded version of event '{@event.Event.TypeName}' to type '{nameof(IAggregateEvent)}'");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new EventUpgradeException(@event.Event.TypeName, ex);
+                }
             }
 
             return aggregate;

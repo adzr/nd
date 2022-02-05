@@ -25,19 +25,19 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Types.Names;
+using Nd.Aggregates;
+using Nd.Commands.Results;
+using Nd.Identities;
 
-namespace Nd.Core.Types.Versions
+namespace Nd.Commands
 {
-    public interface IVersionedType : INamedType
+    public interface ICommandBus
     {
-        public uint TypeVersion { get; }
-
-        /// <summary>
-        /// Upgrades an instance of a type to an instance of a type with the same TypeName and a greater TypeVersion.
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns>An instance of a type with the same TypeName and a greater TypeVersion if this type is upgradable, otherwise null.</returns>
-        Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+        Task<TResult> ExecuteAsync<TAggregate, TIdentity, TResult>(
+            ICommand<TAggregate, TIdentity, TResult> command,
+            CancellationToken cancellationToken = default)
+            where TAggregate : IAggregateRoot<TIdentity>
+            where TIdentity : IIdentity<TIdentity>
+            where TResult : IExecutionResult;
     }
 }

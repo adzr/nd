@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,19 +21,29 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Types.Names;
+using Nd.Identities;
 
-namespace Nd.Core.Types.Versions
+namespace Nd.Aggregates.Persistence
 {
-    public interface IVersionedType : INamedType
+    public interface IAggregateManager
     {
-        public uint TypeVersion { get; }
+        Task<IAggregateRoot> LoadAsync(IIdentity identity, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Upgrades an instance of a type to an instance of a type with the same TypeName and a greater TypeVersion.
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns>An instance of a type with the same TypeName and a greater TypeVersion if this type is upgradable, otherwise null.</returns>
-        Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+        Task SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken = default);
+    }
+
+    public interface IAggregateManager<TAggregate, TIdentity> : IAggregateManager
+        where TAggregate : class, IAggregateRoot<TIdentity>
+        where TIdentity : IIdentity<TIdentity>
+    {
+        async Task<IAggregateRoot> IAggregateManager.LoadAsync(IIdentity identity, CancellationToken cancellationToken) =>
+            await LoadAsync((TIdentity)identity, cancellationToken);
+
+        Task IAggregateManager.SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken) =>
+            SaveAsync((TAggregate)aggregate, cancellationToken);
+
+        Task<TAggregate> LoadAsync(TIdentity identity, CancellationToken cancellationToken = default);
+
+        Task SaveAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
     }
 }

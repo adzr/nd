@@ -3,9 +3,6 @@
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
  * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -29,19 +26,25 @@
  */
 
 using Nd.Aggregates;
+using Nd.Commands.Results;
 using Nd.Identities;
 
 namespace Nd.Commands
 {
     public interface ICommandHandler
     {
+        Task<IExecutionResult> ExecuteAsync(IAggregateRoot aggregate, ICommand command, CancellationToken cancellationToken);
     }
 
-    public interface ICommandHandler<in TAggregate, TIdentity, out TResult, in TCommand> : ICommandHandler
+    public interface ICommandHandler<in TCommand, in TAggregate, TIdentity, TResult> : ICommandHandler
+        where TCommand : ICommand<TAggregate, TIdentity, TResult>
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
-        where TCommand : ICommand<TAggregate, TIdentity>
+        where TResult : IExecutionResult
     {
-        TResult HandleCommand(TCommand command, TAggregate aggregate);
+        async Task<IExecutionResult> ICommandHandler.ExecuteAsync(IAggregateRoot aggregate, ICommand command, CancellationToken cancellationToken)
+            => await ExecuteAsync((TAggregate)aggregate, (TCommand)command, cancellationToken).ConfigureAwait(false);
+
+        Task<TResult> ExecuteAsync(TAggregate aggregate, TCommand command, CancellationToken cancellationToken);
     }
 }

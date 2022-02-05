@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,19 +21,19 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Types.Names;
+using Nd.Commands;
 
-namespace Nd.Core.Types.Versions
+namespace Nd.Aggregates.Exceptions
 {
-    public interface IVersionedType : INamedType
+    [Serializable]
+    public class CommandInvalidAggregateException : Exception
     {
-        public uint TypeVersion { get; }
+        public CommandInvalidAggregateException(ICommand command, Exception? exception = default)
+            : base($"Command {command} specified loads an invalid aggregate", exception)
+        {
+            Command = command;
+        }
 
-        /// <summary>
-        /// Upgrades an instance of a type to an instance of a type with the same TypeName and a greater TypeVersion.
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns>An instance of a type with the same TypeName and a greater TypeVersion if this type is upgradable, otherwise null.</returns>
-        Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+        public ICommand Command { get; }
     }
 }

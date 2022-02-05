@@ -86,14 +86,17 @@ namespace Nd.Core.Extensions
             .Where(t => typeof(T).IsAssignableFrom(t))
             .ToArray();
 
-        public static MethodInfo GetMethodWithSingleParameterOfType(this Type type, string name, Type param) => type
-            .GetTypeInfo()
-            .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, new[] { param }) ?? throw new NotSupportedException(
-                    $"Failed to find method with name \"{name}\" in type \"{type.ToPrettyString()}\" that takes a single parameter of type \"{param.ToPrettyString()}\"");
+        public static MethodInfo GetMethodWithParametersOfTypes(this Type type, string name, params Type[] parameters) =>
+            type.GetTypeInfo().GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, parameters) ??
+                throw new NotSupportedException(
+                    $"Failed to find method with name \"{name}\" in type \"{type.ToPrettyString()}\" " +
+                    $"that takes parameters of types ({string.Join(", ", $"'{parameters.Select(p => p.ToPrettyString())}'")})");
 
-        public static bool HasMethodWithSingleParameterOfType(this Type type, string name, Type param) => type
-            .GetTypeInfo()
-            .GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, new[] { param }) is not null;
+        public static bool HasMethodWithParametersOfTypes(this Type type, string name, params Type[] parameters) =>
+            type.GetTypeInfo().GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, parameters) is not null;
+
+        public static bool HasMethod(this Type type, string name) =>
+            type.GetTypeInfo().GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) is not null;
 
         public static string GetName(this Type type) =>
             type?
@@ -114,16 +117,27 @@ namespace Nd.Core.Extensions
                 (record.TypeName, record.TypeVersion);
         }
 
-        public static async Task<TBase> UpgradeRecursiveAsync<TBase>(this TBase type, CancellationToken cancellationToken = default) where TBase : IVersionedType
+        public static async Task<IVersionedType> UpgradeRecursiveAsync(this IVersionedType type, CancellationToken cancellationToken = default)
         {
-            var upgraded = await type.UpgradeAsync<TBase>(cancellationToken);
+            var upgraded = await type.UpgradeAsync(cancellationToken).ConfigureAwait(false);
 
             if (upgraded is null)
             {
                 return type;
             }
 
-            return await UpgradeRecursiveAsync(upgraded, cancellationToken);
+            if (!string.Equals(type.TypeName, upgraded.TypeName))
+            {
+                throw new Exception($"Trying to upgrade a type of name '{type.TypeName}' to a type of name '{upgraded.TypeName}', type names must match");
+            }
+
+            if (type.TypeVersion >= upgraded.TypeVersion)
+            {
+                throw new Exception($"Trying to upgrade type of name '{type.TypeName}' from version {type.TypeVersion}" +
+                    $" to version '{upgraded.TypeVersion}', the upgraded version must be greater than the given one");
+            }
+
+            return await UpgradeRecursiveAsync(upgraded, cancellationToken).ConfigureAwait(false);
         }
 
         public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)

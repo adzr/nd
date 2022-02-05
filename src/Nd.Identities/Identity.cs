@@ -27,9 +27,10 @@ using Nd.ValueObjects;
 
 namespace Nd.Identities
 {
+    [NamedIdentity(nameof(T))]
     public abstract record class Identity<T> : ValueObject, IIdentity<T> where T : IIdentity<T>
     {
-        public static readonly string TypeName = typeof(T).Name;
+        public static readonly string IdentityName = typeof(T).GetName();
 
         private readonly string _stringValue;
 
@@ -44,6 +45,8 @@ namespace Nd.Identities
         protected Identity(IGuidFactory factory) : this(factory.Create()) { }
 
         string IIdentity.Value => _stringValue;
+
+        public string TypeName => IdentityName;
 
         public sealed override string ToString() => _stringValue;
     }

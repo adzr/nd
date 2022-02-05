@@ -84,23 +84,23 @@ namespace Nd.Core.Tests.Extensions
 
         [Fact]
         public void CanGetMethodWithSingleParameterOfAType() =>
-            Assert.NotNull(typeof(TypeTest).GetMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(string)));
+            Assert.NotNull(typeof(TypeTest).GetMethodWithParametersOfTypes(nameof(TypeTest.DoNothingWith), typeof(string)));
 
         [Fact]
         public void CanNotGetMethodWithSingleWrongParameterOfAType() =>
-            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(int)));
+            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithParametersOfTypes(nameof(TypeTest.DoNothingWith), typeof(int)));
 
         [Fact]
         public void CanNotGetAbsentMethodWithSingleParameterOfAType() =>
-            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithSingleParameterOfType("IDoNotExist", typeof(int)));
+            Assert.Throws<NotSupportedException>(() => typeof(TypeTest).GetMethodWithParametersOfTypes("IDoNotExist", typeof(int)));
 
         [Fact]
         public void CanCheckIfHasMethodWithSingleParameterOfAType() =>
-            Assert.True(typeof(TypeTest).HasMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(string)));
+            Assert.True(typeof(TypeTest).HasMethodWithParametersOfTypes(nameof(TypeTest.DoNothingWith), typeof(string)));
 
         [Fact]
         public void CanCheckIfHasNoMethodWithSingleParameterOfAType() =>
-            Assert.False(typeof(TypeTest).HasMethodWithSingleParameterOfType(nameof(TypeTest.DoNothingWith), typeof(int)));
+            Assert.False(typeof(TypeTest).HasMethodWithParametersOfTypes(nameof(TypeTest.DoNothingWith), typeof(int)));
 
         [Fact]
         public void CanGetNamedTypeName() =>

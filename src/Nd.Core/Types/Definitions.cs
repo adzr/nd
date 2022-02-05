@@ -34,14 +34,16 @@ namespace Nd.Core.Types
 
         public static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<uint, Type>> VersionedTypes;
 
-        static Definitions()
-        {
-            var types = AppDomain
+        public static Type[] GetAllImplementations<T>() => AppDomain
                 .CurrentDomain
                 .GetAssemblies()
                 .SelectMany(a => a.GetTypes())
-                .Where(t => typeof(INamedType).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t.IsPublic)
+                .Where(t => typeof(T).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t.IsPublic)
                 .ToArray();
+
+        static Definitions()
+        {
+            var types = GetAllImplementations<INamedType>();
 
             NamedTypes = types.Where(t => !typeof(IVersionedType).IsAssignableFrom(t))
                            .GroupBy(t => t.GetName())

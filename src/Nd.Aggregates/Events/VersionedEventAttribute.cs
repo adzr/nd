@@ -26,8 +26,8 @@ using Nd.Core.Types.Versions;
 namespace Nd.Aggregates.Events
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedEventAttribute : VersionedTypeAttribute
+    public class VersionedEventAttribute : VersionedTypeAttribute
     {
-        protected VersionedEventAttribute(string name, uint version) : base($"{name}Event", version) { }
+        public VersionedEventAttribute(string name, uint version) : base($"{name}Event", version) { }
     }
 }

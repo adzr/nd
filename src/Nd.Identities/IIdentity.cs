@@ -25,9 +25,11 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Types.Names;
+
 namespace Nd.Identities
 {
-    public interface IIdentity : IComparable
+    public interface IIdentity : IComparable, INamedType
     {
         string Value { get; }
     }

@@ -30,21 +30,23 @@
 
 using Nd.Aggregates;
 using Nd.Aggregates.Identities;
+using Nd.Commands.Results;
 using Nd.Core.Extensions;
 using Nd.Identities;
 using Nd.ValueObjects;
 
 namespace Nd.Commands
 {
-    public abstract record class Command<TCommand, TAggregate, TIdentity>
+    public abstract record class Command<TCommand, TAggregate, TIdentity, TResult>
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity,
             TIdentity AggregateIdentity
-        ) : ValueObject, ICommand<TAggregate, TIdentity>
-        where TCommand : Command<TCommand, TAggregate, TIdentity>
+        ) : ValueObject, ICommand<TAggregate, TIdentity, TResult>
+        where TCommand : Command<TCommand, TAggregate, TIdentity, TResult>
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity<TIdentity>
+        where TResult : IExecutionResult
     {
         private static readonly (string Name, uint Version) TypeNameAndVersion = typeof(TCommand).GetNameAndVersion();
 

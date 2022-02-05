@@ -35,7 +35,7 @@ using Nd.ValueObjects;
 namespace Nd.Aggregates.Events
 {
     public abstract record class AggregateEventApplier<TEventApplier, TAggregate, TIdentity> : ValueObject, IAggregateEventApplier<TAggregate, TIdentity>, IAggregateEventHandler
-        where TEventApplier : class, IAggregateEventApplier<TAggregate, TIdentity>
+        where TEventApplier : AggregateEventApplier<TEventApplier, TAggregate, TIdentity>
         where TAggregate : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity
     {
@@ -43,11 +43,11 @@ namespace Nd.Aggregates.Events
         /// Contains a cached dictionary of aggregate event types as key and a lambda method as a value to help
         /// applying the received events based on types to the correct event handler interface.
         /// </summary>
-        private static readonly IReadOnlyDictionary<Type, Action<TEventApplier, IAggregateEvent>> StateMutationMethods;
+        private static readonly ILookup<Type, Action<TEventApplier, IAggregateEvent>> EventApplicationMethods;
 
         private readonly TEventApplier _this;
 
-        static AggregateEventApplier() => StateMutationMethods = typeof(TEventApplier)
+        static AggregateEventApplier() => EventApplicationMethods = typeof(TEventApplier)
 
                 // Get all the interfaces of type IAggregateEventHandler that TEventApplier implements.
                 .GetInterfacesOfType<IAggregateEventHandler>()
@@ -64,7 +64,7 @@ namespace Nd.Aggregates.Events
                         return false;
                     }
 
-                    return t.HasMethodWithSingleParameterOfType(nameof(IAggregateEventHandler.On), eventType);
+                    return t.HasMethodWithParametersOfTypes(nameof(IAggregateEventHandler.On), eventType);
                 })
 
                 // Convert the findings into a record that contains the aggregate event type
@@ -76,22 +76,24 @@ namespace Nd.Aggregates.Events
 
                     return (
                         Type: type,
-                        Method: t.GetMethodWithSingleParameterOfType(nameof(IAggregateEventHandler.On), type)
+                        Method: t.GetMethodWithParametersOfTypes(nameof(IAggregateEventHandler.On), type)
                         .CompileMethodInvocation<Action<TEventApplier, IAggregateEvent>>()
                     );
                 })
 
                 // Return a dictionary of the records to be statically available.
-                .ToDictionary(r => r.Type, r => r.Method);
+                .ToLookup(r => r.Type, r => r.Method);
 
         protected AggregateEventApplier() => _this = this as TEventApplier ?? throw new InvalidOperationException(
                 $"Event applier of type '{GetType().ToPrettyString()}' has a wrong generic argument '{typeof(TEventApplier).ToPrettyString()}'");
 
         public virtual void Apply(IAggregateEvent @event)
         {
-            if (StateMutationMethods.TryGetValue(@event.GetType(), out var action))
+            var actions = EventApplicationMethods[@event.GetType()];
+
+            if (actions is not null && actions.Any())
             {
-                action(_this, @event);
+                actions.Single()(_this, @event);
             }
         }
 

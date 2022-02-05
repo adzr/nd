@@ -26,7 +26,7 @@ using Nd.Core.Types.Versions;
 namespace Nd.Commands
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedCommandAttribute : VersionedTypeAttribute
+    public class VersionedCommandAttribute : VersionedTypeAttribute
     {
         protected VersionedCommandAttribute(string name, uint version) : base($"{name}Command", version) { }
     }

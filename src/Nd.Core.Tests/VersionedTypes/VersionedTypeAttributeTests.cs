@@ -21,29 +21,148 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Nd.Core.Tests.VersionedTypes
 {
-    internal class TestVersionedTypeAttribute : VersionedTypeAttribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public class VersionedTestAttribute : VersionedTypeAttribute
     {
-        public TestVersionedTypeAttribute(string name, uint version) : base(name, version) { }
+        public VersionedTestAttribute(string name, uint version) : base(name, version) { }
     }
 
+    #region Test types definitions
+
+    public abstract record class UpgradableVersion(
+        int Value
+        ) : IVersionedType
+    {
+        public abstract uint TypeVersion { get; }
+        public abstract string TypeName { get; }
+        public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+    }
+
+    [VersionedTest(nameof(UpgradableVersion), 1)]
+    public record class UpgradableVersion1(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(UpgradableVersion1).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
+    }
+
+    [VersionedTest(nameof(UpgradableVersion), 2)]
+    public record class UpgradableVersion2(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(UpgradableVersion2).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+    }
+
+    [VersionedTest(nameof(UpgradableVersion), 3)]
+    public record class UpgradableVersion3(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(UpgradableVersion3).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+    }
+
+    [VersionedTest(nameof(UpgradableVersion), 4)]
+    public record class UpgradableVersion4(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(UpgradableVersion4).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+    }
+
+    [VersionedTest(nameof(UpgradableVersion), 4)]
+    public record class UpgradableVersion5(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(UpgradableVersion5).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
+    }
+
+    [VersionedTest("NonUpgradableVersion", 2)]
+    public record class NonUpgradableVersion(int Value) : UpgradableVersion(Value)
+    {
+        private static readonly (string Name, uint Version) NameAndVersion = typeof(NonUpgradableVersion).GetNameAndVersion();
+
+        public override uint TypeVersion => NameAndVersion.Version;
+
+        public override string TypeName => NameAndVersion.Name;
+
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+    }
+
+    #endregion
+
+    [VersionedTest(nameof(VersionedTypeAttributeTests), 7)]
     public class VersionedTypeAttributeTests
     {
-        [Theory]
-        [InlineData("ValidName", 1)]
-        [InlineData("Named With Spaces", 1)]
-        [InlineData("ValidName", 2)]
-        [InlineData("Named With Spaces", 2)]
-        public void CanHaveValidInput(string name, uint version) =>
-            Assert.Equal(version, new TestVersionedTypeAttribute(name, version).TypeVersion);
+        [Fact]
+        public void CanHaveAttributedNameAndVersion()
+        {
+            var (name, version) = typeof(VersionedTypeAttributeTests).GetNameAndVersion();
+
+            Assert.Equal(nameof(VersionedTypeAttributeTests), name);
+            Assert.Equal(7u, version);
+        }
 
         [Fact]
-        public void FailsOnInvalidVersion() =>
-                    Assert.Throws<ArgumentOutOfRangeException>(() => new TestVersionedTypeAttribute("ValidName", 0));
+        public void CanUpgradeTypeOfSameTypeNameToGreaterVersion()
+        {
+            var @base = new UpgradableVersion1(2);
+            Assert.Equal(2, @base.Value);
+            var @new = @base.UpgradeRecursiveAsync().GetAwaiter().GetResult();
+            Assert.True(@new is UpgradableVersion3);
+            Assert.Equal(8, ((UpgradableVersion3)@new).Value);
+        }
+
+        [Fact]
+        public void CannotUpgradeTypeOfSameTypeNameToSameVersion()
+        {
+            var @base = new UpgradableVersion5(2);
+            Assert.Equal(2, @base.Value);
+            Assert.Throws<Exception>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+        }
+
+        [Fact]
+        public void CannotUpgradeTypeOfSameTypeNameToLesserVersion()
+        {
+            var @base = new UpgradableVersion4(2);
+            Assert.Equal(2, @base.Value);
+            Assert.Throws<Exception>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+        }
+
+        [Fact]
+        public void CannotUpgradeTypeToTypeOfDifferentTypeName()
+        {
+            var @base = new NonUpgradableVersion(2);
+            Assert.Equal(2, @base.Value);
+            Assert.Throws<Exception>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+        }
     }
 }

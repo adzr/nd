@@ -26,7 +26,7 @@ using Nd.Core.Types.Versions;
 namespace Nd.Aggregates
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedStateAttribute : VersionedTypeAttribute
+    public class VersionedStateAttribute : VersionedTypeAttribute
     {
         protected VersionedStateAttribute(string name, uint version) : base($"{name}State", version) { }
     }

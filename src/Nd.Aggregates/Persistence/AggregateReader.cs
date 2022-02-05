@@ -22,6 +22,7 @@
  */
 
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Identities;
 
@@ -58,7 +59,21 @@ namespace Nd.Aggregates.Persistence
 
             foreach (var @event in events)
             {
-                state.Apply(await @event.Event.UpgradeRecursiveAsync<IAggregateEvent>(cancellation));
+                try
+                {
+                    if (await @event.Event.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e)
+                    {
+                        state.Apply(e);
+                    }
+                    else
+                    {
+                        throw new InvalidCastException($"Failed to cast upgraded version of event '{@event.Event.TypeName}' to type '{nameof(IAggregateEvent)}'");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new EventUpgradeException(@event.Event.TypeName, ex);
+                }
             }
 
             return aggregate;
