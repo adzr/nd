@@ -21,15 +21,13 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Factories;
 using System;
 using System.Linq;
+using Nd.Core.Factories;
 using Xunit;
 
-namespace Nd.Core.Tests.Factories
-{
-    public class DeterministicGuidFactoryTests
-    {
+namespace Nd.Core.Tests.Factories {
+    public class DeterministicGuidFactoryTests {
         private const int GuidCount = 1000;
 
         [Fact]

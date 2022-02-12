@@ -1,11 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -28,21 +21,33 @@
  * SOFTWARE.
  */
 
+using System.Runtime.Serialization;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Exceptions
-{
+namespace Nd.Aggregates.Exceptions {
+
     [Serializable]
-    public class AggregatePersistenceException : Exception
-    {
+    public class AggregatePersistenceException : Exception {
         public AggregatePersistenceException(string aggregateTypeName, IIdentity identity, Exception innerException) :
-            base($"Aggregate \"{aggregateTypeName}\" ({identity}) failed to store", innerException)
-        {
+            base($"Aggregate \"{aggregateTypeName}\" ({identity}) failed to store", innerException) {
             AggregateTypeName = aggregateTypeName;
             Identity = identity;
         }
 
-        public string AggregateTypeName { get; }
-        public IIdentity Identity { get; }
+        public string? AggregateTypeName { get; }
+
+        public IIdentity? Identity { get; }
+
+        public AggregatePersistenceException() : this("Aggregate failed to store") {
+        }
+
+        public AggregatePersistenceException(string message) : base(message) {
+        }
+
+        public AggregatePersistenceException(string message, Exception innerException) : base(message, innerException) {
+        }
+
+        protected AggregatePersistenceException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        }
     }
 }

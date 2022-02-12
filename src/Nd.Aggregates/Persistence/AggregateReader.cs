@@ -23,55 +23,43 @@
 
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
+using Nd.Aggregates.Extensions;
+using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
-    public abstract class AggregateReader<TAggregate, TIdentity, TEventApplier, TState> :
-        IAggregateReader<TAggregate, TIdentity, TEventApplier, TState>
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-        where TState : class
-    {
-        public async Task<TAggregate?> ReadAsync(TIdentity aggregateId,
-                uint version, IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
-                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
-                IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
+namespace Nd.Aggregates.Persistence {
+    public abstract class AggregateReader<TIdentity, TState> : IAggregateReader<TIdentity, TState>
+        where TIdentity : IAggregateIdentity
+        where TState : class {
+        public async Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId,
+                uint version, IAggregateEventReader<TIdentity, TState> eventReader,
+                AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
+                AggregateStateFactoryFunc<TState> initializeState,
                 CancellationToken cancellation = default)
-        {
-            if (aggregateId is null)
-            {
+            where TAggregate : IAggregateRoot<TIdentity, TState> {
+
+            if (aggregateId is null) {
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await eventReader.ReadAsync<ICommittedEvent<TAggregate, TIdentity, TEventApplier>>(aggregateId, version, cancellation)
+            var events = await eventReader.ReadAsync<ICommittedEvent<TIdentity, TState>>(aggregateId, version, cancellation)
                 .ConfigureAwait(false);
 
-            if (!events.Any())
-            {
+            if (!events.Any()) {
                 return default;
             }
 
-            (TAggregate aggregate, TEventApplier state) = Aggregates
-                .CreateAggregateAndState(aggregateId, events.Max(e => e.MetaData.AggregateVersion), aggregateFactory, aggregateStateFactory);
+            (TAggregate aggregate, IAggregateEventApplier<TState> state) = aggregateId
+                .CreateAggregateAndState(initializeAggregate, initializeState, events.Max(e => e.MetaData.AggregateVersion));
 
-            foreach (var @event in events)
-            {
-                try
-                {
-                    if (await @event.Event.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e)
-                    {
+            foreach (var @event in events) {
+                try {
+                    if (await @event.Event.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e) {
                         state.Apply(e);
-                    }
-                    else
-                    {
+                    } else {
                         throw new InvalidCastException($"Failed to cast upgraded version of event '{@event.Event.TypeName}' to type '{nameof(IAggregateEvent)}'");
                     }
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     throw new EventUpgradeException(@event.Event.TypeName, ex);
                 }
             }

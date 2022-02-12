@@ -21,12 +21,11 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
-    public interface IAggregateManager
-    {
+namespace Nd.Aggregates.Persistence {
+    public interface IAggregateManager {
         Task<IAggregateRoot> LoadAsync(IIdentity identity, CancellationToken cancellationToken = default);
 
         Task SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken = default);
@@ -34,10 +33,9 @@ namespace Nd.Aggregates.Persistence
 
     public interface IAggregateManager<TAggregate, TIdentity> : IAggregateManager
         where TAggregate : class, IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-    {
+        where TIdentity : IAggregateIdentity {
         async Task<IAggregateRoot> IAggregateManager.LoadAsync(IIdentity identity, CancellationToken cancellationToken) =>
-            await LoadAsync((TIdentity)identity, cancellationToken);
+            await LoadAsync((TIdentity)identity, cancellationToken).ConfigureAwait(false);
 
         Task IAggregateManager.SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken) =>
             SaveAsync((TAggregate)aggregate, cancellationToken);

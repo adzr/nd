@@ -25,25 +25,21 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Factories
-{
-    public sealed class CombGuidFactory : IGuidFactory
-    {
-        private static int _counter;
-        private static readonly IGuidFactory _instance = new CombGuidFactory();
+namespace Nd.Core.Factories {
+    public sealed class CombGuidFactory : IGuidFactory {
+        private static int s_counter;
+        private static readonly IGuidFactory s_instance = new CombGuidFactory();
 
-        private static long GetTicks()
-        {
-            var i = Interlocked.Increment(ref _counter);
+        private static long GetTicks() {
+            var i = Interlocked.Increment(ref s_counter);
             return DateTimeOffset.UtcNow.Ticks + i;
         }
 
         private CombGuidFactory() { }
 
-        public static IGuidFactory Instance => _instance;
+        public static IGuidFactory Instance => s_instance;
 
-        public Guid Create()
-        {
+        public Guid Create() {
             var (uid, binDate) = (Guid.NewGuid().ToByteArray(), BitConverter.GetBytes(GetTicks()));
 
             return new Guid(

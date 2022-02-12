@@ -23,15 +23,13 @@
 
 using Xunit;
 
-namespace Nd.ValueObjects.Tests
-{
+namespace Nd.ValueObjects.Tests {
     internal record class SampleValueObject(
             int Id,
             string Name
         ) : ValueObject;
 
-    public class ValueObjectTests
-    {
+    public class ValueObjectTests {
         [Theory]
         [InlineData(1, "left", 2, "right", -1)]
         [InlineData(1, "left", 1, "right", -6)]

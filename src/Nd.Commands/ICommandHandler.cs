@@ -25,26 +25,29 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates;
+using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
-using Nd.Identities;
 
-namespace Nd.Commands
-{
-    public interface ICommandHandler
-    {
-        Task<IExecutionResult> ExecuteAsync(IAggregateRoot aggregate, ICommand command, CancellationToken cancellationToken);
+namespace Nd.Commands {
+
+    public interface ICommandHandler {
+        Task<TResult> ExecuteAsync<TResult>(ICommand command, CancellationToken cancellationToken)
+            where TResult : IExecutionResult;
     }
 
-    public interface ICommandHandler<in TCommand, in TAggregate, TIdentity, TResult> : ICommandHandler
-        where TCommand : ICommand<TAggregate, TIdentity, TResult>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TResult : IExecutionResult
-    {
-        async Task<IExecutionResult> ICommandHandler.ExecuteAsync(IAggregateRoot aggregate, ICommand command, CancellationToken cancellationToken)
-            => await ExecuteAsync((TAggregate)aggregate, (TCommand)command, cancellationToken).ConfigureAwait(false);
+    public interface ICommandHandler<TCommand, TIdentity>
+            where TCommand : ICommand<TIdentity>
+            where TIdentity : IAggregateIdentity {
+        Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken)
+            where TResult : IExecutionResult;
+    }
 
-        Task<TResult> ExecuteAsync(TAggregate aggregate, TCommand command, CancellationToken cancellationToken);
+    public abstract class AggregateAwareCommandHandler<TCommand, TIdentity> : ICommandHandler<TCommand, TIdentity>
+        where TCommand : ICommand<TIdentity>
+        where TIdentity : IAggregateIdentity {
+
+        public Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken) where TResult : IExecutionResult {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -21,15 +21,13 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
+namespace Nd.Aggregates.Persistence {
     public interface IAggregateSnapshotReader<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-    {
+        where TIdentity : IAggregateIdentity {
         Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, CancellationToken cancellation = default)
             where TState : class, IVersionedType
             => ReadAsync<TState>(aggregateId, 0u, cancellation);

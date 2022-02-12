@@ -25,25 +25,17 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates;
 using Nd.Aggregates.Identities;
-using Nd.Commands.Results;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Commands
-{
-    public interface ICommand : IVersionedType
-    {
+namespace Nd.Commands {
+    public interface ICommand : IVersionedType {
         IIdempotencyIdentity IdempotencyIdentity { get; }
         ICorrelationIdentity CorrelationIdentity { get; }
     }
 
-    public interface ICommand<TAggregate, TIdentity, TResult> : ICommand
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TResult : IExecutionResult
-    {
+    public interface ICommand<TIdentity> : ICommand
+        where TIdentity : IAggregateIdentity {
         TIdentity AggregateIdentity { get; }
     }
 }

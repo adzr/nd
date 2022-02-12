@@ -24,10 +24,8 @@
 using Nd.Core.Extensions;
 using Xunit;
 
-namespace Nd.Core.Tests.Extensions
-{
-    public class EnumerableExtensionsTests
-    {
+namespace Nd.Core.Tests.Extensions {
+    public class EnumerableExtensionsTests {
         [Theory]
         [InlineData(null, null, 0)]
         [InlineData(new string?[0], null, 1)]

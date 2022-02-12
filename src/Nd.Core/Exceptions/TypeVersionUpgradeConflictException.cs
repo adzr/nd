@@ -1,6 +1,5 @@
 ﻿/*
  * Copyright © 2022 Ahmed Zaher
- * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal 
@@ -22,25 +21,35 @@
  */
 
 using System.Runtime.Serialization;
+using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Exceptions {
+namespace Nd.Core.Exceptions {
 
     [Serializable]
-    public class AggregateCreationException : Exception {
-        public AggregateCreationException(string aggregateTypeName, Exception? exception = default)
-            : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception) {
-            AggregateTypeName = aggregateTypeName;
+    public class TypeVersionUpgradeConflictException : Exception {
+
+        public IVersionedType? Upgradable { get; }
+        public uint? From { get; }
+        public uint? To { get; }
+
+        public TypeVersionUpgradeConflictException(IVersionedType upgradable, uint from, uint to, Exception? innerException = null)
+            : base($"Trying to upgrade type of name '{upgradable.TypeName}' from version {from}" +
+                    $" to version '{to}', the upgraded version must be greater than the given one", innerException) {
+            Upgradable = upgradable;
+            From = from;
+            To = to;
         }
 
-        public string? AggregateTypeName { get; }
-
-        public AggregateCreationException() : this("Failed to create aggregate root") {
+        public TypeVersionUpgradeConflictException() : this($"Trying to upgrade type to an invalid version") {
         }
 
-        public AggregateCreationException(string message) : base(message) {
+        public TypeVersionUpgradeConflictException(string message) : base(message) {
         }
 
-        protected AggregateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        public TypeVersionUpgradeConflictException(string message, Exception innerException) : base(message, innerException) {
+        }
+
+        protected TypeVersionUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context) {
         }
     }
 }

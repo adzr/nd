@@ -23,11 +23,9 @@
 
 using Nd.Core.Types.Names;
 
-namespace Nd.Identities
-{
+namespace Nd.Identities {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public class NamedIdentityAttribute : NamedTypeAttribute
-    {
-        public NamedIdentityAttribute(string name) : base(name) { }
+    public sealed class NamedIdentityAttribute : NamedTypeAttribute {
+        public NamedIdentityAttribute(string typeName) : base(typeName) { }
     }
 }

@@ -28,30 +28,35 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates;
 using Nd.Aggregates.Identities;
-using Nd.Commands.Results;
 using Nd.Core.Extensions;
-using Nd.Identities;
+using Nd.Core.Types;
 using Nd.ValueObjects;
 
-namespace Nd.Commands
-{
-    public abstract record class Command<TCommand, TAggregate, TIdentity, TResult>
-        (
-            IIdempotencyIdentity IdempotencyIdentity,
-            ICorrelationIdentity CorrelationIdentity,
-            TIdentity AggregateIdentity
-        ) : ValueObject, ICommand<TAggregate, TIdentity, TResult>
-        where TCommand : Command<TCommand, TAggregate, TIdentity, TResult>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TResult : IExecutionResult
-    {
-        private static readonly (string Name, uint Version) TypeNameAndVersion = typeof(TCommand).GetNameAndVersion();
+namespace Nd.Commands {
+    public abstract record class Command<TIdentity> : ValueObject, ICommand<TIdentity>
+        where TIdentity : IAggregateIdentity {
 
-        public string TypeName => TypeNameAndVersion.Name;
+        private readonly string _typeName;
+        private readonly uint _typeVersion;
 
-        public uint TypeVersion => TypeNameAndVersion.Version;
+        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity) {
+            (_typeName, _typeVersion) = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault() ??
+            throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
+
+            IdempotencyIdentity = idempotencyIdentity;
+            CorrelationIdentity = correlationIdentity;
+            AggregateIdentity = aggregateIdentity;
+        }
+
+        public string TypeName => _typeName;
+
+        public uint TypeVersion => _typeVersion;
+
+        public TIdentity AggregateIdentity { get; }
+
+        public IIdempotencyIdentity IdempotencyIdentity { get; }
+
+        public ICorrelationIdentity CorrelationIdentity { get; }
     }
 }

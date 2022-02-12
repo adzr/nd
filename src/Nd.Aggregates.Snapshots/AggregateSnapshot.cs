@@ -21,12 +21,11 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates
-{
+namespace Nd.Aggregates {
     internal record class AggregateSnapshot<TIdentity, TState>
         (
             TState State,
@@ -34,6 +33,6 @@ namespace Nd.Aggregates
             TIdentity AggregateIdentity,
             string AggregateName
         ) : IAggregateSnapshot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
+        where TIdentity : IAggregateIdentity
         where TState : class, IVersionedType;
 }

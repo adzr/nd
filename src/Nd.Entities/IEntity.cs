@@ -27,15 +27,12 @@
 
 using Nd.Identities;
 
-namespace Nd.Entities
-{
-    public interface IEntity
-    {
+namespace Nd.Entities {
+    public interface IEntity {
         IIdentity Identity { get; }
     }
 
-    public interface IEntity<out TIdentity> : IEntity where TIdentity : IIdentity
-    {
+    public interface IEntity<out TIdentity> : IEntity where TIdentity : IIdentity {
         new TIdentity Identity { get; }
     }
 }

@@ -21,25 +21,29 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Exceptions;
-using Nd.Core.Extensions;
+using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Events
-{
-    public class DefaultAggregateEventApplierFactory<TEventApplier> : IAggregateEventApplierFactory<TEventApplier>
-    {
-        private static readonly string AggregateStateTypeString = typeof(TEventApplier).ToPrettyString();
+namespace Nd.Commands.Exceptions {
 
-        public TEventApplier Create()
-        {
-            try
-            {
-                return (TEventApplier?)Activator.CreateInstance(typeof(TEventApplier)) ?? throw new NullReferenceException(nameof(Activator.CreateInstance));
-            }
-            catch (Exception exception)
-            {
-                throw new AggregateStateCreationException(AggregateStateTypeString, exception);
-            }
+    [Serializable]
+    public class CommandExecutionException : Exception {
+
+        public ICommand? Command { get; }
+
+        public CommandExecutionException() : this("Command execution has unexpectedly failed") {
+        }
+
+        public CommandExecutionException(string? message) : base(message) {
+        }
+
+        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex) {
+            Command = command;
+        }
+
+        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException) {
+        }
+
+        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context) {
         }
     }
 }

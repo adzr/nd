@@ -27,10 +27,8 @@
 
 using Nd.Core.Types.Names;
 
-namespace Nd.Core.Types.Versions
-{
-    public interface IVersionedType : INamedType
-    {
+namespace Nd.Core.Types.Versions {
+    public interface IVersionedType : INamedType {
         public uint TypeVersion { get; }
 
         /// <summary>

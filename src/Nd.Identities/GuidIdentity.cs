@@ -21,24 +21,31 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Persistence;
-using Nd.Commands;
 using Nd.Core.Extensions;
+using Nd.Core.Factories;
+using Nd.Core.Types;
+using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Exceptions
-{
-    [Serializable]
-    public class CommandAggregateManagerConflictException : Exception
-    {
-        public CommandAggregateManagerConflictException(ICommand command, IAggregateManager[] managers, Exception? exception = default)
-            : base($"Command {command} is matching with multiple aggregate managers {string.Join(", ", managers.Select(m => m.GetType().ToPrettyString()))}", exception)
-        {
-            Command = command;
-            AggregateManagers = managers;
+namespace Nd.Identities {
+
+    public abstract record class GuidIdentity : ValueObject, IIdentity<Guid> {
+
+        private readonly string _stringValue;
+        private readonly string _typeName;
+
+        public Guid Value { get; }
+
+        protected GuidIdentity(Guid value) {
+            _typeName = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault().Name ??
+                throw new TypeDefinitionNotFoundException($"Definition of type has no Name defined: {GetType().ToPrettyString()}");
+            Value = value;
+            _stringValue = $"{_typeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value.ToString("N").ToUpperInvariant()}";
         }
 
-        public ICommand Command { get; }
+        protected GuidIdentity(IGuidFactory factory) : this(factory.Create()) { }
 
-        public IAggregateManager[] AggregateManagers { get; }
+        public string TypeName => _typeName;
+
+        public sealed override string ToString() => _stringValue;
     }
 }

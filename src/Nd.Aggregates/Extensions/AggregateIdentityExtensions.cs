@@ -23,40 +23,37 @@
 
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
+using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
-    public static class Aggregates
-    {
-        public static (TAggregate Aggregate, TEventApplier State) CreateAggregateAndState<TAggregate, TIdentity, TEventApplier, TState>(TIdentity aggregateId, uint version, IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory, IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory)
+namespace Nd.Aggregates.Extensions {
+
+    public static class AggregateIdentityExtensions {
+
+        public static (TAggregate Aggregate, IAggregateEventApplier<TState> State) CreateAggregateAndState<TIdentity, TState, TAggregate>(
+            this TIdentity aggregateId,
+            AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
+            AggregateStateFactoryFunc<TState> initializeState,
+            uint version)
+
             where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IIdentity<TIdentity>
-            where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-            where TState : class
-        {
-            TEventApplier state;
+            where TIdentity : IAggregateIdentity
+            where TState : class {
 
-            try
-            {
-                state = (aggregateStateFactory ?? new DefaultAggregateEventApplierFactory<TEventApplier>()).Create() ??
-                    throw new NullReferenceException(nameof(state));
-            }
-            catch (Exception exception)
-            {
-                throw new AggregateStateCreationException(typeof(TEventApplier).ToPrettyString(), exception);
+            IAggregateEventApplier<TState> state;
+
+            try {
+                state = initializeState() ?? throw new AggregateStateCreationException(typeof(TState));
+            } catch (Exception exception) {
+                throw new AggregateStateCreationException(typeof(TState), exception);
             }
 
             TAggregate aggregate;
 
-            try
-            {
-                aggregate = aggregateFactory.Create(aggregateId, state, version) ??
-                    throw new NullReferenceException(nameof(aggregate));
-            }
-            catch (Exception exception)
-            {
+            try {
+                aggregate = initializeAggregate(aggregateId, () => state, version) ??
+                    throw new AggregateCreationException(typeof(TAggregate).GetName());
+            } catch (Exception exception) {
                 throw new AggregateCreationException(typeof(TAggregate).GetName(), exception);
             }
 

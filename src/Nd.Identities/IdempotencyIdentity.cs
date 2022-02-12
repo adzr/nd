@@ -24,10 +24,8 @@
 using Nd.Core.Factories;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
-{
-    public record class IdempotencyIdentity : Identity<IdempotencyIdentity>, IIdempotencyIdentity
-    {
+namespace Nd.Aggregates.Identities {
+    public record class IdempotencyIdentity : GuidIdentity, IIdempotencyIdentity {
         public IdempotencyIdentity(Guid value) : base(value) { }
 
         public IdempotencyIdentity(IGuidFactory factory) : base(factory) { }

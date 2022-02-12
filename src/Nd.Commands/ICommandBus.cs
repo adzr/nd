@@ -25,19 +25,15 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates;
+using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
-using Nd.Identities;
 
-namespace Nd.Commands
-{
-    public interface ICommandBus
-    {
-        Task<TResult> ExecuteAsync<TAggregate, TIdentity, TResult>(
-            ICommand<TAggregate, TIdentity, TResult> command,
+namespace Nd.Commands {
+    public interface ICommandBus {
+        Task<TResult> ExecuteAsync<TIdentity, TResult>(
+            ICommand<TIdentity> command,
             CancellationToken cancellationToken = default)
-            where TAggregate : IAggregateRoot<TIdentity>
-            where TIdentity : IIdentity<TIdentity>
+            where TIdentity : IAggregateIdentity
             where TResult : IExecutionResult;
     }
 }

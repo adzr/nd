@@ -22,22 +22,22 @@
  */
 
 using Nd.Core.Extensions;
-using Nd.Identities;
+using Nd.Core.Types;
 using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Events
-{
-    public abstract record class AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier> :
-        ValueObject, IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TEvent : AggregateEvent<TEvent, TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-        private static readonly (string Name, uint Version) TypeNameAndVersion = typeof(TEvent).GetNameAndVersion();
+namespace Nd.Aggregates.Events {
+    public abstract record class AggregateEvent<TState> :
+        ValueObject, IAggregateEvent<TState>
+        where TState : class {
 
-        public string TypeName => TypeNameAndVersion.Name;
+        private readonly string _typeName;
+        private readonly uint _typeVersion;
 
-        public uint TypeVersion => TypeNameAndVersion.Version;
+        protected AggregateEvent() => (_typeName, _typeVersion) = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault() ??
+            throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
+
+        public virtual string TypeName => _typeName;
+
+        public virtual uint TypeVersion => _typeVersion;
     }
 }

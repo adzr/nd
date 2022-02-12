@@ -26,49 +26,13 @@
  */
 
 using Nd.Aggregates.Identities;
-using Nd.ValueObjects;
 
-namespace Nd.Commands.Results
-{
-    public interface IExecutionResult
-    {
+namespace Nd.Commands.Results {
+    public interface IExecutionResult {
         bool IsSuccess { get; }
 
         IIdempotencyIdentity IdempotencyIdentity { get; }
 
         ICorrelationIdentity CorrelationIdentity { get; }
-    }
-
-    public static class ExecutionResults
-    {
-        private record class SuccessExecutionResult
-        (
-            IIdempotencyIdentity IdempotencyIdentity,
-            ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IExecutionResult
-        {
-            public bool IsSuccess => true;
-
-            public override string ToString() => $"Successful execution: ({IdempotencyIdentity}, {CorrelationIdentity})";
-        }
-
-        private record class FailureExecutionResult
-        (
-            IIdempotencyIdentity IdempotencyIdentity,
-            ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IExecutionResult
-        {
-            public bool IsSuccess => false;
-        }
-
-        public static IExecutionResult Success(
-            IIdempotencyIdentity idempotencyIdentity,
-            ICorrelationIdentity correlationIdentity) =>
-            new SuccessExecutionResult(idempotencyIdentity, correlationIdentity);
-
-        public static IExecutionResult Failure(
-            IIdempotencyIdentity idempotencyIdentity,
-            ICorrelationIdentity correlationIdentity) =>
-            new FailureExecutionResult(idempotencyIdentity, correlationIdentity);
     }
 }

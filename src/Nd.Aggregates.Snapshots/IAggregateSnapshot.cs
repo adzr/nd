@@ -21,15 +21,13 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Identities;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Snapshots
-{
+namespace Nd.Aggregates.Snapshots {
     public interface IAggregateSnapshot<out TIdentity, out TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TState : class, IVersionedType
-    {
+        where TIdentity : IAggregateIdentity
+        where TState : class, IVersionedType {
         TState State { get; }
 
         uint AggregateVersion { get; }
@@ -40,8 +38,7 @@ namespace Nd.Aggregates.Snapshots
     }
 
     public interface ICanConsumeState<in TState>
-        where TState : class, IVersionedType
-    {
+        where TState : class, IVersionedType {
         public void ConsumeState(TState state);
     }
 }

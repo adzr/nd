@@ -27,10 +27,8 @@
 
 using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
-{
-    public interface IAggregateEventIdentity : IIdentity
-    {
+namespace Nd.Aggregates.Identities {
+    public interface IAggregateEventIdentity : IIdentity<Guid> {
         new Guid Value { get; }
     }
 }

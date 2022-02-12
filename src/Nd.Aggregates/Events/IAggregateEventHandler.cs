@@ -21,21 +21,15 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
-
-namespace Nd.Aggregates.Events
-{
-    public interface IAggregateEventHandler
-    {
-        void On(IAggregateEvent @event);
+namespace Nd.Aggregates.Events {
+    public interface IAggregateEventHandler {
+        virtual void On(IAggregateEvent @event) { }
     }
 
-    public interface IAggregateEventHandler<in TEvent, TAggregate, TIdentity, TEventApplier> : IAggregateEventHandler
-        where TEvent : IAggregateEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
+    public interface IAggregateEventHandler<in TEvent> : IAggregateEventHandler
+        where TEvent : IAggregateEvent {
         void On(TEvent @event);
+
+        protected new void On(IAggregateEvent @event) => On((TEvent)@event);
     }
 }

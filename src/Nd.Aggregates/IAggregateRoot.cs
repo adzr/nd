@@ -31,25 +31,21 @@
 using Nd.Core.Types.Names;
 using Nd.Identities;
 
-namespace Nd.Aggregates
-{
-    public interface IAggregateRoot : INamedType
-    {
+namespace Nd.Aggregates {
+    public interface IAggregateRoot : INamedType {
         IIdentity Identity { get; }
         uint Version { get; }
         bool IsNew { get; }
     }
 
     public interface IAggregateRoot<out TIdentity> : IAggregateRoot
-        where TIdentity : IIdentity
-    {
+        where TIdentity : IIdentity {
         new TIdentity Identity { get; }
     }
 
     public interface IAggregateRoot<out TIdentity, out TState> : IAggregateRoot<TIdentity>
         where TIdentity : IIdentity
-        where TState : class
-    {
+        where TState : class {
         TState State { get; }
     }
 }

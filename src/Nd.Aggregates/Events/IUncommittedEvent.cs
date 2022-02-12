@@ -25,23 +25,18 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Events
-{
-    public interface IUncommittedEvent
-    {
+namespace Nd.Aggregates.Events {
+    public interface IUncommittedEvent {
         public IAggregateEvent Event { get; }
         public IAggregateEventMetaData MetaData { get; }
     }
 
-    public interface IUncommittedEvent<TAggregate, TIdentity, TEventApplier> : IUncommittedEvent
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-        public new IAggregateEvent<TAggregate, TIdentity, TEventApplier> Event { get; }
-        public new IAggregateEventMetaData<TAggregate, TIdentity> MetaData { get; }
+    public interface IUncommittedEvent<TIdentity> : IUncommittedEvent
+        where TIdentity : IAggregateIdentity {
+        public new IAggregateEvent Event { get; }
+        public new IAggregateEventMetaData<TIdentity> MetaData { get; }
         IAggregateEvent IUncommittedEvent.Event => Event;
         IAggregateEventMetaData IUncommittedEvent.MetaData => MetaData;
     }

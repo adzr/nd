@@ -23,10 +23,8 @@
 
 using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
-{
-    public interface ICorrelationIdentity : IIdentity
-    {
+namespace Nd.Aggregates.Identities {
+    public interface ICorrelationIdentity : IIdentity<Guid> {
         new Guid Value { get; }
     }
 }

@@ -1,5 +1,5 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -21,30 +21,25 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
 using System;
+using Nd.Identities;
 using Xunit;
 
-namespace Nd.Entities.Tests
-{
+namespace Nd.Entities.Tests {
     [NamedIdentity("sample")]
-    internal record class SampleId : Identity<SampleId>
-    {
+    internal record class SampleId : GuidIdentity {
         public SampleId(Guid value) : base(value) { }
     }
 
-    internal class SampleEntity : Entity<SampleId>
-    {
-        public SampleEntity(SampleId identity, string text) : base(identity)
-        {
+    internal class SampleEntity : Entity<SampleId> {
+        public SampleEntity(SampleId identity, string text) : base(identity) {
             Text = text;
         }
 
         public string Text { get; }
     }
 
-    public class EntityTests
-    {
+    public class EntityTests {
         private const string DefaultText = "Value";
         private readonly Guid _guid = Guid.NewGuid();
 

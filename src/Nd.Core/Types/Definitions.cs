@@ -23,72 +23,47 @@
 
 using Nd.Core.Extensions;
 using Nd.Core.Types.Names;
-using Nd.Core.Types.Versions;
-using System.Collections.ObjectModel;
 
-namespace Nd.Core.Types
-{
-    public static class Definitions
-    {
-        public static readonly IReadOnlyDictionary<string, Type> NamedTypes;
+namespace Nd.Core.Types {
+    public static class Definitions {
 
-        public static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<uint, Type>> VersionedTypes;
+        public static readonly ILookup<Type, (string Name, uint Version)> TypesNamesAndVersions =
+            GetAllImplementations<INamedType>()
+            .Select(ResolveTypesNamesAndVersions)
+            .GroupBy(g => g.Name)
+            .Select(ValidateUniqueVersionSequences)
+            .SelectMany(g => g.ToList())
+            .ToLookup(r => r.Type, r => (r.Name, r.Version));
 
         public static Type[] GetAllImplementations<T>() => AppDomain
-                .CurrentDomain
-                .GetAssemblies()
-                .SelectMany(a => a.GetTypes())
-                .Where(t => typeof(T).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t.IsPublic)
+            .CurrentDomain
+            .GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .Where(t => typeof(T).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && !t.IsGenericType)
+            .ToArray();
+
+        private static (string Name, uint Version, Type Type) ResolveTypesNamesAndVersions(Type type) {
+            var (name, version) = type.GetNameAndVersion();
+            return (name, version, type);
+        }
+
+        private static IGrouping<string, (string Name, uint Version, Type Type)> ValidateUniqueVersionSequences(IGrouping<string, (string Name, uint Version, Type Type)> types) {
+
+            var duplicates = types
+                .GroupBy(g => g.Version)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
                 .ToArray();
 
-        static Definitions()
-        {
-            var types = GetAllImplementations<INamedType>();
-
-            NamedTypes = types.Where(t => !typeof(IVersionedType).IsAssignableFrom(t))
-                           .GroupBy(t => t.GetName())
-                           .Select(ValidateNameDuplicates)
-                           .ToDictionary(g => g.Key, nameGroup => nameGroup.Single());
-
-            VersionedTypes = types.Where(t => typeof(IVersionedType).IsAssignableFrom(t))
-                       .Select(ResolveTypesNamesAndVersions)
-                       .GroupBy(t => t.Name)
-                       .Select(ValidateVersionConflictsInGroup)
-                       .ToDictionary(g => g.Key, nameGroup => (IReadOnlyDictionary<uint, Type>)new ReadOnlyDictionary<uint, Type>(nameGroup
-                           .GroupBy(g => g.Version)
-                           .ToDictionary(g => g.Key, versionGroup => versionGroup.Single().Type)));
-        }
-
-        private static IGrouping<string, Type> ValidateNameDuplicates(IGrouping<string, Type> type)
-        {
-            if (type.Count() > 1)
-            {
-                throw new ApplicationException($"Multiple definitions of unversioned type name \"{type.Key}\"");
+            if (duplicates.Any()) {
+                throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with similar version numbers {{{string.Join(", ", duplicates)}}}");
             }
 
-            return type;
-        }
-
-        private static IGrouping<string, (string Name, uint Version, Type Type)> ValidateVersionConflictsInGroup(IGrouping<string, (string Name, uint Version, Type Type)> types)
-        {
-            if (types.Any(t => t.Version == 0u))
-            {
-                throw new ApplicationException($"Definition of type name \"{types.Key}\" has a version number of value equals 0");
-            }
-
-            if (types.Count() > types.Select(t => t.Version).Distinct().Count())
-            {
-                throw new ApplicationException($"Multiple definitions of type name \"{types.Key}\" with similar version numbers");
+            if (types.Any(t => t.Version == 0) && types.Count() > 1) {
+                throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with some of them missing version numbers");
             }
 
             return types;
-        }
-
-        private static (string Name, uint Version, Type Type) ResolveTypesNamesAndVersions(Type type)
-        {
-            var (name, version) = type.GetNameAndVersion();
-
-            return (name, version, type);
         }
     }
 }

@@ -27,17 +27,13 @@
 
 using Nd.Core.Types.Names;
 
-namespace Nd.Core.Types.Versions
-{
+namespace Nd.Core.Types.Versions {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class VersionedTypeAttribute : NamedTypeAttribute, IVersionedType
-    {
+    public abstract class VersionedTypeAttribute : NamedTypeAttribute {
         public uint TypeVersion { get; }
 
-        protected VersionedTypeAttribute(string name, uint version) : base(name)
-        {
-            if (version == 0)
-            {
+        protected VersionedTypeAttribute(string name, uint version) : base(name) {
+            if (version == 0) {
                 throw new ArgumentOutOfRangeException(nameof(version), "must be greater than 0");
             }
 

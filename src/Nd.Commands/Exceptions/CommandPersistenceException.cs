@@ -22,25 +22,31 @@
  */
 
 using System.Runtime.Serialization;
+using Nd.Commands.Results;
 
-namespace Nd.Aggregates.Exceptions {
-
+namespace Nd.Commands.Exceptions {
     [Serializable]
-    public class AggregateCreationException : Exception {
-        public AggregateCreationException(string aggregateTypeName, Exception? exception = default)
-            : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception) {
-            AggregateTypeName = aggregateTypeName;
+    public class CommandPersistenceException : Exception {
+
+        public ICommand? Command { get; }
+
+        public IExecutionResult? Result { get; }
+
+        public CommandPersistenceException() : this("Command and result persistence has unexpectedly failed") {
         }
 
-        public string? AggregateTypeName { get; }
-
-        public AggregateCreationException() : this("Failed to create aggregate root") {
+        public CommandPersistenceException(string? message) : base(message) {
         }
 
-        public AggregateCreationException(string message) : base(message) {
+        public CommandPersistenceException(ICommand command, IExecutionResult result, Exception ex) : this($"Command {command} with result {result} persistence has unexpectedly failed", ex) {
+            Command = command;
+            Result = result;
         }
 
-        protected AggregateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        public CommandPersistenceException(string? message, Exception? innerException) : base(message, innerException) {
+        }
+
+        protected CommandPersistenceException(SerializationInfo info, StreamingContext context) : base(info, context) {
         }
     }
 }

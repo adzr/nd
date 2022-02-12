@@ -21,17 +21,27 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Exceptions
-{
+using System.Runtime.Serialization;
+
+namespace Nd.Aggregates.Exceptions {
+
     [Serializable]
-    public class EventUpgradeException : Exception
-    {
+    public class EventUpgradeException : Exception {
+
         public EventUpgradeException(string eventTypeName, Exception? exception = default)
-            : base($"Failed to upgrade event of Name \"{eventTypeName}\"", exception)
-        {
+            : base($"Failed to upgrade event of Name \"{eventTypeName}\"", exception) {
             EventTypeName = eventTypeName;
         }
 
-        public string EventTypeName { get; }
+        public string? EventTypeName { get; }
+
+        public EventUpgradeException() : this("Failed to upgrade event") {
+        }
+
+        public EventUpgradeException(string message) : base(message) {
+        }
+
+        protected EventUpgradeException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        }
     }
 }

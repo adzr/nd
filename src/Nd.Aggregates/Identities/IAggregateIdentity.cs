@@ -21,33 +21,10 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
-using Nd.Core.Factories;
-using Nd.ValueObjects;
+using Nd.Identities;
 
-namespace Nd.Identities
-{
-    [NamedIdentity(nameof(T))]
-    public abstract record class Identity<T> : ValueObject, IIdentity<T> where T : IIdentity<T>
-    {
-        public static readonly string IdentityName = typeof(T).GetName();
-
-        private readonly string _stringValue;
-
-        public Guid Value { get; }
-
-        protected Identity(Guid value)
-        {
-            Value = value;
-            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd("_id", "_identity")}-{value.ToString("N").ToLowerInvariant()}";
-        }
-
-        protected Identity(IGuidFactory factory) : this(factory.Create()) { }
-
-        string IIdentity.Value => _stringValue;
-
-        public string TypeName => IdentityName;
-
-        public sealed override string ToString() => _stringValue;
+namespace Nd.Aggregates.Identities {
+    public interface IAggregateIdentity : IIdentity<Guid> {
+        new Guid Value { get; }
     }
 }

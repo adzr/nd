@@ -21,19 +21,23 @@
  * SOFTWARE.
  */
 
-using Nd.Commands;
+using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Exceptions
-{
+namespace Nd.Core.Types {
+
     [Serializable]
-    public class CommandInvalidAggregateException : Exception
-    {
-        public CommandInvalidAggregateException(ICommand command, Exception? exception = default)
-            : base($"Command {command} specified loads an invalid aggregate", exception)
-        {
-            Command = command;
+    public class TypeDefinitionNotFoundException : Exception {
+
+        public TypeDefinitionNotFoundException() : this($"Definition of type has no Name or Version defined") {
         }
 
-        public ICommand Command { get; }
+        public TypeDefinitionNotFoundException(string? message) : base(message) {
+        }
+
+        public TypeDefinitionNotFoundException(string? message, Exception? innerException) : base(message, innerException) {
+        }
+
+        protected TypeDefinitionNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        }
     }
 }

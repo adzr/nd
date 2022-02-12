@@ -1,6 +1,5 @@
 ﻿/*
  * Copyright © 2022 Ahmed Zaher
- * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal 
@@ -21,19 +20,33 @@
  * SOFTWARE.
  */
 
-using Nd.Commands;
+using System.Runtime.Serialization;
+using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Exceptions
-{
+namespace Nd.Core.Exceptions {
+
     [Serializable]
-    public class CommandMissingAggregateManagerException : Exception
-    {
-        public CommandMissingAggregateManagerException(ICommand command, Exception? exception = default)
-            : base($"Command {command} has no matching aggregate manager", exception)
-        {
-            Command = command;
+    public class TypeUpgradeConflictException : Exception {
+
+        public IVersionedType? From { get; }
+        public IVersionedType? To { get; }
+
+        public TypeUpgradeConflictException(IVersionedType from, IVersionedType to, Exception? innerException = null)
+            : base($"Trying to upgrade a type of name '{from.TypeName}' to a type of name '{to.TypeName}', type names must match", innerException) {
+            From = from;
+            To = to;
         }
 
-        public ICommand Command { get; }
+        public TypeUpgradeConflictException() : this($"Trying to upgrade between two different types, type names must match") {
+        }
+
+        public TypeUpgradeConflictException(string message) : base(message) {
+        }
+
+        public TypeUpgradeConflictException(string message, Exception innerException) : base(message, innerException) {
+        }
+
+        protected TypeUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        }
     }
 }

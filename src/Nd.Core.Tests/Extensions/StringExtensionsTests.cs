@@ -21,30 +21,29 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Extensions;
 using Xunit;
 
-namespace Nd.Core.Tests.Extensions
-{
-    public class StringExtensionsTests
-    {
+namespace Nd.Core.Tests.Extensions {
+    public class StringExtensionsTests {
         [Theory]
-        [InlineData("SomeTestData", "some_test_data")]
-        [InlineData("Some_Test_Data", "some_test_data")]
-        [InlineData("some_test_data", "some_test_data")]
-        [InlineData("some-test-data", "some_test_data")]
-        [InlineData("some test data", "some_test_data")]
-        [InlineData("Some test data", "some_test_data")]
-        [InlineData("Some Test Data", "some_test_data")]
-        [InlineData(" Some Test Data ", "some_test_data")]
-        [InlineData("_some_test_data_", "some_test_data")]
-        [InlineData("_Some_Test_Data_", "some_test_data")]
-        [InlineData("#Some#Test#Data#", "some_test_data")]
-        [InlineData("Some#Test#Data#1", "some_test_data_1")]
-        [InlineData("SomeTestData1", "some_test_data_1")]
-        [InlineData("SomeTestData_1", "some_test_data_1")]
-        [InlineData("??Some??Test??Data??1??", "some_test_data_1")]
-        [InlineData("??some??test??data??1??", "some_test_data_1")]
+        [InlineData("SomeTestData", "SOME_TEST_DATA")]
+        [InlineData("Some_Test_Data", "SOME_TEST_DATA")]
+        [InlineData("some_test_data", "SOME_TEST_DATA")]
+        [InlineData("some-test-data", "SOME_TEST_DATA")]
+        [InlineData("some test data", "SOME_TEST_DATA")]
+        [InlineData("Some test data", "SOME_TEST_DATA")]
+        [InlineData("Some Test Data", "SOME_TEST_DATA")]
+        [InlineData(" Some Test Data ", "SOME_TEST_DATA")]
+        [InlineData("_some_test_data_", "SOME_TEST_DATA")]
+        [InlineData("_Some_Test_Data_", "SOME_TEST_DATA")]
+        [InlineData("#Some#Test#Data#", "SOME_TEST_DATA")]
+        [InlineData("Some#Test#Data#1", "SOME_TEST_DATA_1")]
+        [InlineData("SomeTestData1", "SOME_TEST_DATA_1")]
+        [InlineData("SomeTestData_1", "SOME_TEST_DATA_1")]
+        [InlineData("??Some??Test??Data??1??", "SOME_TEST_DATA_1")]
+        [InlineData("??some??test??data??1??", "SOME_TEST_DATA_1")]
         public void CanConvertToSnakeCase(string input, string expected)
             => Assert.Equal(expected, input.ToSnakeCase());
 
@@ -54,6 +53,6 @@ namespace Nd.Core.Tests.Extensions
         [InlineData("SomeTestData_1", "_1", "SomeTestData")]
         [InlineData("SomeTestData_//", "_//", "SomeTestData")]
         public void CanTrimEnd(string input, string trim, string expected)
-            => Assert.Equal(expected, input.TrimEnd(trim));
+            => Assert.Equal(expected, input.TrimEnd(StringComparison.OrdinalIgnoreCase, trim));
     }
 }

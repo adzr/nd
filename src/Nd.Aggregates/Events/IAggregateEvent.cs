@@ -27,26 +27,12 @@
 
 using Nd.Core.Types.Names;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Events
-{
-    public interface IAggregateEvent : INamedType, IVersionedType
-    {
-
+namespace Nd.Aggregates.Events {
+    public interface IAggregateEvent : INamedType, IVersionedType {
     }
 
-    public interface IAggregateEvent<TIdentity> : IAggregateEvent
-        where TIdentity : IIdentity<TIdentity>
-    {
-
-    }
-
-    public interface IAggregateEvent<TAggregate, TIdentity, TEventApplier> : IAggregateEvent<TIdentity>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>
-    {
-
+    public interface IAggregateEvent<TState> : IAggregateEvent
+        where TState : class {
     }
 }

@@ -21,17 +21,31 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Exceptions
-{
+using System.Runtime.Serialization;
+using Nd.Core.Extensions;
+
+namespace Nd.Aggregates.Exceptions {
+
     [Serializable]
-    public class AggregateStateCreationException : Exception
-    {
-        public AggregateStateCreationException(string aggregateStateTypeString, Exception? exception = default)
-            : base("Aggregate state must expose a public default constructor, unable to create aggregate state of Type: {aggregateStateTypeString}", exception)
-        {
-            AggregateStateTypeString = aggregateStateTypeString;
+    public class AggregateStateCreationException : Exception {
+
+        public AggregateStateCreationException(Type aggregateStateType, Exception? exception = default)
+            : base($"Failed to create aggregate state of Type: {aggregateStateType.ToPrettyString()}", exception) {
+            AggregateStateType = aggregateStateType;
         }
 
-        public string AggregateStateTypeString { get; }
+        public Type? AggregateStateType { get; }
+
+        public AggregateStateCreationException() : this("Failed to create aggregate state") {
+        }
+
+        public AggregateStateCreationException(string message) : base(message) {
+        }
+
+        public AggregateStateCreationException(string message, Exception innerException) : base(message, innerException) {
+        }
+
+        protected AggregateStateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        }
     }
 }

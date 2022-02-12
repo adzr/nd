@@ -21,28 +21,25 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Events;
-using Nd.Identities;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
-    public interface IAggregateReader<TAggregate, TIdentity, TEventApplier, TState>
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-        where TState : class
-    {
-        Task<TAggregate?> ReadAsync(TIdentity aggregateId,
-                IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
-                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
-                IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
+namespace Nd.Aggregates.Persistence {
+    public interface IAggregateReader<TIdentity, TState>
+        where TIdentity : IAggregateIdentity
+        where TState : class {
+        Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId,
+                IAggregateEventReader<TIdentity, TState> eventReader,
+                AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
+                AggregateStateFactoryFunc<TState> initializeState,
                 CancellationToken cancellation = default)
-             => ReadAsync(aggregateId, 0u, eventReader, aggregateFactory, aggregateStateFactory, cancellation);
+            where TAggregate : IAggregateRoot<TIdentity, TState>
+             => ReadAsync(aggregateId, 0u, eventReader, initializeAggregate, initializeState, cancellation);
 
-        Task<TAggregate?> ReadAsync(TIdentity aggregateId, uint version,
-                IAggregateEventReader<TAggregate, TIdentity, TEventApplier> eventReader,
-                IAggregateFactory<TAggregate, TIdentity, TEventApplier, TState> aggregateFactory,
-                IAggregateEventApplierFactory<TEventApplier>? aggregateStateFactory = default,
-                CancellationToken cancellation = default);
+        Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId, uint version,
+                IAggregateEventReader<TIdentity, TState> eventReader,
+                AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
+                AggregateStateFactoryFunc<TState> initializeState,
+                CancellationToken cancellation = default)
+            where TAggregate : IAggregateRoot<TIdentity, TState>;
     }
 }

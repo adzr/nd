@@ -1,6 +1,5 @@
 ﻿/*
  * Copyright © 2022 Ahmed Zaher
- * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal 
@@ -23,24 +22,21 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Exceptions {
+namespace Nd.Core.Exceptions {
 
     [Serializable]
-    public class AggregateCreationException : Exception {
-        public AggregateCreationException(string aggregateTypeName, Exception? exception = default)
-            : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception) {
-            AggregateTypeName = aggregateTypeName;
+    public class MissingDeclaringTypeException : Exception {
+
+        public MissingDeclaringTypeException() : this($"Method info missing declaring type") {
         }
 
-        public string? AggregateTypeName { get; }
-
-        public AggregateCreationException() : this("Failed to create aggregate root") {
+        public MissingDeclaringTypeException(string? message) : base(message) {
         }
 
-        public AggregateCreationException(string message) : base(message) {
+        public MissingDeclaringTypeException(string? message, Exception? innerException) : base(message, innerException) {
         }
 
-        protected AggregateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected MissingDeclaringTypeException(SerializationInfo info, StreamingContext context) : base(info, context) {
         }
     }
 }

@@ -22,18 +22,16 @@
  */
 
 using Nd.Aggregates.Events;
-using Nd.Identities;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates
-{
-    public interface IAggregateFactory<out TAggregate, in TIdentity, in TEventApplier, TState>
+namespace Nd.Aggregates {
+
+    public delegate IAggregateEventApplier<TState> AggregateStateFactoryFunc<TState>() where TState : class;
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1005:Avoid excessive parameters on generic types", Justification = "All the generic types declared are required.")]
+    public delegate TAggregate AggregateFactoryFunc<TIdentity, TState, TAggregate>(
+        TIdentity identity, AggregateStateFactoryFunc<TState> initializeState, uint version = default)
         where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
-        where TState : class
-    {
-        TAggregate Create(TIdentity identity);
-        TAggregate Create(TIdentity identity, TEventApplier state, uint version);
-        TAggregate Create(TIdentity identity, IAggregateEventApplierFactory<TEventApplier> factory, uint version);
-    }
+        where TIdentity : IAggregateIdentity
+        where TState : class;
 }

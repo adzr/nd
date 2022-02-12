@@ -21,17 +21,13 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Types.Names
-{
+namespace Nd.Core.Types.Names {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public abstract class NamedTypeAttribute : Attribute
-    {
+    public abstract class NamedTypeAttribute : Attribute {
         public string TypeName { get; }
 
-        protected NamedTypeAttribute(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
+        protected NamedTypeAttribute(string name) {
+            if (string.IsNullOrWhiteSpace(name)) {
                 throw new ArgumentNullException(nameof(name));
             }
 

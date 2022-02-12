@@ -1,5 +1,5 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -21,6 +21,11 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using FakeItEasy;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
@@ -28,87 +33,61 @@ using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Core.Factories;
 using Nd.Identities;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Xunit;
 
-namespace Nd.Aggregates.Tests
-{
-    public class AggregateRootTests
-    {
+namespace Nd.Aggregates.Tests {
+    public class AggregateRootTests {
         #region Test types definitions
-        public sealed record class TestIdentity : Identity<TestIdentity>
-        {
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        public sealed record class TestIdentity : GuidIdentity, IAggregateIdentity {
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
         }
 
-        public abstract record class TestAggregateEvent<TEvent>
-            : AggregateEvent<TEvent, TestAggregateRoot, TestIdentity, TestAggregateEventApplier>
-            where TEvent : TestAggregateEvent<TEvent>;
+        internal record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier>,
+            IAggregateEventHandler<TestEventA>,
+            IAggregateEventHandler<TestEventB>,
+            IAggregateEventHandler<TestEventC> {
+            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateEventApplier>> _events = new();
 
-        internal interface IApplyTestAggregateEvent<TEvent> : IAggregateEventHandler<TEvent, TestAggregateRoot, TestIdentity, TestAggregateEventApplier>
-                where TEvent : TestAggregateEvent<TEvent>
-        { }
+            public IReadOnlyCollection<IAggregateEvent<TestAggregateEventApplier>> Events { get => _events; }
 
-        public record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier, TestAggregateRoot, TestIdentity>,
-            IApplyTestAggregateEvent<TestEventA>,
-            IApplyTestAggregateEvent<TestEventB>,
-            IApplyTestAggregateEvent<TestEventC>
-        {
-            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> _events = new();
-
-            public IReadOnlyCollection<IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> Events { get => _events; }
+            public override TestAggregateEventApplier State => this;
 
             public void On(TestEventA @event) => _events.Enqueue(@event);
 
             public void On(TestEventB _) => _events.Enqueue(new TestEventB());
 
             public void On(TestEventC _) => _events.Enqueue(new TestEventC());
+
+            public IAggregateEvent? Yield() => _events.TryDequeue(out var e) ? e : default;
         }
 
-        public sealed record class TestEventA(string Value) : TestAggregateEvent<TestEventA>;
+        internal sealed record class TestEventA(string Value) : AggregateEvent<TestAggregateEventApplier>;
 
-        public sealed record class TestEventB : TestAggregateEvent<TestEventB>;
+        internal sealed record class TestEventB : AggregateEvent<TestAggregateEventApplier>;
 
-        public sealed record class TestEventC : TestAggregateEvent<TestEventC>;
+        internal sealed record class TestEventC : AggregateEvent<TestAggregateEventApplier>;
 
-        public sealed record class TestEventD : TestAggregateEvent<TestEventD>;
-
-        public class TestAggregateRoot : AggregateRoot<TestAggregateRoot, TestIdentity, TestAggregateEventApplier, TestAggregateEventApplier>
-        {
-            public TestAggregateRoot(TestIdentity identity) : base(identity) { }
-
-            public TestAggregateRoot(TestIdentity identity, TestAggregateEventApplier state) : base(identity, state) { }
+        internal class TestAggregateRoot : AggregateRoot<TestIdentity, TestAggregateEventApplier> {
+            public TestAggregateRoot(TestIdentity identity, Func<TestAggregateEventApplier> stateFactory) : base(identity, stateFactory) { }
 
             public void LetThisHappen<T>(IAggregateEventMetaData? meta = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
-                where T : TestAggregateEvent<T> => Emit(Activator.CreateInstance<T>(), meta, failOnDuplicates, currentTimestampProvider);
+                where T : AggregateEvent<TestAggregateEventApplier> => Emit(Activator.CreateInstance<T>(), meta, failOnDuplicates, currentTimestampProvider);
 
             public void LetThisHappen<T>(T @event, IAggregateEventMetaData? meta = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
-                where T : TestAggregateEvent<T> => Emit(@event, meta, failOnDuplicates, currentTimestampProvider);
+                where T : AggregateEvent<TestAggregateEventApplier> => Emit(@event, meta, failOnDuplicates, currentTimestampProvider);
         }
 
-        internal record class QueueTestAggregateEventApplier : TestAggregateEventApplier
-        {
-            private readonly Queue<IAggregateEvent> _events = new();
-
-            public override void Apply(IAggregateEvent @event) => _events.Enqueue(@event);
-
-            public IAggregateEvent Yield() => _events.TryDequeue(out var e) ? e :
-                throw new IndexOutOfRangeException($"{typeof(QueueTestAggregateEventApplier)} is expected to contain elements but it's empty");
-        }
         #endregion
 
         [Fact]
-        public void CanBeNewAndHaveIdentity()
-        {
+        public void CanBeNewAndHaveIdentity() {
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
 
-            var aggregate = new TestAggregateRoot(identity);
+            var aggregate = new TestAggregateRoot(identity, () => new TestAggregateEventApplier());
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -116,11 +95,10 @@ namespace Nd.Aggregates.Tests
         }
 
         [Fact]
-        public void CanTriggerEventAndIncrementVersion()
-        {
-            var state = new QueueTestAggregateEventApplier();
+        public void CanTriggerEventAndIncrementVersion() {
+            var state = new TestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
-            var aggregate = new TestAggregateRoot(identity, state);
+            var aggregate = new TestAggregateRoot(identity, () => state);
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -129,16 +107,15 @@ namespace Nd.Aggregates.Tests
 
             Assert.False(aggregate.IsNew);
             Assert.Equal(1u, aggregate.Version);
-            Assert.Equal(typeof(TestEventC), state.Yield().GetType());
+            Assert.Equal(typeof(TestEventC), state.Yield()?.GetType());
         }
 
         [Fact]
-        public void CanFailOnDuplicateEvents()
-        {
-            var state = new QueueTestAggregateEventApplier();
+        public void CanFailOnDuplicateEvents() {
+            var state = new TestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var idempotency = new IdempotencyIdentity(RandomGuidFactory.Instance.Create());
-            var aggregate = new TestAggregateRoot(identity, state);
+            var aggregate = new TestAggregateRoot(identity, () => state);
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -147,23 +124,22 @@ namespace Nd.Aggregates.Tests
 
             Assert.False(aggregate.IsNew);
             Assert.Equal(1u, aggregate.Version);
-            Assert.Equal(typeof(TestEventC), state.Yield().GetType());
+            Assert.Equal(typeof(TestEventC), state.Yield()?.GetType());
 
             Assert.Throws<DuplicateAggregateEventException>(() =>
                 aggregate.LetThisHappen<TestEventC>(new AggregateEventMetaData(idempotency, new CorrelationIdentity(RandomGuidFactory.Instance.Create()))));
 
             Assert.False(aggregate.IsNew);
             Assert.Equal(1u, aggregate.Version);
-            Assert.Throws<IndexOutOfRangeException>(() => state.Yield());
+            Assert.Null(state.Yield());
         }
 
         [Fact]
-        public void CanIgnoreDuplicateEvents()
-        {
-            var state = new QueueTestAggregateEventApplier();
+        public void CanIgnoreDuplicateEvents() {
+            var state = new TestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var idempotency = new IdempotencyIdentity(RandomGuidFactory.Instance.Create());
-            var aggregate = new TestAggregateRoot(identity, state);
+            var aggregate = new TestAggregateRoot(identity, () => state);
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -172,22 +148,21 @@ namespace Nd.Aggregates.Tests
 
             Assert.False(aggregate.IsNew);
             Assert.Equal(1u, aggregate.Version);
-            Assert.Equal(typeof(TestEventC), state.Yield().GetType());
+            Assert.Equal(typeof(TestEventC), state.Yield()?.GetType());
 
             aggregate.LetThisHappen<TestEventC>(new AggregateEventMetaData(idempotency, new CorrelationIdentity(RandomGuidFactory.Instance.Create())), false);
 
             Assert.False(aggregate.IsNew);
             Assert.Equal(1u, aggregate.Version);
-            Assert.Throws<IndexOutOfRangeException>(() => state.Yield());
+            Assert.Null(state.Yield());
         }
 
         [Fact]
-        public void CanPassImmutableEventData()
-        {
-            var state = new QueueTestAggregateEventApplier();
+        public void CanPassImmutableEventData() {
+            var state = new TestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var idempotency = new IdempotencyIdentity(RandomGuidFactory.Instance.Create());
-            var aggregate = new TestAggregateRoot(identity, state);
+            var aggregate = new TestAggregateRoot(identity, () => state);
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -201,16 +176,15 @@ namespace Nd.Aggregates.Tests
 
             var @event = state.Yield();
 
-            Assert.Equal(typeof(TestEventA), @event.GetType());
-            Assert.Equal(Message, ((TestEventA)@event).Value);
+            Assert.Equal(typeof(TestEventA), @event?.GetType());
+            Assert.Equal(Message, ((TestEventA)@event!).Value);
         }
 
         [Fact]
-        public void CanPersistEventAndMetaData()
-        {
-            var state = new QueueTestAggregateEventApplier();
+        public void CanPersistEventAndMetaData() {
+            var state = new TestAggregateEventApplier();
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
-            var aggregate = new TestAggregateRoot(identity, state);
+            var aggregate = new TestAggregateRoot(identity, () => state);
 
             Assert.True(aggregate.IsNew);
             Assert.Equal(0u, aggregate.Version);
@@ -220,17 +194,15 @@ namespace Nd.Aggregates.Tests
 
             const string Message = "Hello World!";
 
-            for (int i = 0; i < 5; i++)
-            {
+            for (int i = 0; i < 5; i++) {
                 metas.Add(new(new IdempotencyIdentity(RandomGuidFactory.Instance.Create()),
                             new CorrelationIdentity(RandomGuidFactory.Instance.Create())));
                 events.Add(new TestEventA($"{Message} {i}"));
             }
 
-            var writer = A.Fake<IAggregateEventWriter<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>>();
+            var writer = A.Fake<IAggregateEventWriter<TestIdentity>>();
 
-            foreach (var (@event, meta) in events.Zip(metas))
-            {
+            foreach (var (@event, meta) in events.Zip(metas)) {
                 aggregate.LetThisHappen(@event, meta);
             }
 
@@ -241,17 +213,15 @@ namespace Nd.Aggregates.Tests
 
             aggregate.CommitAsync(writer, CancellationToken.None).GetAwaiter().GetResult();
 
-            A.CallTo(() => writer.WriteAsync(A<IEnumerable<IUncommittedEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>>>._, A<CancellationToken>._))
-                .Invokes((IEnumerable<IUncommittedEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> uncommittedEvents, CancellationToken cancellation) =>
-                {
-                    foreach (var (Expected, Actual) in events
+            _ = A.CallTo(() => writer.WriteAsync(A<IEnumerable<IUncommittedEvent<TestIdentity>>>._, A<CancellationToken>._))
+                .Invokes((IEnumerable<IUncommittedEvent<TestIdentity>> uncommittedEvents, CancellationToken cancellation) => {
+                    foreach (var (expected, actual) in events
                         .Zip(metas)
                         .Select(r => (Event: r.First, MetaData: r.Second))
                         .Zip(uncommittedEvents)
-                        .Select(r => (Expected: r.First, Actual: r.Second)))
-                    {
-                        Assert.Equal(Expected.Event, Actual.Event);
-                        Assert.Equal(Expected.MetaData, new AggregateEventMetaData(Actual.MetaData.IdempotencyIdentity, Actual.MetaData.CorrelationIdentity));
+                        .Select(r => (Expected: r.First, Actual: r.Second))) {
+                        Assert.Equal(expected.Event, actual.Event);
+                        Assert.Equal(expected.MetaData, new AggregateEventMetaData(actual.MetaData.IdempotencyIdentity, actual.MetaData.CorrelationIdentity));
                     }
                 })
                 .MustHaveHappenedOnceExactly();

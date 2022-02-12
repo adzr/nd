@@ -21,19 +21,28 @@
  * SOFTWARE.
  */
 
-using Nd.Commands;
+using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Exceptions
-{
+namespace Nd.Commands {
     [Serializable]
-    public class CommandInvalidAggregateIdentityException : Exception
-    {
-        public CommandInvalidAggregateIdentityException(ICommand command, Exception? exception = default)
-            : base($"Command {command} has been specified with an invalid aggregate identity", exception)
-        {
+    public class CommandInvalidAggregateIdentityException : Exception {
+
+        public ICommand? Command { get; }
+
+        public CommandInvalidAggregateIdentityException() : this("Invalid aggregate identity in command") {
+        }
+
+        public CommandInvalidAggregateIdentityException(ICommand command) : this($"Invalid aggregate identity in command {command}") {
             Command = command;
         }
 
-        public ICommand Command { get; }
+        public CommandInvalidAggregateIdentityException(string? message) : base(message) {
+        }
+
+        public CommandInvalidAggregateIdentityException(string? message, Exception? innerException) : base(message, innerException) {
+        }
+
+        protected CommandInvalidAggregateIdentityException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        }
     }
 }

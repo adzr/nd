@@ -20,13 +20,11 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Extensions
-{
+namespace Nd.Core.Extensions {
     /// <summary>
     /// Contains extension methods for <see cref="IEnumerable{T}"/>.
     /// </summary>
-    public static class EnumerableExtensions
-    {
+    public static class EnumerableExtensions {
         /// <summary>
         /// Compares two <see cref="IEnumerable{T}"/> collections based on each individual element in sequence.
         /// </summary>
@@ -36,45 +34,35 @@ namespace Nd.Core.Extensions
         /// <param name="right">The right-side operand for comparison.</param>
         /// <returns></returns>
         public static int CompareTo<T, TEnumerable>(this TEnumerable? left, IEnumerable<T?>? right)
-            where TEnumerable : IEnumerable<T?>
-        {
+            where TEnumerable : IEnumerable<T?> {
             // Conversion to arrays for multiple iterations.
             var leftArray = left?.ToArray();
             var rightArray = right?.ToArray();
 
-            if (leftArray is null && rightArray is null)
-            {
+            if (leftArray is null && rightArray is null) {
                 return 0;
             }
 
-            if (leftArray is null)
-            {
+            if (leftArray is null) {
                 return -1;
             }
 
-            if (rightArray is null)
-            {
+            if (rightArray is null) {
                 return 1;
             }
 
             // Else compare each element in the left array against
             // its corresponding element in the right one,
             // and return once a difference is found.
-            for (var i = 0; i < leftArray.Length && i < rightArray.Length; i++)
-            {
+            for (var i = 0; i < leftArray.Length && i < rightArray.Length; i++) {
                 var l = leftArray[i];
                 var r = rightArray[i];
 
-                if (l is null && r is null)
-                {
+                if (l is null && r is null) {
                     continue;
-                }
-                else if (l is null)
-                {
+                } else if (l is null) {
                     return -1;
-                }
-                else if (r is null)
-                {
+                } else if (r is null) {
                     return 1;
                 }
 
@@ -82,8 +70,7 @@ namespace Nd.Core.Extensions
                     ((IComparable<T>)l).CompareTo(r) :
                     string.CompareOrdinal(l.ToString(), r.ToString());
 
-                if (compareElementResult != 0)
-                {
+                if (compareElementResult != 0) {
                     return compareElementResult;
                 }
             }

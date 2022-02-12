@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -24,24 +28,36 @@
 using Nd.Aggregates.Identities;
 using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Events {
-    public record class AggregateEventMetaData
+namespace Nd.Commands.Results {
+    public static class ExecutionResults {
+        private record class SuccessExecutionResult
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IAggregateEventMetaData;
+        ) : ValueObject, IExecutionResult {
+            public bool IsSuccess => true;
 
-    public record class AggregateEventMetaData<TIdentity>
+            public override string ToString() => $"Successful execution: ({IdempotencyIdentity}, {CorrelationIdentity})";
+        }
+
+        private record class FailureExecutionResult
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity,
-            IAggregateEventIdentity EventIdentity,
-            string TypeName,
-            uint TypeVersion,
-            TIdentity AggregateIdentity,
-            string AggregateName,
-            uint AggregateVersion,
-            DateTimeOffset Timestamp
-        ) : AggregateEventMetaData(IdempotencyIdentity, CorrelationIdentity), IAggregateEventMetaData<TIdentity>
-        where TIdentity : IAggregateIdentity;
+            IReadOnlyCollection<Exception> Exceptions
+        ) : ValueObject, IExecutionResult {
+            public bool IsSuccess => false;
+        }
+
+        public static IExecutionResult Success(
+            IIdempotencyIdentity idempotencyIdentity,
+            ICorrelationIdentity correlationIdentity) =>
+            new SuccessExecutionResult(idempotencyIdentity, correlationIdentity);
+
+        public static IExecutionResult Failure(
+            IIdempotencyIdentity idempotencyIdentity,
+            ICorrelationIdentity correlationIdentity,
+            IReadOnlyCollection<Exception> exceptions) =>
+            new FailureExecutionResult(idempotencyIdentity, correlationIdentity, exceptions);
+    }
 }

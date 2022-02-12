@@ -21,20 +21,18 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Extensions;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using Nd.Core.Extensions;
 
-namespace Nd.ValueObjects
-{
+namespace Nd.ValueObjects {
     [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-    public abstract record class ValueObject : IComparable
-    {
-        private static readonly ConcurrentDictionary<Type, IReadOnlyCollection<PropertyInfo>> TypePropertiesCache = new();
+    public abstract record class ValueObject : IComparable {
+        private static readonly ConcurrentDictionary<Type, IReadOnlyCollection<PropertyInfo>> s_typePropertiesCache = new();
 
         protected virtual IEnumerable<PropertyInfo> GetProperties() =>
-            TypePropertiesCache.GetOrAdd(GetType(), t => t
+            s_typePropertiesCache.GetOrAdd(GetType(), t => t
                     .GetTypeInfo()
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .Where(p => p.CanRead)
@@ -44,20 +42,16 @@ namespace Nd.ValueObjects
         protected virtual IEnumerable<object?> GetComparisonProperties() => GetProperties()
             .Select(x => x.GetValue(this));
 
-        public virtual int CompareTo(object? obj)
-        {
-            if (Equals(obj))
-            {
+        public virtual int CompareTo(object? obj) {
+            if (Equals(obj)) {
                 return 0;
             }
 
-            if (obj is null)
-            {
+            if (obj is null) {
                 return 1;
             }
 
-            if (obj is not ValueObject other)
-            {
+            if (obj is not ValueObject other) {
                 throw new ArgumentException($"Cannot compare '{GetType().ToPrettyString()}' and '{obj.GetType().ToPrettyString()}'");
             }
 

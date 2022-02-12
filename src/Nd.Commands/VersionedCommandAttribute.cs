@@ -23,11 +23,9 @@
 
 using Nd.Core.Types.Versions;
 
-namespace Nd.Commands
-{
+namespace Nd.Commands {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public class VersionedCommandAttribute : VersionedTypeAttribute
-    {
-        protected VersionedCommandAttribute(string name, uint version) : base($"{name}Command", version) { }
+    public sealed class VersionedCommandAttribute : VersionedTypeAttribute {
+        public VersionedCommandAttribute(string typeName, uint typeVersion) : base($"{typeName}Command", typeVersion) { }
     }
 }

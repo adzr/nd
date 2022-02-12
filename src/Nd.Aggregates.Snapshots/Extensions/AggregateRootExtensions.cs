@@ -21,20 +21,15 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Events;
+using Nd.Aggregates.Identities;
 using Nd.Core.Types.Versions;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Persistence
-{
-    public static class AggregateRootExtensions
-    {
-        public static Task TakeSnapshotAsync<TAggregate, TIdentity, TEventApplier, TState>(
-            this AggregateRoot<TAggregate, TIdentity, TEventApplier, TState> aggregate,
+namespace Nd.Aggregates.Persistence {
+    public static class AggregateRootExtensions {
+        public static Task TakeSnapshotAsync<TIdentity, TState>(
+            this AggregateRoot<TIdentity, TState> aggregate,
             IAggregateSnapshotWriter<TIdentity> writer, CancellationToken cancellation = default)
-            where TAggregate : AggregateRoot<TAggregate, TIdentity, TEventApplier, TState>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>, TState
+        where TIdentity : IAggregateIdentity
         where TState : class, IVersionedType
             => writer.WriteAsync(new AggregateSnapshot<TIdentity, TState>(aggregate.State, aggregate.Version, aggregate.Identity, aggregate.TypeName), cancellation);
     }

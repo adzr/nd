@@ -21,15 +21,12 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Events
-{
-    internal sealed record class UncommittedEvent<TAggregate, TIdentity, TEventApplier>(
-        IAggregateEvent<TAggregate, TIdentity, TEventApplier> Event,
-        IAggregateEventMetaData<TAggregate, TIdentity> MetaData
-    ) : IUncommittedEvent<TAggregate, TIdentity, TEventApplier>
-        where TAggregate : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity<TIdentity>
-        where TEventApplier : IAggregateEventApplier<TAggregate, TIdentity>;
+namespace Nd.Aggregates.Events {
+    internal sealed record class UncommittedEvent<TIdentity>(
+        IAggregateEvent Event,
+        IAggregateEventMetaData<TIdentity> MetaData
+    ) : IUncommittedEvent<TIdentity>
+        where TIdentity : IAggregateIdentity;
 }

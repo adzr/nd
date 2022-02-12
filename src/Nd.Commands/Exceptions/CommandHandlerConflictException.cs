@@ -21,20 +21,32 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Exceptions
-{
+using System.Runtime.Serialization;
+
+namespace Nd.Aggregates.Exceptions {
+
     [Serializable]
-    public class CommandHandlerConflictException : Exception
-    {
+    public class CommandHandlerConflictException : Exception {
         public CommandHandlerConflictException(string commandTypeName, string[] commandHandlerTypeNames, Exception? exception = default)
-            : base($"Multiple command handlers {string.Join(", ", commandHandlerTypeNames.Select(n => $"\"{n}\""))} for the same command \"{commandTypeName}\"", exception)
-        {
+            : base($"Multiple command handlers {string.Join(", ", commandHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same command \"{commandTypeName}\"", exception) {
             CommandTypeName = commandTypeName;
             CommandHandlerTypeNames = commandHandlerTypeNames;
         }
 
-        public string CommandTypeName { get; }
+        public string? CommandTypeName { get; }
 
-        public string[] CommandHandlerTypeNames { get; }
+        public IReadOnlyList<string>? CommandHandlerTypeNames { get; }
+
+        public CommandHandlerConflictException() : this("Multiple command handlers found for the same command") {
+        }
+
+        public CommandHandlerConflictException(string message) : base(message) {
+        }
+
+        public CommandHandlerConflictException(string message, Exception innerException) : base(message, innerException) {
+        }
+
+        protected CommandHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        }
     }
 }

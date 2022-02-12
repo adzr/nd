@@ -23,11 +23,9 @@
 
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Events
-{
+namespace Nd.Aggregates.Events {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public class VersionedEventAttribute : VersionedTypeAttribute
-    {
-        public VersionedEventAttribute(string name, uint version) : base($"{name}Event", version) { }
+    public sealed class VersionedEventAttribute : VersionedTypeAttribute {
+        public VersionedEventAttribute(string typeName, uint typeVersion) : base($"{typeName}Event", typeVersion) { }
     }
 }

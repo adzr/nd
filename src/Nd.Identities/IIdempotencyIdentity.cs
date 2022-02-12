@@ -23,10 +23,8 @@
 
 using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
-{
-    public interface IIdempotencyIdentity : IIdentity
-    {
+namespace Nd.Aggregates.Identities {
+    public interface IIdempotencyIdentity : IIdentity<Guid> {
         new Guid Value { get; }
     }
 }

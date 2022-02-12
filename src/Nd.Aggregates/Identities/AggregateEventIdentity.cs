@@ -28,10 +28,8 @@
 using Nd.Core.Factories;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Identities
-{
-    public sealed record class AggregateEventIdentity : Identity<AggregateEventIdentity>, IAggregateEventIdentity
-    {
+namespace Nd.Aggregates.Identities {
+    public sealed record class AggregateEventIdentity : GuidIdentity, IAggregateEventIdentity {
         public static readonly Guid NamespaceIdentifier = Guid.ParseExact("8a563c72-5604-4ca2-9d5f-bb6eb7f960c7", "D");
 
         public AggregateEventIdentity(Guid value) : base(value) { }

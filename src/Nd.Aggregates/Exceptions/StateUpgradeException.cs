@@ -21,17 +21,27 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Exceptions
-{
+using System.Runtime.Serialization;
+
+namespace Nd.Aggregates.Exceptions {
+
     [Serializable]
-    public class StateUpgradeException : Exception
-    {
+    public class StateUpgradeException : Exception {
+
         public StateUpgradeException(string stateTypeName, Exception? exception = default)
-            : base($"Failed to upgrade state of Name \"{stateTypeName}\"", exception)
-        {
+            : base($"Failed to upgrade state of Name \"{stateTypeName}\"", exception) {
             StateTypeName = stateTypeName;
         }
 
-        public string StateTypeName { get; }
+        public string? StateTypeName { get; }
+
+        public StateUpgradeException() : this("Failed to upgrade state") {
+        }
+
+        public StateUpgradeException(string message) : base(message) {
+        }
+
+        protected StateUpgradeException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        }
     }
 }

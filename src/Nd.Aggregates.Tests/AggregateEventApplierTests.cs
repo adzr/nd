@@ -1,5 +1,5 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -21,43 +21,26 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Events;
-using Nd.Core.Factories;
-using Nd.Identities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Nd.Aggregates.Events;
 using Xunit;
 
-namespace Nd.Aggregates.Tests
-{
-    public class AggregateEventApplierTests
-    {
+namespace Nd.Aggregates.Tests {
+    public class AggregateEventApplierTests {
         #region Test types definitions
-        internal sealed record class TestIdentity : Identity<TestIdentity>
-        {
-            public TestIdentity(Guid value) : base(value) { }
 
-            public TestIdentity(IGuidFactory factory) : base(factory) { }
-        }
+        internal record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier>,
+            IAggregateEventHandler<TestEventA>,
+            IAggregateEventHandler<TestEventB>,
+            IAggregateEventHandler<TestEventC> {
+            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateEventApplier>> _events = new();
 
-        internal abstract record class TestAggregateEvent<TEvent>
-            : AggregateEvent<TEvent, TestAggregateRoot, TestIdentity, TestAggregateEventApplier>
-            where TEvent : TestAggregateEvent<TEvent>;
+            public IReadOnlyCollection<IAggregateEvent<TestAggregateEventApplier>> Events { get => _events; }
 
-        internal interface IApplyTestAggregateEvent<TEvent> : IAggregateEventHandler<TEvent, TestAggregateRoot, TestIdentity, TestAggregateEventApplier>
-                where TEvent : TestAggregateEvent<TEvent>
-        { }
-
-        internal record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier, TestAggregateRoot, TestIdentity>,
-            IApplyTestAggregateEvent<TestEventA>,
-            IApplyTestAggregateEvent<TestEventB>,
-            IApplyTestAggregateEvent<TestEventC>
-        {
-            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> _events = new();
-
-            public IReadOnlyCollection<IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>> Events { get => _events; }
+            public override TestAggregateEventApplier State => this;
 
             public void On(TestEventA _) => _events.Enqueue(new TestEventA());
 
@@ -66,31 +49,21 @@ namespace Nd.Aggregates.Tests
             public void On(TestEventC _) => _events.Enqueue(new TestEventC());
         }
 
-        internal sealed record class TestEventA : TestAggregateEvent<TestEventA>;
+        internal sealed record class TestEventA : AggregateEvent<TestAggregateEventApplier>;
 
-        internal sealed record class TestEventB : TestAggregateEvent<TestEventB>;
+        internal sealed record class TestEventB : AggregateEvent<TestAggregateEventApplier>;
 
-        internal sealed record class TestEventC : TestAggregateEvent<TestEventC>;
+        internal sealed record class TestEventC : AggregateEvent<TestAggregateEventApplier>;
 
-        internal sealed record class TestEventD : TestAggregateEvent<TestEventD>;
+        internal sealed record class TestEventD : AggregateEvent<TestAggregateEventApplier>;
 
-        internal class TestAggregateRoot : AggregateRoot<TestAggregateRoot, TestIdentity, TestAggregateEventApplier, TestAggregateEventApplier>
-        {
-            public TestAggregateRoot(TestIdentity identity) : base(identity) { }
-
-            public TestAggregateRoot(TestIdentity identity, TestAggregateEventApplier state) : base(identity, state) { }
-
-            public void FireEvent<T>(IAggregateEventMetaData? meta = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
-                where T : TestAggregateEvent<T> => Emit(Activator.CreateInstance<T>(), meta, failOnDuplicates, currentTimestampProvider);
-        }
         #endregion
 
         [Fact]
-        public void CanApplyCorrectEventsBasedOnEventType()
-        {
+        public void CanApplyCorrectEventsBasedOnEventType() {
             var state = new TestAggregateEventApplier();
 
-            var events = new IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>[] {
+            var events = new IAggregateEvent<TestAggregateEventApplier>[] {
                 new TestEventC(),
                 new TestEventA(),
                 new TestEventB(),
@@ -99,8 +72,7 @@ namespace Nd.Aggregates.Tests
                 new TestEventB()
             };
 
-            foreach (var e in events)
-            {
+            foreach (var e in events) {
                 state.Apply(e);
             }
 
@@ -108,18 +80,16 @@ namespace Nd.Aggregates.Tests
         }
 
         [Fact]
-        public void CanIgnoreEventsWithNoImplementation()
-        {
+        public void CanIgnoreEventsWithNoImplementation() {
             var state = new TestAggregateEventApplier();
 
-            var events = new IAggregateEvent<TestAggregateRoot, TestIdentity, TestAggregateEventApplier>[] {
+            var events = new IAggregateEvent<TestAggregateEventApplier>[] {
                 new TestEventD(),
                 new TestEventD(),
                 new TestEventD()
             };
 
-            foreach (var e in events)
-            {
+            foreach (var e in events) {
                 state.Apply(e);
             }
 
