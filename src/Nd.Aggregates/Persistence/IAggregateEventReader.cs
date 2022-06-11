@@ -23,10 +23,12 @@
 
 using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Persistence {
+namespace Nd.Aggregates.Persistence
+{
     public interface IAggregateEventReader<TIdentity, TState>
         where TIdentity : IAggregateIdentity
-        where TState : class {
+        where TState : class
+    {
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified.
         /// </summary>

@@ -22,10 +22,10 @@
  */
 
 using Nd.Aggregates.Identities;
-using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates {
+namespace Nd.Aggregates.Snapshots
+{
     internal record class AggregateSnapshot<TIdentity, TState>
         (
             TState State,

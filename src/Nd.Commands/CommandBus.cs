@@ -21,25 +21,28 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Commands.Exceptions;
 using Nd.Commands.Persistence;
 using Nd.Commands.Results;
 using Nd.Core.Extensions;
 
-namespace Nd.Commands {
-    public class CommandBus : ICommandBus {
+namespace Nd.Commands
+{
+    public class CommandBus : ICommandBus
+    {
         private readonly ILookup<Type, ICommandHandler> _commandHandlerRegistery;
 
         private readonly ICommandWriter _commandWriter;
 
-        public CommandBus(ICommandWriter commandWriter, params ICommandHandler[] commandHandlers) {
-
+        public CommandBus(ICommandWriter commandWriter, params ICommandHandler[] commandHandlers)
+        {
             _commandWriter = commandWriter ?? throw new ArgumentNullException(nameof(commandWriter));
 
             if (commandHandlers is null)
+            {
                 throw new ArgumentNullException(nameof(commandHandlers));
+            }
 
             _commandHandlerRegistery = commandHandlers
                 .Where(handler => handler is not null)
@@ -64,28 +67,32 @@ namespace Nd.Commands {
 
         public async Task<TResult> ExecuteAsync<TIdentity, TResult>(ICommand<TIdentity> command, CancellationToken cancellationToken = default)
             where TIdentity : IAggregateIdentity
-            where TResult : IExecutionResult {
-
+            where TResult : IExecutionResult
+        {
             // Validating command reference.
-            if (command is null) {
+            if (command is null)
+            {
                 throw new ArgumentNullException(nameof(command));
             }
 
             // Fetching and validating command aggregate identity.
             var identity = command.AggregateIdentity;
 
-            if (identity is null) {
+            if (identity is null)
+            {
                 throw new CommandInvalidAggregateIdentityException(command);
             }
 
             // Fetching and validating command handler.
             var handlers = _commandHandlerRegistery[command.GetType()];
 
-            if (handlers is null || !handlers.Any()) {
+            if (handlers is null || !handlers.Any())
+            {
                 throw new CommandNotRegisteredException(command.TypeName);
             }
 
-            if (handlers.Count() > 1) {
+            if (handlers.Count() > 1)
+            {
                 throw new CommandHandlerConflictException(command.TypeName, handlers.Select(h => h.GetType().ToPrettyString()).ToArray());
             }
 
@@ -93,17 +100,23 @@ namespace Nd.Commands {
 
             TResult result;
 
-            try {
+            try
+            {
                 // Execute the command and keep the result.
                 result = await handler.ExecuteAsync<TResult>(command, cancellationToken).ConfigureAwait(false);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 throw new CommandExecutionException(command, ex);
             }
 
-            try {
+            try
+            {
                 // Store the command and its result.
                 await _commandWriter.WriteAsync(command, result, cancellationToken).ConfigureAwait(false);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 throw new CommandPersistenceException(command, result, ex);
             }
 

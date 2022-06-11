@@ -22,12 +22,13 @@
  */
 
 using Nd.Aggregates.Identities;
-using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Persistence {
+namespace Nd.Aggregates.Snapshots
+{
     public interface IAggregateSnapshotWriter<in TIdentity>
-        where TIdentity : IAggregateIdentity {
+        where TIdentity : IAggregateIdentity
+    {
         Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : class, IVersionedType;
     }
 }

@@ -22,12 +22,13 @@
  */
 
 using Nd.Aggregates.Identities;
-using Nd.Aggregates.Snapshots;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Persistence {
+namespace Nd.Aggregates.Snapshots
+{
     public interface IAggregateSnapshotReader<TIdentity>
-        where TIdentity : IAggregateIdentity {
+        where TIdentity : IAggregateIdentity
+    {
         Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, CancellationToken cancellation = default)
             where TState : class, IVersionedType
             => ReadAsync<TState>(aggregateId, 0u, cancellation);

@@ -23,24 +23,30 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Exceptions {
+namespace Nd.Aggregates.Exceptions
+{
 
     [Serializable]
-    public class AggregateCreationException : Exception {
+    public class AggregateCreationException : Exception
+    {
         public AggregateCreationException(string aggregateTypeName, Exception? exception = default)
-            : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception) {
+            : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception)
+        {
             AggregateTypeName = aggregateTypeName;
         }
 
         public string? AggregateTypeName { get; }
 
-        public AggregateCreationException() : this("Failed to create aggregate root") {
+        public AggregateCreationException() : this("Failed to create aggregate root")
+        {
         }
 
-        public AggregateCreationException(string message) : base(message) {
+        public AggregateCreationException(string message) : base(message)
+        {
         }
 
-        protected AggregateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected AggregateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
         }
     }
 }

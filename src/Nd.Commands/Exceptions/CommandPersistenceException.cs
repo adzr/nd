@@ -24,29 +24,35 @@
 using System.Runtime.Serialization;
 using Nd.Commands.Results;
 
-namespace Nd.Commands.Exceptions {
+namespace Nd.Commands.Exceptions
+{
     [Serializable]
-    public class CommandPersistenceException : Exception {
-
+    public class CommandPersistenceException : Exception
+    {
         public ICommand? Command { get; }
 
         public IExecutionResult? Result { get; }
 
-        public CommandPersistenceException() : this("Command and result persistence has unexpectedly failed") {
+        public CommandPersistenceException() : this("Command and result persistence has unexpectedly failed")
+        {
         }
 
-        public CommandPersistenceException(string? message) : base(message) {
+        public CommandPersistenceException(string? message) : base(message)
+        {
         }
 
-        public CommandPersistenceException(ICommand command, IExecutionResult result, Exception ex) : this($"Command {command} with result {result} persistence has unexpectedly failed", ex) {
+        public CommandPersistenceException(ICommand command, IExecutionResult result, Exception ex) : this($"Command {command} with result {result} persistence has unexpectedly failed", ex)
+        {
             Command = command;
             Result = result;
         }
 
-        public CommandPersistenceException(string? message, Exception? innerException) : base(message, innerException) {
+        public CommandPersistenceException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected CommandPersistenceException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected CommandPersistenceException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

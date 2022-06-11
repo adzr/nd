@@ -24,12 +24,16 @@
 using System.Diagnostics;
 using Nd.Identities;
 
-namespace Nd.Entities {
+namespace Nd.Entities
+{
     [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public abstract class Entity<TIdentity> : IEntity<TIdentity>
-        where TIdentity : IIdentity {
-        protected Entity(TIdentity identity) {
-            if (identity is null) {
+        where TIdentity : IIdentity
+    {
+        protected Entity(TIdentity identity)
+        {
+            if (identity is null)
+            {
                 throw new ArgumentNullException(nameof(identity));
             }
 

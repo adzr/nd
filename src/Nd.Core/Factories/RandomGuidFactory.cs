@@ -21,14 +21,14 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Factories {
-    public sealed class RandomGuidFactory : IGuidFactory {
-        private static readonly IGuidFactory s_instance = new RandomGuidFactory();
-
+namespace Nd.Core.Factories
+{
+    public sealed class RandomGuidFactory : IGuidFactory
+    {
         private RandomGuidFactory() { }
 
         public Guid Create() => Guid.NewGuid();
 
-        public static IGuidFactory Instance => s_instance;
+        public static IGuidFactory Instance { get; } = new RandomGuidFactory();
     }
 }

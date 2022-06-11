@@ -24,12 +24,14 @@
 using System.Runtime.Serialization;
 using Nd.Identities;
 
-namespace Nd.Aggregates.Exceptions {
-
+namespace Nd.Aggregates.Exceptions
+{
     [Serializable]
-    public class AggregatePersistenceException : Exception {
+    public class AggregatePersistenceException : Exception
+    {
         public AggregatePersistenceException(string aggregateTypeName, IIdentity identity, Exception innerException) :
-            base($"Aggregate \"{aggregateTypeName}\" ({identity}) failed to store", innerException) {
+            base($"Aggregate \"{aggregateTypeName}\" ({identity}) failed to store", innerException)
+        {
             AggregateTypeName = aggregateTypeName;
             Identity = identity;
         }
@@ -38,16 +40,20 @@ namespace Nd.Aggregates.Exceptions {
 
         public IIdentity? Identity { get; }
 
-        public AggregatePersistenceException() : this("Aggregate failed to store") {
+        public AggregatePersistenceException() : this("Aggregate failed to store")
+        {
         }
 
-        public AggregatePersistenceException(string message) : base(message) {
+        public AggregatePersistenceException(string message) : base(message)
+        {
         }
 
-        public AggregatePersistenceException(string message, Exception innerException) : base(message, innerException) {
+        public AggregatePersistenceException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected AggregatePersistenceException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected AggregatePersistenceException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
         }
     }
 }

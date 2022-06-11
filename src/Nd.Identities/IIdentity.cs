@@ -27,10 +27,12 @@
 
 using Nd.Core.Types.Names;
 
-namespace Nd.Identities {
+namespace Nd.Identities
+{
     public interface IIdentity : INamedType, IComparable { }
 
-    public interface IIdentity<out T> : IIdentity {
+    public interface IIdentity<out T> : IIdentity
+    {
         T Value { get; }
     }
 }

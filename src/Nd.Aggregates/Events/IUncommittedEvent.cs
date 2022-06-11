@@ -27,17 +27,20 @@
 
 using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Events {
-    public interface IUncommittedEvent {
-        public IAggregateEvent Event { get; }
-        public IAggregateEventMetaData MetaData { get; }
+namespace Nd.Aggregates.Events
+{
+    public interface IUncommittedEvent
+    {
+        public IAggregateEvent AggregateEvent { get; }
+        public IAggregateEventMetadata Metadata { get; }
     }
 
     public interface IUncommittedEvent<TIdentity> : IUncommittedEvent
-        where TIdentity : IAggregateIdentity {
-        public new IAggregateEvent Event { get; }
-        public new IAggregateEventMetaData<TIdentity> MetaData { get; }
-        IAggregateEvent IUncommittedEvent.Event => Event;
-        IAggregateEventMetaData IUncommittedEvent.MetaData => MetaData;
+        where TIdentity : IAggregateIdentity
+    {
+        public new IAggregateEvent AggregateEvent { get; }
+        public new IAggregateEventMetadata<TIdentity> Metadata { get; }
+        IAggregateEvent IUncommittedEvent.AggregateEvent => AggregateEvent;
+        IAggregateEventMetadata IUncommittedEvent.Metadata => Metadata;
     }
 }

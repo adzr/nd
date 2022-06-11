@@ -33,8 +33,10 @@ using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 using Xunit;
 
-namespace Nd.Core.Tests.Extensions {
-    public class TypeExtensionsTests {
+namespace Nd.Core.Tests.Extensions
+{
+    public class TypeExtensionsTests
+    {
         [Theory]
         [InlineData(typeof(string), "String")]
         [InlineData(typeof(int), "Int32")]
@@ -48,7 +50,8 @@ namespace Nd.Core.Tests.Extensions {
             Assert.Equal(expectedPrettyString, type.ToPrettyString());
 
         [Fact]
-        public void CanGetInterfacesOfSpecificTypeOfAType() {
+        public void CanGetInterfacesOfSpecificTypeOfAType()
+        {
             var result = typeof(TypeTest).GetInterfacesOfType<IA>();
 
             Assert.Equal(6, result.Length);
@@ -61,7 +64,8 @@ namespace Nd.Core.Tests.Extensions {
         }
 
         [Fact]
-        public void CanGetGenericTypeArgumentsOfAType() {
+        public void CanGetGenericTypeArgumentsOfAType()
+        {
             var result = typeof(TypeTest)
                 .GetTypeInfo()
                 .GetInterfaces()
@@ -128,7 +132,8 @@ namespace Nd.Core.Tests.Extensions {
     internal interface IF : ID { }
 
     [VersionedTypeTest("Test", 1)]
-    internal class TypeTest : IA<ID>, IB, IC, ID {
+    internal class TypeTest : IA<ID>, IB, IC, ID
+    {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
         public void DoNothingWith(string _) { }
 
@@ -136,7 +141,8 @@ namespace Nd.Core.Tests.Extensions {
         public string ReturnArg(string arg) => arg;
     }
 
-    internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute {
+    internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
+    {
         public VersionedTypeTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
     }
 }

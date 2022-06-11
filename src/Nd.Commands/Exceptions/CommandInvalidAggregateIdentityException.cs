@@ -23,26 +23,32 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Commands {
+namespace Nd.Commands.Exceptions
+{
     [Serializable]
-    public class CommandInvalidAggregateIdentityException : Exception {
-
+    public class CommandInvalidAggregateIdentityException : Exception
+    {
         public ICommand? Command { get; }
 
-        public CommandInvalidAggregateIdentityException() : this("Invalid aggregate identity in command") {
+        public CommandInvalidAggregateIdentityException() : this("Invalid aggregate identity in command")
+        {
         }
 
-        public CommandInvalidAggregateIdentityException(ICommand command) : this($"Invalid aggregate identity in command {command}") {
+        public CommandInvalidAggregateIdentityException(ICommand command) : this($"Invalid aggregate identity in command {command}")
+        {
             Command = command;
         }
 
-        public CommandInvalidAggregateIdentityException(string? message) : base(message) {
+        public CommandInvalidAggregateIdentityException(string? message) : base(message)
+        {
         }
 
-        public CommandInvalidAggregateIdentityException(string? message, Exception? innerException) : base(message, innerException) {
+        public CommandInvalidAggregateIdentityException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected CommandInvalidAggregateIdentityException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected CommandInvalidAggregateIdentityException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

@@ -23,21 +23,25 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Core.Types {
-
+namespace Nd.Core.Exceptions
+{
     [Serializable]
-    public class TypeDefinitionNotFoundException : Exception {
-
-        public TypeDefinitionNotFoundException() : this($"Definition of type has no Name or Version defined") {
+    public class TypeDefinitionNotFoundException : Exception
+    {
+        public TypeDefinitionNotFoundException() : this($"Definition of type has no Name or Version defined")
+        {
         }
 
-        public TypeDefinitionNotFoundException(string? message) : base(message) {
+        public TypeDefinitionNotFoundException(string? message) : base(message)
+        {
         }
 
-        public TypeDefinitionNotFoundException(string? message, Exception? innerException) : base(message, innerException) {
+        public TypeDefinitionNotFoundException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected TypeDefinitionNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected TypeDefinitionNotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

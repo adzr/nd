@@ -22,11 +22,13 @@
 
 using System.Text.RegularExpressions;
 
-namespace Nd.Core.Extensions {
+namespace Nd.Core.Extensions
+{
     /// <summary>
     /// Contains extension methods for <see cref="string"/>.
     /// </summary>
-    public static class StringExtensions {
+    public static class StringExtensions
+    {
         private static readonly Regex s_camelCasePattern = new(@"(([A-Z]+[a-z]*)|([0-9]+)|([a-z]+))", RegexOptions.Compiled);
 
         /// <summary>
@@ -44,7 +46,8 @@ namespace Nd.Core.Extensions {
         /// <param name="value">The value of the given <see cref="string"/>.</param>
         /// <param name="trimStrings">A <see cref="string"/> array that contains the values to be trimmed of the end of the given <see cref="string"/>.</param>
         /// <returns>An end-trimmed <see cref="string"/> of the first value match found in the given array.</returns>
-        public static string TrimEnd(this string value, StringComparison comparison, params string[] trimStrings) {
+        public static string TrimEnd(this string value, StringComparison comparison, params string[] trimStrings)
+        {
             var trim = trimStrings?.FirstOrDefault((s) => value.EndsWith(s, comparison));
 
             return !string.IsNullOrEmpty(trim) ? value[..^trim.Length] : value;

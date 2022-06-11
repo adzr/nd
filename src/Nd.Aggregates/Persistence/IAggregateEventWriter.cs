@@ -24,9 +24,11 @@
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Persistence {
+namespace Nd.Aggregates.Persistence
+{
     public interface IAggregateEventWriter<TIdentity>
-        where TIdentity : IAggregateIdentity {
+        where TIdentity : IAggregateIdentity
+    {
         Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
             where TEvent : IUncommittedEvent<TIdentity>;
     }

@@ -31,8 +31,10 @@ using Nd.Core.Exceptions;
 using Nd.Core.Types.Names;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Core.Extensions {
-    public static class TypeExtensions {
+namespace Nd.Core.Extensions
+{
+    public static class TypeExtensions
+    {
         private const int PrettyStringMaxDepth = 8;
 
         private static readonly ConcurrentDictionary<Type, string> s_toPrettyStringCache = new();
@@ -40,27 +42,33 @@ namespace Nd.Core.Extensions {
         public static string ToPrettyString(this Type type, int maxDepth = PrettyStringMaxDepth) =>
             s_toPrettyStringCache.GetOrAdd(type, t => ToPrettyStringRecursive(t, 0, maxDepth));
 
-        private static string ToPrettyStringRecursive(Type type, int depth, int maxDepth) {
-            if (depth > maxDepth) {
+        private static string ToPrettyStringRecursive(Type type, int depth, int maxDepth)
+        {
+            if (depth > maxDepth)
+            {
                 return type.Name;
             }
 
             var typeNameFragments = GetTypeNameFragments(type);
 
-            if (typeNameFragments.Length == 1) {
+            if (typeNameFragments.Length == 1)
+            {
                 return typeNameFragments[0];
             }
 
             Type[]? genericArguments;
 
-            try {
+            try
+            {
                 genericArguments = type.GetTypeInfo().GetGenericArguments();
 
                 var isConstructedGenericType = type.IsConstructedGenericType;
 
                 return @$"{typeNameFragments[0]}<{string.Join(",", genericArguments.Select(t =>
                 !isConstructedGenericType ? string.Empty : ToPrettyStringRecursive(t, depth + 1, maxDepth)))}>";
-            } catch (NotSupportedException) {
+            }
+            catch (NotSupportedException)
+            {
                 return type.Name;
             }
         }
@@ -98,7 +106,8 @@ namespace Nd.Core.Extensions {
             .FirstOrDefault()?.TypeName ??
             type?.AssemblyQualifiedName ?? string.Empty;
 
-        public static (string Name, uint Version) GetNameAndVersion(this Type type) {
+        public static (string Name, uint Version) GetNameAndVersion(this Type type)
+        {
             var record = type?
             .GetTypeInfo()
             .GetCustomAttributes<VersionedTypeAttribute>(true)
@@ -109,30 +118,37 @@ namespace Nd.Core.Extensions {
                 (record.TypeName, record.TypeVersion);
         }
 
-        public static async Task<IVersionedType> UpgradeRecursiveAsync(this IVersionedType type, CancellationToken cancellationToken = default) {
+        public static async Task<IVersionedType> UpgradeRecursiveAsync(this IVersionedType type, CancellationToken cancellationToken = default)
+        {
+            if (type is null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             var upgraded = await type.UpgradeAsync(cancellationToken).ConfigureAwait(false);
 
-            if (upgraded is null) {
-                return type;
-            }
-
-            if (!string.Equals(type.TypeName, upgraded.TypeName, StringComparison.Ordinal)) {
-                throw new TypeUpgradeConflictException(type, upgraded);
-            }
-
-            if (type.TypeVersion >= upgraded.TypeVersion) {
-                throw new TypeVersionUpgradeConflictException(type, type.TypeVersion, upgraded.TypeVersion);
-            }
-
-            return await UpgradeRecursiveAsync(upgraded, cancellationToken).ConfigureAwait(false);
+            return upgraded is null
+                ? type
+                : !string.Equals(type.TypeName, upgraded.TypeName, StringComparison.Ordinal)
+                ? throw new TypeUpgradeConflictException(type, upgraded)
+                : type.TypeVersion >= upgraded.TypeVersion
+                ? throw new TypeVersionUpgradeConflictException(type, type.TypeVersion, upgraded.TypeVersion)
+                : await UpgradeRecursiveAsync(upgraded, cancellationToken).ConfigureAwait(false);
         }
 
-        public static T CompileMethodInvocation<T>(this MethodInfo methodInfo) {
+        public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)
+        {
+            if (methodInfo is null)
+            {
+                throw new ArgumentNullException(nameof(methodInfo));
+            }
+
             var genericArguments = typeof(T).GetTypeInfo().GetGenericArguments();
             var methodArgumentList = methodInfo.GetParameters().Select(p => p.ParameterType).ToList();
             var funcArgumentList = genericArguments.Skip(1).Take(methodArgumentList.Count).ToList();
 
-            if (funcArgumentList.Count != methodArgumentList.Count) {
+            if (funcArgumentList.Count != methodArgumentList.Count)
+            {
                 throw new ArgumentException("Incorrect number of arguments");
             }
 
@@ -140,7 +156,8 @@ namespace Nd.Core.Extensions {
 
             var argumentPairs = funcArgumentList.Zip(methodArgumentList, (s, d) => new { Source = s, Destination = d }).ToList();
 
-            if (argumentPairs.All(a => a.Source == a.Destination)) {
+            if (argumentPairs.All(a => a.Source == a.Destination))
+            {
                 // No need to do anything fancy, the types are the same.
                 var parameters = funcArgumentList.Select(Expression.Parameter).ToList();
                 return Expression.Lambda<T>(
@@ -161,12 +178,16 @@ namespace Nd.Core.Extensions {
 
             var callArguments = new List<ParameterExpression>();
 
-            foreach (var a in argumentPairs) {
-                if (a.Source == a.Destination) {
+            foreach (var a in argumentPairs)
+            {
+                if (a.Source == a.Destination)
+                {
                     var sourceParameter = Expression.Parameter(a.Source);
                     lambdaArgument.Add(sourceParameter);
                     callArguments.Add(sourceParameter);
-                } else {
+                }
+                else
+                {
                     var sourceParameter = Expression.Parameter(a.Source);
                     var destinationVariable = Expression.Variable(a.Destination);
                     var assignToDestination = Expression.Assign(destinationVariable, Expression.Convert(sourceParameter, a.Destination));

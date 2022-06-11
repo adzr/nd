@@ -21,15 +21,18 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Events {
-    public interface IAggregateEventHandler {
-        virtual void On(IAggregateEvent @event) { }
+namespace Nd.Aggregates.Events
+{
+    public interface ICanHandleAggregateEvent
+    {
+        virtual void Handle(IAggregateEvent aggregateEvent) { }
     }
 
-    public interface IAggregateEventHandler<in TEvent> : IAggregateEventHandler
-        where TEvent : IAggregateEvent {
-        void On(TEvent @event);
+    public interface ICanHandleAggregateEvent<in TEvent> : ICanHandleAggregateEvent
+        where TEvent : IAggregateEvent
+    {
+        void Handle(TEvent aggregateEvent);
 
-        protected new void On(IAggregateEvent @event) => On((TEvent)@event);
+        protected new void Handle(IAggregateEvent aggregateEvent) => Handle((TEvent)aggregateEvent);
     }
 }

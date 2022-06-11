@@ -23,10 +23,11 @@
 
 using Nd.Core.Types.Names;
 
-namespace Nd.Aggregates {
-
+namespace Nd.Aggregates
+{
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class NamedAggregateAttribute : NamedTypeAttribute {
+    public sealed class NamedAggregateAttribute : NamedTypeAttribute
+    {
         public NamedAggregateAttribute(string typeName) : base(typeName) { }
     }
 }

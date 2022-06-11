@@ -26,11 +26,11 @@ using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
 
-namespace Nd.Aggregates.Extensions {
-
-    public static class AggregateIdentityExtensions {
-
-        public static (TAggregate Aggregate, IAggregateEventApplier<TState> State) CreateAggregateAndState<TIdentity, TState, TAggregate>(
+namespace Nd.Aggregates.Extensions
+{
+    public static class AggregateIdentityExtensions
+    {
+        public static (TAggregate Aggregate, IAggregateState<TState> State) CreateAggregateAndState<TIdentity, TState, TAggregate>(
             this TIdentity aggregateId,
             AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
             AggregateStateFactoryFunc<TState> initializeState,
@@ -38,22 +38,38 @@ namespace Nd.Aggregates.Extensions {
 
             where TAggregate : IAggregateRoot<TIdentity, TState>
             where TIdentity : IAggregateIdentity
-            where TState : class {
+            where TState : class
+        {
+            if (initializeState is null)
+            {
+                throw new ArgumentNullException(nameof(initializeState));
+            }
 
-            IAggregateEventApplier<TState> state;
+            if (initializeAggregate is null)
+            {
+                throw new ArgumentNullException(nameof(initializeAggregate));
+            }
 
-            try {
+            IAggregateState<TState> state;
+
+            try
+            {
                 state = initializeState() ?? throw new AggregateStateCreationException(typeof(TState));
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 throw new AggregateStateCreationException(typeof(TState), exception);
             }
 
             TAggregate aggregate;
 
-            try {
+            try
+            {
                 aggregate = initializeAggregate(aggregateId, () => state, version) ??
                     throw new AggregateCreationException(typeof(TAggregate).GetName());
-            } catch (Exception exception) {
+            }
+            catch (Exception exception)
+            {
                 throw new AggregateCreationException(typeof(TAggregate).GetName(), exception);
             }
 

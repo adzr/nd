@@ -22,21 +22,25 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Core.Exceptions {
-
+namespace Nd.Core.Exceptions
+{
     [Serializable]
-    public class MissingDeclaringTypeException : Exception {
-
-        public MissingDeclaringTypeException() : this($"Method info missing declaring type") {
+    public class MissingDeclaringTypeException : Exception
+    {
+        public MissingDeclaringTypeException() : this($"Method info missing declaring type")
+        {
         }
 
-        public MissingDeclaringTypeException(string? message) : base(message) {
+        public MissingDeclaringTypeException(string? message) : base(message)
+        {
         }
 
-        public MissingDeclaringTypeException(string? message, Exception? innerException) : base(message, innerException) {
+        public MissingDeclaringTypeException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected MissingDeclaringTypeException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected MissingDeclaringTypeException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

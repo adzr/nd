@@ -22,10 +22,11 @@
  */
 
 using Nd.Core.Factories;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Identities {
-    public record class IdempotencyIdentity : GuidIdentity, IIdempotencyIdentity {
+namespace Nd.Identities
+{
+    public record class IdempotencyIdentity : GuidIdentity, IIdempotencyIdentity
+    {
         public IdempotencyIdentity(Guid value) : base(value) { }
 
         public IdempotencyIdentity(IGuidFactory factory) : base(factory) { }

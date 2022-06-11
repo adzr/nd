@@ -29,29 +29,30 @@
  */
 
 using Nd.Aggregates.Identities;
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types;
+using Nd.Identities;
 using Nd.ValueObjects;
 
-namespace Nd.Commands {
+namespace Nd.Commands
+{
     public abstract record class Command<TIdentity> : ValueObject, ICommand<TIdentity>
-        where TIdentity : IAggregateIdentity {
-
-        private readonly string _typeName;
-        private readonly uint _typeVersion;
-
-        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity) {
-            (_typeName, _typeVersion) = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault() ??
-            throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
+        where TIdentity : IAggregateIdentity
+    {
+        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity)
+        {
+            (TypeName, TypeVersion) = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry :
+                throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
 
             IdempotencyIdentity = idempotencyIdentity;
             CorrelationIdentity = correlationIdentity;
             AggregateIdentity = aggregateIdentity;
         }
 
-        public string TypeName => _typeName;
+        public virtual string TypeName { get; }
 
-        public uint TypeVersion => _typeVersion;
+        public virtual uint TypeVersion { get; }
 
         public TIdentity AggregateIdentity { get; }
 

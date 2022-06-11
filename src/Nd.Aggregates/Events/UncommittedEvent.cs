@@ -23,10 +23,11 @@
 
 using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Events {
+namespace Nd.Aggregates.Events
+{
     internal sealed record class UncommittedEvent<TIdentity>(
-        IAggregateEvent Event,
-        IAggregateEventMetaData<TIdentity> MetaData
+        IAggregateEvent AggregateEvent,
+        IAggregateEventMetadata<TIdentity> Metadata
     ) : IUncommittedEvent<TIdentity>
         where TIdentity : IAggregateIdentity;
 }

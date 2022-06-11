@@ -27,8 +27,10 @@ using System.Linq;
 using Nd.Core.Factories;
 using Xunit;
 
-namespace Nd.Core.Tests.Factories {
-    public class CombGuidFactoryTests {
+namespace Nd.Core.Tests.Factories
+{
+    public class CombGuidFactoryTests
+    {
         private const int GuidCount = 1000;
 
         [Fact]
@@ -36,21 +38,26 @@ namespace Nd.Core.Tests.Factories {
             Assert.Equal(GuidCount, (from _ in Enumerable.Range(0, GuidCount) select CombGuidFactory.Instance.Create()).Distinct().Count());
 
         [Fact]
-        public void CanGenerateSequencialGuid() {
+        public void CanGenerateSequencialGuid()
+        {
             var guids = (from _ in Enumerable.Range(0, GuidCount) select CombGuidFactory.Instance.Create()).ToArray();
             Assert.True(guids.SequenceEqual(guids.OrderBy(g => g, new CombGuidComparer())));
         }
     }
 
-    internal class CombGuidComparer : IComparer<Guid> {
-        public int Compare(Guid x, Guid y) {
+    internal class CombGuidComparer : IComparer<Guid>
+    {
+        public int Compare(Guid x, Guid y)
+        {
             var bytesX = GetGuidV1OrderedBytes(x);
             var bytesY = GetGuidV1OrderedBytes(y);
 
-            for (var i = 0; i < 16; i++) {
+            for (var i = 0; i < 16; i++)
+            {
                 var result = bytesX[i].CompareTo(bytesY[i]);
 
-                if (result != 0) {
+                if (result != 0)
+                {
                     return result;
                 }
             }
@@ -58,7 +65,8 @@ namespace Nd.Core.Tests.Factories {
             return 0;
         }
 
-        public static byte[] GetGuidV1OrderedBytes(Guid guid) {
+        public static byte[] GetGuidV1OrderedBytes(Guid guid)
+        {
             var b = guid.ToByteArray();
 
             return new[] {

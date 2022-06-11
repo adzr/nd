@@ -29,9 +29,11 @@ using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 using Xunit;
 
-namespace Nd.Core.Tests.VersionedTypes {
+namespace Nd.Core.Tests.VersionedTypes
+{
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class VersionedTestAttribute : VersionedTypeAttribute {
+    public sealed class VersionedTestAttribute : VersionedTypeAttribute
+    {
         public VersionedTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
     }
 
@@ -39,36 +41,40 @@ namespace Nd.Core.Tests.VersionedTypes {
 
     public abstract record class UpgradableVersion(
         int Value
-        ) : IVersionedType {
+        ) : IVersionedType
+    {
         public abstract uint TypeVersion { get; }
         public abstract string TypeName { get; }
         public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
     }
 
     [VersionedTest(nameof(UpgradableVersion), 1)]
-    public record class UpgradableVersion1(int Value) : UpgradableVersion(Value) {
+    public record class UpgradableVersion1(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion1).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 2)]
-    public record class UpgradableVersion2(int Value) : UpgradableVersion(Value) {
+    public record class UpgradableVersion2(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion2).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 3)]
-    public record class UpgradableVersion3(int Value) : UpgradableVersion(Value) {
+    public record class UpgradableVersion3(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion3).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
@@ -77,44 +83,49 @@ namespace Nd.Core.Tests.VersionedTypes {
     }
 
     [VersionedTest(nameof(UpgradableVersion), 4)]
-    public record class UpgradableVersion4(int Value) : UpgradableVersion(Value) {
+    public record class UpgradableVersion4(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion4).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 4)]
-    public record class UpgradableVersion5(int Value) : UpgradableVersion(Value) {
+    public record class UpgradableVersion5(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion5).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
     }
 
     [VersionedTest("NonUpgradableVersion", 2)]
-    public record class NonUpgradableVersion(int Value) : UpgradableVersion(Value) {
+    public record class NonUpgradableVersion(int Value) : UpgradableVersion(Value)
+    {
         private static readonly (string Name, uint Version) s_nameAndVersion = typeof(NonUpgradableVersion).GetNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     #endregion
 
     [VersionedTest(nameof(VersionedTypeAttributeTests), 7)]
-    public class VersionedTypeAttributeTests {
+    public class VersionedTypeAttributeTests
+    {
         [Fact]
-        public void CanHaveAttributedNameAndVersion() {
+        public void CanHaveAttributedNameAndVersion()
+        {
             var (name, version) = typeof(VersionedTypeAttributeTests).GetNameAndVersion();
 
             Assert.Equal(nameof(VersionedTypeAttributeTests), name);
@@ -122,7 +133,8 @@ namespace Nd.Core.Tests.VersionedTypes {
         }
 
         [Fact]
-        public void CanUpgradeTypeOfSameTypeNameToGreaterVersion() {
+        public void CanUpgradeTypeOfSameTypeNameToGreaterVersion()
+        {
             var @base = new UpgradableVersion1(2);
             Assert.Equal(2, @base.Value);
             var @new = @base.UpgradeRecursiveAsync().GetAwaiter().GetResult();
@@ -131,24 +143,27 @@ namespace Nd.Core.Tests.VersionedTypes {
         }
 
         [Fact]
-        public void CannotUpgradeTypeOfSameTypeNameToSameVersion() {
+        public void CannotUpgradeTypeOfSameTypeNameToSameVersion()
+        {
             var @base = new UpgradableVersion5(2);
             Assert.Equal(2, @base.Value);
-            Assert.Throws<TypeVersionUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+            _ = Assert.Throws<TypeVersionUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
         }
 
         [Fact]
-        public void CannotUpgradeTypeOfSameTypeNameToLesserVersion() {
+        public void CannotUpgradeTypeOfSameTypeNameToLesserVersion()
+        {
             var @base = new UpgradableVersion4(2);
             Assert.Equal(2, @base.Value);
-            Assert.Throws<TypeVersionUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+            _ = Assert.Throws<TypeVersionUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
         }
 
         [Fact]
-        public void CannotUpgradeTypeToTypeOfDifferentTypeName() {
+        public void CannotUpgradeTypeToTypeOfDifferentTypeName()
+        {
             var @base = new NonUpgradableVersion(2);
             Assert.Equal(2, @base.Value);
-            Assert.Throws<TypeUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
+            _ = Assert.Throws<TypeUpgradeConflictException>(() => @base.UpgradeRecursiveAsync().GetAwaiter().GetResult());
         }
     }
 }

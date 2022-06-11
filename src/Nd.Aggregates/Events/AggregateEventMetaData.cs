@@ -22,16 +22,18 @@
  */
 
 using Nd.Aggregates.Identities;
+using Nd.Identities;
 using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Events {
-    public record class AggregateEventMetaData
+namespace Nd.Aggregates.Events
+{
+    public record class AggregateEventMetadata
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IAggregateEventMetaData;
+        ) : ValueObject, IAggregateEventMetadata;
 
-    public record class AggregateEventMetaData<TIdentity>
+    public record class AggregateEventMetadata<TIdentity>
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity,
@@ -42,6 +44,6 @@ namespace Nd.Aggregates.Events {
             string AggregateName,
             uint AggregateVersion,
             DateTimeOffset Timestamp
-        ) : AggregateEventMetaData(IdempotencyIdentity, CorrelationIdentity), IAggregateEventMetaData<TIdentity>
+        ) : AggregateEventMetadata(IdempotencyIdentity, CorrelationIdentity), IAggregateEventMetadata<TIdentity>
         where TIdentity : IAggregateIdentity;
 }

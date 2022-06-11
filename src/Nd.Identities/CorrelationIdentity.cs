@@ -22,10 +22,11 @@
  */
 
 using Nd.Core.Factories;
-using Nd.Identities;
 
-namespace Nd.Aggregates.Identities {
-    public record class CorrelationIdentity : GuidIdentity, ICorrelationIdentity {
+namespace Nd.Identities
+{
+    public record class CorrelationIdentity : GuidIdentity, ICorrelationIdentity
+    {
         public CorrelationIdentity(Guid value) : base(value) { }
 
         public CorrelationIdentity(IGuidFactory factory) : base(factory) { }

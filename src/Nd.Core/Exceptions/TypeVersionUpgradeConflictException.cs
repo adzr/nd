@@ -23,33 +23,38 @@
 using System.Runtime.Serialization;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Core.Exceptions {
-
+namespace Nd.Core.Exceptions
+{
     [Serializable]
-    public class TypeVersionUpgradeConflictException : Exception {
-
+    public class TypeVersionUpgradeConflictException : Exception
+    {
         public IVersionedType? Upgradable { get; }
         public uint? From { get; }
         public uint? To { get; }
 
         public TypeVersionUpgradeConflictException(IVersionedType upgradable, uint from, uint to, Exception? innerException = null)
-            : base($"Trying to upgrade type of name '{upgradable.TypeName}' from version {from}" +
-                    $" to version '{to}', the upgraded version must be greater than the given one", innerException) {
+            : base($"Trying to upgrade type of name '{upgradable?.TypeName}' from version {from}" +
+                    $" to version '{to}', the upgraded version must be greater than the given one", innerException)
+        {
             Upgradable = upgradable;
             From = from;
             To = to;
         }
 
-        public TypeVersionUpgradeConflictException() : this($"Trying to upgrade type to an invalid version") {
+        public TypeVersionUpgradeConflictException() : this($"Trying to upgrade type to an invalid version")
+        {
         }
 
-        public TypeVersionUpgradeConflictException(string message) : base(message) {
+        public TypeVersionUpgradeConflictException(string message) : base(message)
+        {
         }
 
-        public TypeVersionUpgradeConflictException(string message, Exception innerException) : base(message, innerException) {
+        public TypeVersionUpgradeConflictException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected TypeVersionUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected TypeVersionUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

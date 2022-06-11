@@ -28,42 +28,46 @@ using System.Linq;
 using Nd.Aggregates.Events;
 using Xunit;
 
-namespace Nd.Aggregates.Tests {
-    public class AggregateEventApplierTests {
+namespace Nd.Aggregates.Tests
+{
+    public class AggregateStateTests
+    {
         #region Test types definitions
 
-        internal record class TestAggregateEventApplier : AggregateEventApplier<TestAggregateEventApplier>,
-            IAggregateEventHandler<TestEventA>,
-            IAggregateEventHandler<TestEventB>,
-            IAggregateEventHandler<TestEventC> {
-            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateEventApplier>> _events = new();
+        internal record class TestAggregateState : AggregateState<TestAggregateState>,
+            ICanHandleAggregateEvent<TestEventA>,
+            ICanHandleAggregateEvent<TestEventB>,
+            ICanHandleAggregateEvent<TestEventC>
+        {
+            private readonly ConcurrentQueue<IAggregateEvent<TestAggregateState>> _events = new();
 
-            public IReadOnlyCollection<IAggregateEvent<TestAggregateEventApplier>> Events { get => _events; }
+            public IReadOnlyCollection<IAggregateEvent<TestAggregateState>> Events => _events;
 
-            public override TestAggregateEventApplier State => this;
+            public override TestAggregateState State => this;
 
-            public void On(TestEventA _) => _events.Enqueue(new TestEventA());
+            public void Handle(TestEventA _) => _events.Enqueue(new TestEventA());
 
-            public void On(TestEventB _) => _events.Enqueue(new TestEventB());
+            public void Handle(TestEventB _) => _events.Enqueue(new TestEventB());
 
-            public void On(TestEventC _) => _events.Enqueue(new TestEventC());
+            public void Handle(TestEventC _) => _events.Enqueue(new TestEventC());
         }
 
-        internal sealed record class TestEventA : AggregateEvent<TestAggregateEventApplier>;
+        internal sealed record class TestEventA : AggregateEvent<TestAggregateState>;
 
-        internal sealed record class TestEventB : AggregateEvent<TestAggregateEventApplier>;
+        internal sealed record class TestEventB : AggregateEvent<TestAggregateState>;
 
-        internal sealed record class TestEventC : AggregateEvent<TestAggregateEventApplier>;
+        internal sealed record class TestEventC : AggregateEvent<TestAggregateState>;
 
-        internal sealed record class TestEventD : AggregateEvent<TestAggregateEventApplier>;
+        internal sealed record class TestEventD : AggregateEvent<TestAggregateState>;
 
         #endregion
 
         [Fact]
-        public void CanApplyCorrectEventsBasedOnEventType() {
-            var state = new TestAggregateEventApplier();
+        public void CanApplyCorrectEventsBasedOnEventType()
+        {
+            var state = new TestAggregateState();
 
-            var events = new IAggregateEvent<TestAggregateEventApplier>[] {
+            var events = new IAggregateEvent<TestAggregateState>[] {
                 new TestEventC(),
                 new TestEventA(),
                 new TestEventB(),
@@ -72,7 +76,8 @@ namespace Nd.Aggregates.Tests {
                 new TestEventB()
             };
 
-            foreach (var e in events) {
+            foreach (var e in events)
+            {
                 state.Apply(e);
             }
 
@@ -80,16 +85,18 @@ namespace Nd.Aggregates.Tests {
         }
 
         [Fact]
-        public void CanIgnoreEventsWithNoImplementation() {
-            var state = new TestAggregateEventApplier();
+        public void CanIgnoreEventsWithNoImplementation()
+        {
+            var state = new TestAggregateState();
 
-            var events = new IAggregateEvent<TestAggregateEventApplier>[] {
+            var events = new IAggregateEvent<TestAggregateState>[] {
                 new TestEventD(),
                 new TestEventD(),
                 new TestEventD()
             };
 
-            foreach (var e in events) {
+            foreach (var e in events)
+            {
                 state.Apply(e);
             }
 

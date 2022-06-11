@@ -21,30 +21,31 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;
 using Nd.Core.Types;
 using Nd.ValueObjects;
 
-namespace Nd.Identities {
-
-    public abstract record class GuidIdentity : ValueObject, IIdentity<Guid> {
-
+namespace Nd.Identities
+{
+    public abstract record class GuidIdentity : ValueObject, IIdentity<Guid>
+    {
         private readonly string _stringValue;
-        private readonly string _typeName;
 
         public Guid Value { get; }
 
-        protected GuidIdentity(Guid value) {
-            _typeName = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault().Name ??
+        protected GuidIdentity(Guid value)
+        {
+            TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
                 throw new TypeDefinitionNotFoundException($"Definition of type has no Name defined: {GetType().ToPrettyString()}");
             Value = value;
-            _stringValue = $"{_typeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value.ToString("N").ToUpperInvariant()}";
+            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value.ToString("N").ToUpperInvariant()}";
         }
 
-        protected GuidIdentity(IGuidFactory factory) : this(factory.Create()) { }
+        protected GuidIdentity(IGuidFactory factory) : this(factory?.Create() ?? throw new ArgumentNullException(nameof(factory))) { }
 
-        public string TypeName => _typeName;
+        public string TypeName { get; }
 
         public sealed override string ToString() => _stringValue;
     }

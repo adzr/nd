@@ -23,21 +23,25 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Core.Types {
-
+namespace Nd.Core.Exceptions
+{
     [Serializable]
-    public class TypeDefinitionConflictException : Exception {
-
-        public TypeDefinitionConflictException() : this($"Multiple definitions of type name with similar version numbers") {
+    public class TypeDefinitionConflictException : Exception
+    {
+        public TypeDefinitionConflictException() : this($"Multiple definitions of type name with similar version numbers")
+        {
         }
 
-        public TypeDefinitionConflictException(string? message) : base(message) {
+        public TypeDefinitionConflictException(string? message) : base(message)
+        {
         }
 
-        public TypeDefinitionConflictException(string? message, Exception? innerException) : base(message, innerException) {
+        public TypeDefinitionConflictException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected TypeDefinitionConflictException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected TypeDefinitionConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

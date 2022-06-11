@@ -25,12 +25,14 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
-using Nd.Aggregates.Snapshots;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Persistence {
-    public static class AggregateReaderExtensions {
+namespace Nd.Aggregates.Snapshots.Extensions
+{
+    public static class AggregateReaderExtensions
+    {
 
         public static async Task<TAggregate?> ReadAsync<TIdentity, TState, TAggregate>(
             TIdentity aggregateId, uint version,
@@ -41,10 +43,22 @@ namespace Nd.Aggregates.Persistence {
             CancellationToken cancellation = default)
             where TAggregate : AggregateRoot<TIdentity, TState>
             where TIdentity : IAggregateIdentity
-            where TState : class, IVersionedType {
+            where TState : class, IVersionedType
+        {
 
-            if (aggregateId is null) {
+            if (aggregateId is null)
+            {
                 throw new ArgumentNullException(nameof(aggregateId));
+            }
+
+            if (snapshotReader is null)
+            {
+                throw new ArgumentNullException(nameof(snapshotReader));
+            }
+
+            if (eventReader is null)
+            {
+                throw new ArgumentNullException(nameof(eventReader));
             }
 
             List<ICommittedEvent> events = new();
@@ -53,20 +67,22 @@ namespace Nd.Aggregates.Persistence {
 
             var storedSnapshot = await snapshotReader.ReadAsync<TState>(aggregateId, version, cancellation).ConfigureAwait(false);
 
-            if (storedSnapshot is not null) {
+            if (storedSnapshot is not null)
+            {
 
 
-                try {
-                    if (await storedSnapshot.State.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is TState upgradedState) {
-                        snapshot = new AggregateSnapshot<TIdentity, TState>(
+                try
+                {
+                    snapshot = await storedSnapshot.State.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is TState upgradedState
+                        ? (IAggregateSnapshot<TIdentity, TState>)new AggregateSnapshot<TIdentity, TState>(
                             upgradedState,
                             storedSnapshot.AggregateVersion,
                             storedSnapshot.AggregateIdentity,
-                            storedSnapshot.AggregateName);
-                    } else {
-                        throw new InvalidCastException($"Failed to cast upgraded version of state '{storedSnapshot.State.TypeName}' to type '{typeof(TState).Name}'");
-                    }
-                } catch (Exception ex) {
+                            storedSnapshot.AggregateName)
+                        : throw new InvalidCastException($"Failed to cast upgraded version of state '{storedSnapshot.State.TypeName}' to type '{typeof(TState).Name}'");
+                }
+                catch (Exception ex)
+                {
                     throw new StateUpgradeException(storedSnapshot.State.TypeName, ex);
                 }
             }
@@ -77,31 +93,43 @@ namespace Nd.Aggregates.Persistence {
                 version,
                 cancellation).ConfigureAwait(false));
 
-            if (!events.Any()) {
+            if (!events.Any())
+            {
                 return default;
             }
 
-            (TAggregate aggregate, IAggregateEventApplier<TState> state) = aggregateId
-                .CreateAggregateAndState(initializeAggregate, initializeState, events.Max(e => e.MetaData.AggregateVersion));
+            (var aggregate, var state) = aggregateId
+                .CreateAggregateAndState(initializeAggregate, initializeState, events.Max(e => e.Metadata.AggregateVersion));
 
-            if (snapshot is not null) {
-                if (state is ICanConsumeState<TState> stateConsumer) {
+            if (snapshot is not null)
+            {
+                if (state is ICanConsumeState<TState> stateConsumer)
+                {
                     stateConsumer.ConsumeState(snapshot.State);
-                } else {
+                }
+                else
+                {
                     throw new InvalidOperationException($"Aggregate state {state.GetType().GetNameAndVersion()} " +
                         $"must implement {nameof(ICanConsumeState<TState>)} to support snapshot loading");
                 }
             }
 
-            foreach (var @event in events) {
-                try {
-                    if (await @event.Event.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e) {
+            foreach (var @event in events)
+            {
+                try
+                {
+                    if (await @event.AggregateEvent.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e)
+                    {
                         state.Apply(e);
-                    } else {
-                        throw new InvalidCastException($"Failed to cast upgraded version of event '{@event.Event.TypeName}' to type '{nameof(IAggregateEvent)}'");
                     }
-                } catch (Exception ex) {
-                    throw new EventUpgradeException(@event.Event.TypeName, ex);
+                    else
+                    {
+                        throw new InvalidCastException($"Failed to cast upgraded version of event '{@event.AggregateEvent.TypeName}' to type '{nameof(IAggregateEvent)}'");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new EventUpgradeException(@event.AggregateEvent.TypeName, ex);
                 }
             }
 

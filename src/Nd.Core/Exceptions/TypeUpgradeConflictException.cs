@@ -23,30 +23,35 @@
 using System.Runtime.Serialization;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Core.Exceptions {
-
+namespace Nd.Core.Exceptions
+{
     [Serializable]
-    public class TypeUpgradeConflictException : Exception {
-
+    public class TypeUpgradeConflictException : Exception
+    {
         public IVersionedType? From { get; }
         public IVersionedType? To { get; }
 
         public TypeUpgradeConflictException(IVersionedType from, IVersionedType to, Exception? innerException = null)
-            : base($"Trying to upgrade a type of name '{from.TypeName}' to a type of name '{to.TypeName}', type names must match", innerException) {
+            : base($"Trying to upgrade a type of name '{from?.TypeName}' to a type of name '{to?.TypeName}', type names must match", innerException)
+        {
             From = from;
             To = to;
         }
 
-        public TypeUpgradeConflictException() : this($"Trying to upgrade between two different types, type names must match") {
+        public TypeUpgradeConflictException() : this($"Trying to upgrade between two different types, type names must match")
+        {
         }
 
-        public TypeUpgradeConflictException(string message) : base(message) {
+        public TypeUpgradeConflictException(string message) : base(message)
+        {
         }
 
-        public TypeUpgradeConflictException(string message, Exception innerException) : base(message, innerException) {
+        public TypeUpgradeConflictException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected TypeUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected TypeUpgradeConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

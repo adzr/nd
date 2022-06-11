@@ -25,15 +25,17 @@
  * SOFTWARE.
  */
 
-namespace Nd.Aggregates.Events {
-
-    public interface IAggregateEventApplier {
-        void Apply(IAggregateEvent @event);
+namespace Nd.Aggregates.Events
+{
+    public interface IAggregateState
+    {
+        void Apply(IAggregateEvent aggregateEvent);
     }
 
-    public interface IAggregateEventApplier<TState> : IAggregateEventApplier
-        where TState : class {
-        void Apply(IAggregateEvent<TState> @event);
+    public interface IAggregateState<TState> : IAggregateState
+        where TState : class
+    {
+        void Apply(IAggregateEvent<TState> aggregateEvent);
 
         TState State { get; }
     }

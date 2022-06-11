@@ -25,8 +25,10 @@ using System;
 using Nd.Core.Extensions;
 using Xunit;
 
-namespace Nd.Core.Tests.Extensions {
-    public class StringExtensionsTests {
+namespace Nd.Core.Tests.Extensions
+{
+    public class StringExtensionsTests
+    {
         [Theory]
         [InlineData("SomeTestData", "SOME_TEST_DATA")]
         [InlineData("Some_Test_Data", "SOME_TEST_DATA")]

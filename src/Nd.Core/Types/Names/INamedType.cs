@@ -21,8 +21,10 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Types.Names {
-    public interface INamedType {
+namespace Nd.Core.Types.Names
+{
+    public interface INamedType
+    {
         public string TypeName { get; }
     }
 }

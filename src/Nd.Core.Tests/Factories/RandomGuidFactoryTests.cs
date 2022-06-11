@@ -25,8 +25,10 @@ using System.Linq;
 using Nd.Core.Factories;
 using Xunit;
 
-namespace Nd.Core.Tests.Factories {
-    public class RandomGuidFactoryTests {
+namespace Nd.Core.Tests.Factories
+{
+    public class RandomGuidFactoryTests
+    {
         private const int GuidCount = 1000;
 
         [Fact]

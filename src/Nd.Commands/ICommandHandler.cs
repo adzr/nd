@@ -28,25 +28,28 @@
 using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
 
-namespace Nd.Commands {
-
-    public interface ICommandHandler {
+namespace Nd.Commands
+{
+    public interface ICommandHandler
+    {
         Task<TResult> ExecuteAsync<TResult>(ICommand command, CancellationToken cancellationToken)
             where TResult : IExecutionResult;
     }
 
     public interface ICommandHandler<TCommand, TIdentity>
             where TCommand : ICommand<TIdentity>
-            where TIdentity : IAggregateIdentity {
+            where TIdentity : IAggregateIdentity
+    {
         Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken)
             where TResult : IExecutionResult;
     }
 
     public abstract class AggregateAwareCommandHandler<TCommand, TIdentity> : ICommandHandler<TCommand, TIdentity>
         where TCommand : ICommand<TIdentity>
-        where TIdentity : IAggregateIdentity {
-
-        public Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken) where TResult : IExecutionResult {
+        where TIdentity : IAggregateIdentity
+    {
+        public Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken) where TResult : IExecutionResult
+        {
             throw new NotImplementedException();
         }
     }

@@ -25,14 +25,16 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Types.Names;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Events {
-    public interface IAggregateEvent : INamedType, IVersionedType {
+namespace Nd.Aggregates.Events
+{
+    public interface IAggregateEvent : IVersionedType
+    {
     }
 
     public interface IAggregateEvent<TState> : IAggregateEvent
-        where TState : class {
+        where TState : class
+    {
     }
 }

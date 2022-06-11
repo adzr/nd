@@ -32,15 +32,18 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;
 using Nd.Core.Types;
 using Nd.Identities;
 
-namespace Nd.Aggregates {
+namespace Nd.Aggregates
+{
     public abstract class AggregateRoot<TIdentity, TState> : IAggregateRoot<TIdentity, TState>
         where TIdentity : IAggregateIdentity
-        where TState : class {
+        where TState : class
+    {
 
         private readonly object _uncommittedEventsLock = new();
 
@@ -48,31 +51,30 @@ namespace Nd.Aggregates {
 
         private readonly List<IIdempotencyIdentity> _idempotencyCheckList = new();
 
-        private readonly string _typeName;
+        private readonly IAggregateState<TState> _state;
 
-        private readonly IAggregateEventApplier<TState> _applier;
-
-        protected AggregateRoot(TIdentity identity, Func<IAggregateEventApplier<TState>> initialStateProvider, uint version = default) {
-            _typeName = Definitions.TypesNamesAndVersions[GetType()]?.FirstOrDefault().Name ??
+        protected AggregateRoot(TIdentity identity, AggregateStateFactoryFunc<TState> initialStateProvider, uint version)
+        {
+            TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
                 throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
 
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
 
             var createState = initialStateProvider ?? throw new ArgumentNullException(nameof(initialStateProvider));
 
-            _applier = createState() ?? throw new AggregateStateCreationException(typeof(TState),
+            _state = createState() ?? throw new AggregateStateCreationException(typeof(TState),
                 new AggregateStateCreationException($"{nameof(initialStateProvider)} delegate returned a null reference"));
 
             Version = version;
         }
 
-        public TState State => _applier.State;
+        public TState State => _state.State;
 
         public TIdentity Identity { get; }
 
         IIdentity IAggregateRoot.Identity => Identity;
 
-        public string TypeName => _typeName;
+        public string TypeName { get; }
 
         public uint Version { get; private set; }
 
@@ -80,43 +82,54 @@ namespace Nd.Aggregates {
 
         public bool HasPendingChanges => _uncommittedEvents.Any();
 
-        protected virtual void Emit<TEvent>(TEvent @event, IAggregateEventMetaData? metaData = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
-            where TEvent : AggregateEvent<TState> {
-            if (@event == null) {
-                throw new ArgumentNullException(nameof(@event));
+        protected virtual void Emit<TEvent>(TEvent aggregateEvent, IAggregateEventMetadata? metadata = default, bool failOnDuplicates = true, Func<DateTimeOffset>? currentTimestampProvider = default)
+            where TEvent : AggregateEvent<TState>
+        {
+            if (aggregateEvent == null)
+            {
+                throw new ArgumentNullException(nameof(aggregateEvent));
             }
 
-            if (metaData is not null && _idempotencyCheckList.Contains(metaData.IdempotencyIdentity)) {
-                if (failOnDuplicates) {
-                    throw new DuplicateAggregateEventException(@event, metaData);
+            if (metadata is not null && _idempotencyCheckList.Contains(metadata.IdempotencyIdentity))
+            {
+                if (failOnDuplicates)
+                {
+                    throw new DuplicateAggregateEventException(aggregateEvent, metadata);
                 }
 
                 return;
             }
 
-            // Creating event meta-data to be stored along side the event.
-            var meta = new AggregateEventMetaData<TIdentity>
-            (
-                metaData?.IdempotencyIdentity ?? new IdempotencyIdentity(RandomGuidFactory.Instance),
-                metaData?.CorrelationIdentity ?? new CorrelationIdentity(RandomGuidFactory.Instance),
-                new AggregateEventIdentity(DeterministicGuidFactory.Instance(AggregateEventIdentity.NamespaceIdentifier, $"{Identity}-V{Version + 1}")),
-                @event.TypeName,
-                @event.TypeVersion,
-                Identity,
-                _typeName,
-                Version + 1,
-                currentTimestampProvider?.Invoke() ?? DateTimeOffset.UtcNow
-            );
+            lock (_uncommittedEventsLock)
+            {
+                // Creating event meta-data to be stored along side the event.
+                var meta = new AggregateEventMetadata<TIdentity>
+                (
+                    metadata?.IdempotencyIdentity ?? new IdempotencyIdentity(RandomGuidFactory.Instance),
+                    metadata?.CorrelationIdentity ?? new CorrelationIdentity(RandomGuidFactory.Instance),
+                    new AggregateEventIdentity(DeterministicGuidFactory.Instance(AggregateEventIdentity.NamespaceIdentifier, $"{Identity}-V{Version + 1}")),
+                    aggregateEvent.TypeName,
+                    aggregateEvent.TypeVersion,
+                    Identity,
+                    TypeName,
+                    Version + 1,
+                    currentTimestampProvider?.Invoke() ?? DateTimeOffset.UtcNow
+                );
 
-            lock (_uncommittedEventsLock) {
-                _applier.Apply(@event);
+                _state.Apply(aggregateEvent);
                 _idempotencyCheckList.Add(meta.IdempotencyIdentity);
-                _uncommittedEvents.Add(new UncommittedEvent<TIdentity>(@event, meta));
+                _uncommittedEvents.Add(new UncommittedEvent<TIdentity>(aggregateEvent, meta));
                 Version++;
             }
         }
 
-        public virtual async Task CommitAsync(IAggregateEventWriter<TIdentity> writer, CancellationToken cancellation = default) {
+        public virtual async Task CommitAsync(IAggregateEventWriter<TIdentity> writer, CancellationToken cancellation = default)
+        {
+            if (writer is null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
             // Creating a list for the events about to be stored.
             var outgoingEvents = new List<IUncommittedEvent<TIdentity>>();
             var outgoingIdempotencyIds = new List<IIdempotencyIdentity>();
@@ -124,24 +137,29 @@ namespace Nd.Aggregates {
             // Freezing the aggregate event-list and copying all
             // of its events into the new list just created,
             // then clearing the event-list and de-freezing it.
-            lock (_uncommittedEventsLock) {
+            lock (_uncommittedEventsLock)
+            {
                 outgoingEvents.AddRange(_uncommittedEvents);
                 outgoingIdempotencyIds.AddRange(_idempotencyCheckList);
                 _uncommittedEvents.Clear();
                 _idempotencyCheckList.Clear();
             }
 
-            try {
+            try
+            {
                 // Trying to store all of the events copied from
                 // the aggregate event-list.
                 await writer.WriteAsync(outgoingEvents, cancellation)
                     .ConfigureAwait(false);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 // In case of a failure, freeze the aggregate
                 // event-list again and put back the
                 // failed-to-store events into the beginning
                 // of the event-list then de-freeze.
-                lock (_uncommittedEventsLock) {
+                lock (_uncommittedEventsLock)
+                {
                     var incomingEvents = new List<IUncommittedEvent<TIdentity>>(_uncommittedEvents);
                     _uncommittedEvents.Clear();
                     _uncommittedEvents.AddRange(outgoingEvents);
@@ -154,7 +172,7 @@ namespace Nd.Aggregates {
                 }
 
                 // Wrap the exception and throw it.
-                throw new AggregatePersistenceException(_typeName, Identity, ex);
+                throw new AggregatePersistenceException(TypeName, Identity, ex);
             }
         }
     }

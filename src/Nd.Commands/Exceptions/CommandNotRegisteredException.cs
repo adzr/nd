@@ -22,28 +22,34 @@
  */
 
 using System.Runtime.Serialization;
-using Nd.Commands;
 
-namespace Nd.Aggregates.Exceptions {
+namespace Nd.Commands.Exceptions
+{
     [Serializable]
-    public class CommandNotRegisteredException : Exception {
+    public class CommandNotRegisteredException : Exception
+    {
         public CommandNotRegisteredException(ICommand command, Exception? exception = default)
-            : base($"Command \"{command.TypeName}\" is not found in the command registery, cannot find a handler for an unknown command", exception) {
+            : base($"Command \"{command?.TypeName ?? throw new ArgumentNullException(nameof(command))}\" is not found in the command registery, cannot find a handler for an unknown command", exception)
+        {
             CommandTypeName = command.TypeName;
         }
 
         public string? CommandTypeName { get; }
 
-        public CommandNotRegisteredException() : this($"Command is not found in the command registery, cannot find a handler for an unknown command") {
+        public CommandNotRegisteredException() : this($"Command is not found in the command registery, cannot find a handler for an unknown command")
+        {
         }
 
-        public CommandNotRegisteredException(string message) : base(message) {
+        public CommandNotRegisteredException(string message) : base(message)
+        {
         }
 
-        public CommandNotRegisteredException(string message, Exception innerException) : base(message, innerException) {
+        public CommandNotRegisteredException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected CommandNotRegisteredException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected CommandNotRegisteredException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
             throw new NotImplementedException();
         }
     }

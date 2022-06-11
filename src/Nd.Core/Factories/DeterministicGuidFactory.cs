@@ -28,17 +28,20 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Nd.Core.Factories {
+namespace Nd.Core.Factories
+{
     /// <summary>
     /// A factory that creates a name-based UUID using the algorithm from RFC 4122 §4.3.
     /// </summary>
-    public sealed class DeterministicGuidFactory : IGuidFactory {
+    public sealed class DeterministicGuidFactory : IGuidFactory
+    {
         private const int GuidVersion = 5;
 
         private readonly Guid _namespaceId;
         private readonly byte[] _nameBytes;
 
-        private DeterministicGuidFactory(Guid namespaceId, byte[] nameBytes) {
+        private DeterministicGuidFactory(Guid namespaceId, byte[] nameBytes)
+        {
             _namespaceId = namespaceId;
             _nameBytes = nameBytes;
         }
@@ -52,12 +55,15 @@ namespace Nd.Core.Factories {
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public Guid Create() {
-            if (_namespaceId == default) {
+        public Guid Create()
+        {
+            if (_namespaceId == default)
+            {
                 throw new ArgumentNullException(nameof(_namespaceId));
             }
 
-            if (_nameBytes is null || _nameBytes.Length == 0) {
+            if (_nameBytes is null || _nameBytes.Length == 0)
+            {
                 throw new ArgumentNullException(nameof(_nameBytes));
             }
 
@@ -69,7 +75,8 @@ namespace Nd.Core.Factories {
             // Comput the hash of the name space ID concatenated with the name (step 4)
             byte[] hash;
 
-            using (var algorithm = SHA512.Create()) {
+            using (var algorithm = SHA512.Create())
+            {
                 var combinedBytes = new byte[namespaceBytes.Length + _nameBytes.Length];
 
                 Buffer.BlockCopy(namespaceBytes, 0, combinedBytes, 0, namespaceBytes.Length);
@@ -99,14 +106,16 @@ namespace Nd.Core.Factories {
         }
 
         // Converts a GUID (expressed as a byte array) to/from network order (MSB-first).
-        private static void SwapByteOrder(byte[] guid) {
+        private static void SwapByteOrder(byte[] guid)
+        {
             SwapBytes(guid, 0, 3);
             SwapBytes(guid, 1, 2);
             SwapBytes(guid, 4, 5);
             SwapBytes(guid, 6, 7);
         }
 
-        private static void SwapBytes(byte[] guid, int left, int right) {
+        private static void SwapBytes(byte[] guid, int left, int right)
+        {
             guid[left] ^= guid[right];
             guid[right] ^= guid[left];
             guid[left] ^= guid[right];

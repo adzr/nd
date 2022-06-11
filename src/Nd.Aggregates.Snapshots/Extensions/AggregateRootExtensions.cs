@@ -24,13 +24,17 @@
 using Nd.Aggregates.Identities;
 using Nd.Core.Types.Versions;
 
-namespace Nd.Aggregates.Persistence {
-    public static class AggregateRootExtensions {
+namespace Nd.Aggregates.Snapshots.Extensions
+{
+    public static class AggregateRootExtensions
+    {
         public static Task TakeSnapshotAsync<TIdentity, TState>(
             this AggregateRoot<TIdentity, TState> aggregate,
             IAggregateSnapshotWriter<TIdentity> writer, CancellationToken cancellation = default)
         where TIdentity : IAggregateIdentity
         where TState : class, IVersionedType
-            => writer.WriteAsync(new AggregateSnapshot<TIdentity, TState>(aggregate.State, aggregate.Version, aggregate.Identity, aggregate.TypeName), cancellation);
+            => writer?.WriteAsync(new AggregateSnapshot<TIdentity, TState>(aggregate?.State ?? throw new ArgumentNullException(nameof(aggregate)),
+                aggregate.Version, aggregate.Identity, aggregate.TypeName), cancellation) ??
+            throw new ArgumentNullException(nameof(writer));
     }
 }

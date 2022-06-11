@@ -24,18 +24,21 @@
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates.Persistence {
-    public interface ICommittedEvent {
-        public IAggregateEvent Event { get; }
-        public IAggregateEventMetaData MetaData { get; }
+namespace Nd.Aggregates.Persistence
+{
+    public interface ICommittedEvent
+    {
+        public IAggregateEvent AggregateEvent { get; }
+        public IAggregateEventMetadata Metadata { get; }
     }
 
     public interface ICommittedEvent<TIdentity, TState> : ICommittedEvent
         where TIdentity : IAggregateIdentity
-        where TState : class {
-        public new IAggregateEvent<TState> Event { get; }
-        public new IAggregateEventMetaData<TIdentity> MetaData { get; }
-        IAggregateEvent ICommittedEvent.Event => Event;
-        IAggregateEventMetaData ICommittedEvent.MetaData => MetaData;
+        where TState : class
+    {
+        public new IAggregateEvent<TState> AggregateEvent { get; }
+        public new IAggregateEventMetadata<TIdentity> Metadata { get; }
+        IAggregateEvent ICommittedEvent.AggregateEvent => AggregateEvent;
+        IAggregateEventMetadata ICommittedEvent.Metadata => Metadata;
     }
 }

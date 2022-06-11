@@ -23,27 +23,32 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Commands.Exceptions {
-
+namespace Nd.Commands.Exceptions
+{
     [Serializable]
-    public class CommandExecutionException : Exception {
-
+    public class CommandExecutionException : Exception
+    {
         public ICommand? Command { get; }
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed") {
+        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        {
         }
 
-        public CommandExecutionException(string? message) : base(message) {
+        public CommandExecutionException(string? message) : base(message)
+        {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex) {
+        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
+        {
             Command = command;
         }
 
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException) {
+        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
 
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context) {
+        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
         }
     }
 }

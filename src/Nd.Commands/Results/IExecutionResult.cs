@@ -25,10 +25,12 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
+using Nd.Identities;
 
-namespace Nd.Commands.Results {
-    public interface IExecutionResult {
+namespace Nd.Commands.Results
+{
+    public interface IExecutionResult
+    {
         bool IsSuccess { get; }
 
         IIdempotencyIdentity IdempotencyIdentity { get; }

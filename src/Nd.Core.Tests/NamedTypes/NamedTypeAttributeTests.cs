@@ -26,14 +26,17 @@ using Nd.Core.Extensions;
 using Nd.Core.Types.Names;
 using Xunit;
 
-namespace Nd.Core.Tests.NamedTypes {
+namespace Nd.Core.Tests.NamedTypes
+{
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class NamedTestAttribute : NamedTypeAttribute {
+    public sealed class NamedTestAttribute : NamedTypeAttribute
+    {
         public NamedTestAttribute(string typeName) : base(typeName) { }
     }
 
     [NamedTest(nameof(NamedTypeAttributeTests))]
-    public class NamedTypeAttributeTests {
+    public class NamedTypeAttributeTests
+    {
         [Fact]
         public void CanHaveAttributedName() =>
             Assert.Equal(nameof(NamedTypeAttributeTests), typeof(NamedTypeAttributeTests).GetName());

@@ -1,18 +1,19 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.ValueObjects", "src\Nd.ValueObjects\Nd.ValueObjects.csproj", "{3B6281D5-00CF-42A0-8039-D2901EDD8111}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "L02-Fragments", "L02-Fragments", "{5C853A9B-CEB2-40A5-B8BE-205FCCC17EA8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02-Fragments", "02-Fragments", "{5C853A9B-CEB2-40A5-B8BE-205FCCC17EA8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "L01-Core", "L01-Core", "{BF5C3632-5A9B-4D8E-9F9E-6287275AF8F0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01-Core", "01-Core", "{BF5C3632-5A9B-4D8E-9F9E-6287275AF8F0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core", "src\Nd.Core\Nd.Core.csproj", "{37FE87C8-E98A-485F-95EF-368C50633CAF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Entities", "src\Nd.Entities\Nd.Entities.csproj", "{18C5B043-50AF-4571-B6F6-C52C6EBDA318}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "L03-Aggregates", "L03-Aggregates", "{72369685-5A14-45E3-8F3C-0C4190AA0C38}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Aggregates", "03-Aggregates", "{72369685-5A14-45E3-8F3C-0C4190AA0C38}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}"
 EndProject
@@ -26,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core.Tests", "src\Nd.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates.Tests", "src\Nd.Aggregates.Tests\Nd.Aggregates.Tests.csproj", "{E25B4DCD-EE9A-48C4-BB48-6CAB36E15099}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "L04-Commands", "L04-Commands", "{8E8238A0-4217-4D01-917A-617553CF06E0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Commands", "04-Commands", "{8E8238A0-4217-4D01-917A-617553CF06E0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands", "src\Nd.Commands\Nd.Commands.csproj", "{481290AB-E457-4389-AD86-D9DADD9D5362}"
 EndProject
@@ -35,6 +36,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities.Tests", "src\Nd.Identities.Tests\Nd.Identities.Tests.csproj", "{629612CB-3F31-420C-8FF4-B5ED21CAE7C8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates.Snapshots", "src\Nd.Aggregates.Snapshots\Nd.Aggregates.Snapshots.csproj", "{26F09407-9528-4BE7-8530-E1377612FE45}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands.Tests", "src\Nd.Commands.Tests\Nd.Commands.Tests.csproj", "{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{014491D0-3E2E-4FAE-834B-A3D0CF28D8E6}"
 	ProjectSection(SolutionItems) = preProject
@@ -46,6 +49,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.Config = NuGet.Config
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{E74D4CBC-6F0F-482D-BFE3-BB5B898B8995}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Samples.ECommerce", "samples\ECommerce\Nd.Samples.ECommerce\Nd.Samples.ECommerce.csproj", "{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,6 +108,14 @@ Global
 		{26F09407-9528-4BE7-8530-E1377612FE45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26F09407-9528-4BE7-8530-E1377612FE45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26F09407-9528-4BE7-8530-E1377612FE45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +133,8 @@ Global
 		{52B8678D-BB58-4949-B6B2-6537F3F81D5A} = {5C853A9B-CEB2-40A5-B8BE-205FCCC17EA8}
 		{629612CB-3F31-420C-8FF4-B5ED21CAE7C8} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
 		{26F09407-9528-4BE7-8530-E1377612FE45} = {72369685-5A14-45E3-8F3C-0C4190AA0C38}
+		{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
+		{0BBDFAA9-9E90-406F-8311-1DBB2FE57C86} = {E74D4CBC-6F0F-482D-BFE3-BB5B898B8995}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E90C591-5B90-440A-83A7-A6B425A1325D}

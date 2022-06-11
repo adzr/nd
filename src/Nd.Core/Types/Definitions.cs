@@ -21,19 +21,28 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Names;
 
-namespace Nd.Core.Types {
-    public static class Definitions {
-
-        public static readonly ILookup<Type, (string Name, uint Version)> TypesNamesAndVersions =
+namespace Nd.Core.Types
+{
+    public static class Definitions
+    {
+        public static readonly (string Name, uint Version, Type Type)[] Catalog =
             GetAllImplementations<INamedType>()
             .Select(ResolveTypesNamesAndVersions)
             .GroupBy(g => g.Name)
             .Select(ValidateUniqueVersionSequences)
             .SelectMany(g => g.ToList())
-            .ToLookup(r => r.Type, r => (r.Name, r.Version));
+            .Select(r => (r.Name, r.Version, r.Type))
+            .ToArray();
+
+        public static readonly IDictionary<Type, (string Name, uint Version)> TypesNamesAndVersions = Catalog
+            .ToDictionary(r => r.Type, r => (r.Name, r.Version));
+
+        public static readonly IDictionary<(string name, uint Version), Type> NamesAndVersionsTypes = Catalog
+            .ToDictionary(r => (r.Name, r.Version), r => r.Type);
 
         public static Type[] GetAllImplementations<T>() => AppDomain
             .CurrentDomain
@@ -42,28 +51,25 @@ namespace Nd.Core.Types {
             .Where(t => typeof(T).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && !t.IsGenericType)
             .ToArray();
 
-        private static (string Name, uint Version, Type Type) ResolveTypesNamesAndVersions(Type type) {
+        private static (string Name, uint Version, Type Type) ResolveTypesNamesAndVersions(Type type)
+        {
             var (name, version) = type.GetNameAndVersion();
             return (name, version, type);
         }
 
-        private static IGrouping<string, (string Name, uint Version, Type Type)> ValidateUniqueVersionSequences(IGrouping<string, (string Name, uint Version, Type Type)> types) {
-
+        private static IGrouping<string, (string Name, uint Version, Type Type)> ValidateUniqueVersionSequences(IGrouping<string, (string Name, uint Version, Type Type)> types)
+        {
             var duplicates = types
                 .GroupBy(g => g.Version)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToArray();
 
-            if (duplicates.Any()) {
-                throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with similar version numbers {{{string.Join(", ", duplicates)}}}");
-            }
-
-            if (types.Any(t => t.Version == 0) && types.Count() > 1) {
-                throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with some of them missing version numbers");
-            }
-
-            return types;
+            return duplicates.Any()
+                ? throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with similar version numbers {{{string.Join(", ", duplicates)}}}")
+                : types.Any(t => t.Version == 0) && types.Count() > 1
+                ? throw new TypeDefinitionConflictException($"Multiple definitions of type name \"{types.Key}\" with some of them missing version numbers")
+                : types;
         }
     }
 }

@@ -23,18 +23,20 @@
 
 using System;
 using Nd.Core.Factories;
-using Nd.Identities;
 using Xunit;
 
-namespace Nd.ValueObjects.Tests {
+namespace Nd.Identities.Tests
+{
     [NamedIdentity("sample")]
-    internal record class SampleIdentity : GuidIdentity {
+    internal record class SampleIdentity : GuidIdentity
+    {
         public SampleIdentity(Guid value) : base(value) { }
 
         public SampleIdentity(IGuidFactory factory) : base(factory) { }
     }
 
-    public class IdentityTests {
+    public class IdentityTests
+    {
         [Theory]
         [InlineData("0b58cdd0-5220-4053-baf7-5dd9d15aa535", "5d819ee0-65b8-4afe-aaae-1849d439e217", -5)]
         [InlineData("5d819ee0-65b8-4afe-aaae-1849d439e217", "0b58cdd0-5220-4053-baf7-5dd9d15aa535", 5)]
@@ -64,8 +66,8 @@ namespace Nd.ValueObjects.Tests {
         [InlineData("0b58cdd0-5220-4053-baf7-5dd9d15aa535")]
         [InlineData("5d819ee0-65b8-4afe-aaae-1849d439e217")]
         [InlineData("8db0c071-4a1f-4776-9154-518725ac78cb")]
-        public void CanBeConvertedToValidString(string guid) =>
-            Assert.Equal($"SAMPLE-{guid.Replace("-", "", StringComparison.OrdinalIgnoreCase).ToUpperInvariant()}",
-                new SampleIdentity(Guid.ParseExact(guid, "D")).ToString());
+        public void CanBeConvertedToValidString(string identifier) =>
+            Assert.Equal($"SAMPLE-{identifier?.Replace("-", "", StringComparison.OrdinalIgnoreCase).ToUpperInvariant()}",
+                new SampleIdentity(Guid.ParseExact(identifier!, "D")).ToString());
     }
 }

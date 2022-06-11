@@ -23,12 +23,14 @@
 
 using System.Runtime.Serialization;
 
-namespace Nd.Aggregates.Exceptions {
-
+namespace Nd.Commands.Exceptions
+{
     [Serializable]
-    public class CommandHandlerConflictException : Exception {
+    public class CommandHandlerConflictException : Exception
+    {
         public CommandHandlerConflictException(string commandTypeName, string[] commandHandlerTypeNames, Exception? exception = default)
-            : base($"Multiple command handlers {string.Join(", ", commandHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same command \"{commandTypeName}\"", exception) {
+            : base($"Multiple command handlers {string.Join(", ", commandHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same command \"{commandTypeName}\"", exception)
+        {
             CommandTypeName = commandTypeName;
             CommandHandlerTypeNames = commandHandlerTypeNames;
         }
@@ -37,16 +39,20 @@ namespace Nd.Aggregates.Exceptions {
 
         public IReadOnlyList<string>? CommandHandlerTypeNames { get; }
 
-        public CommandHandlerConflictException() : this("Multiple command handlers found for the same command") {
+        public CommandHandlerConflictException() : this("Multiple command handlers found for the same command")
+        {
         }
 
-        public CommandHandlerConflictException(string message) : base(message) {
+        public CommandHandlerConflictException(string message) : base(message)
+        {
         }
 
-        public CommandHandlerConflictException(string message, Exception innerException) : base(message, innerException) {
+        public CommandHandlerConflictException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected CommandHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected CommandHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
         }
     }
 }

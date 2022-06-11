@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
-
-namespace Nd.Aggregates.Identities {
-    public interface IIdempotencyIdentity : IIdentity<Guid> {
+namespace Nd.Identities
+{
+    public interface IIdempotencyIdentity : IIdentity<Guid>
+    {
         new Guid Value { get; }
     }
 }

@@ -28,8 +28,10 @@
 using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
 
-namespace Nd.Commands {
-    public interface ICommandBus {
+namespace Nd.Commands
+{
+    public interface ICommandBus
+    {
         Task<TResult> ExecuteAsync<TIdentity, TResult>(
             ICommand<TIdentity> command,
             CancellationToken cancellationToken = default)

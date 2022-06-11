@@ -24,28 +24,33 @@
 using System.Runtime.Serialization;
 using Nd.Core.Extensions;
 
-namespace Nd.Aggregates.Exceptions {
-
+namespace Nd.Aggregates.Exceptions
+{
     [Serializable]
-    public class AggregateStateCreationException : Exception {
-
+    public class AggregateStateCreationException : Exception
+    {
         public AggregateStateCreationException(Type aggregateStateType, Exception? exception = default)
-            : base($"Failed to create aggregate state of Type: {aggregateStateType.ToPrettyString()}", exception) {
+            : base($"Failed to create aggregate state of Type: {aggregateStateType.ToPrettyString()}", exception)
+        {
             AggregateStateType = aggregateStateType;
         }
 
         public Type? AggregateStateType { get; }
 
-        public AggregateStateCreationException() : this("Failed to create aggregate state") {
+        public AggregateStateCreationException() : this("Failed to create aggregate state")
+        {
         }
 
-        public AggregateStateCreationException(string message) : base(message) {
+        public AggregateStateCreationException(string message) : base(message)
+        {
         }
 
-        public AggregateStateCreationException(string message, Exception innerException) : base(message, innerException) {
+        public AggregateStateCreationException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected AggregateStateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected AggregateStateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
         }
     }
 }

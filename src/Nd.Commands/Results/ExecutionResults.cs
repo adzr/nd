@@ -25,16 +25,19 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
+using Nd.Identities;
 using Nd.ValueObjects;
 
-namespace Nd.Commands.Results {
-    public static class ExecutionResults {
+namespace Nd.Commands.Results
+{
+    public static class ExecutionResults
+    {
         private record class SuccessExecutionResult
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IExecutionResult {
+        ) : ValueObject, IExecutionResult
+        {
             public bool IsSuccess => true;
 
             public override string ToString() => $"Successful execution: ({IdempotencyIdentity}, {CorrelationIdentity})";
@@ -45,7 +48,8 @@ namespace Nd.Commands.Results {
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity,
             IReadOnlyCollection<Exception> Exceptions
-        ) : ValueObject, IExecutionResult {
+        ) : ValueObject, IExecutionResult
+        {
             public bool IsSuccess => false;
         }
 

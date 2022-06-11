@@ -24,31 +24,36 @@
 using System.Runtime.Serialization;
 using Nd.Aggregates.Events;
 
-namespace Nd.Aggregates.Exceptions {
-
+namespace Nd.Aggregates.Exceptions
+{
     [Serializable]
-    public class DuplicateAggregateEventException : Exception {
-
+    public class DuplicateAggregateEventException : Exception
+    {
         public IAggregateEvent? Event { get; }
 
-        public IAggregateEventMetaData? MetaData { get; }
+        public IAggregateEventMetadata? Metadata { get; }
 
-        public DuplicateAggregateEventException(IAggregateEvent @event, IAggregateEventMetaData metaData) :
-            base($"Aggregate event has already been emitted with idempotency id {metaData.IdempotencyIdentity}") {
+        public DuplicateAggregateEventException(IAggregateEvent @event, IAggregateEventMetadata metadata) :
+            base($"Aggregate event has already been emitted with idempotency id {metadata?.IdempotencyIdentity}")
+        {
             Event = @event;
-            MetaData = metaData;
+            Metadata = metadata;
         }
 
-        public DuplicateAggregateEventException() : this("Aggregate event has already been emitted") {
+        public DuplicateAggregateEventException() : this("Aggregate event has already been emitted")
+        {
         }
 
-        public DuplicateAggregateEventException(string message) : base(message) {
+        public DuplicateAggregateEventException(string message) : base(message)
+        {
         }
 
-        public DuplicateAggregateEventException(string message, Exception innerException) : base(message, innerException) {
+        public DuplicateAggregateEventException(string message, Exception innerException) : base(message, innerException)
+        {
         }
 
-        protected DuplicateAggregateEventException(SerializationInfo serializationInfo, StreamingContext streamingContext) {
+        protected DuplicateAggregateEventException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        {
         }
     }
 }

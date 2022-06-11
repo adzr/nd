@@ -26,16 +26,20 @@
  */
 
 using Nd.Aggregates.Identities;
+using Nd.Identities;
 
-namespace Nd.Aggregates.Events {
-    public interface IAggregateEventMetaData : IComparable {
+namespace Nd.Aggregates.Events
+{
+    public interface IAggregateEventMetadata : IComparable
+    {
         IIdempotencyIdentity IdempotencyIdentity { get; }
         ICorrelationIdentity CorrelationIdentity { get; }
         uint AggregateVersion => 0u;
     }
 
-    public interface IAggregateEventMetaData<out TIdentity> : IAggregateEventMetaData
-        where TIdentity : IAggregateIdentity {
+    public interface IAggregateEventMetadata<out TIdentity> : IAggregateEventMetadata
+        where TIdentity : IAggregateIdentity
+    {
         string AggregateName { get; }
         IAggregateEventIdentity EventIdentity { get; }
         DateTimeOffset Timestamp { get; }

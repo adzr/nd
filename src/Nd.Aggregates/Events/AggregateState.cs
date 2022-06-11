@@ -28,70 +28,73 @@
  * SOFTWARE.
  */
 
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types;
 using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Events {
-
-    public abstract record class AggregateEventApplier<TState> : ValueObject, IAggregateEventApplier<TState>
-        where TState : class {
+namespace Nd.Aggregates.Events
+{
+    public abstract record class AggregateState<TState> : ValueObject, IAggregateState<TState>
+        where TState : class
+    {
         /// <summary>
         /// Contains a cached lookup of aggregate events and a lambda method to help
         /// applying the received events based on types to the correct event handler interface.
         /// </summary>
-        private static readonly ILookup<Type, ILookup<Type, Action<IAggregateEventApplier, IAggregateEvent>>> s_eventApplicationMethods =
+        private static readonly ILookup<Type, ILookup<Type, Action<IAggregateState, IAggregateEvent>>> s_eventApplicationMethods =
             Definitions
-            .GetAllImplementations<IAggregateEventApplier>()
+            .GetAllImplementations<IAggregateState>()
             .Select(t => (Type: t,
-                // Get all the interfaces of type IAggregateEventHandler that TEventApplier implements.
-                Lookup: t.GetInterfacesOfType<IAggregateEventHandler>()
+                // Get all the interfaces of type IAggregateEventHandler that IAggregateState implements.
+                Lookup: t.GetInterfacesOfType<ICanHandleAggregateEvent>()
                 // Filter only on interfaces that has a first generic argument of a type that implements IAggregateEvent,
                 // and have a method with the name "On" that takes a single parameter of a type assignable to
                 // the found generic type.
-                .Where(t => {
+                .Where(t =>
+                {
                     var eventType = t.GetGenericTypeArgumentsOfType<IAggregateEvent>().FirstOrDefault();
-
-                    if (eventType is null) {
-                        return false;
-                    }
-
-                    return t.HasMethodWithParametersOfTypes(nameof(IAggregateEventHandler.On), eventType);
+                    return eventType is not null && t.HasMethodWithParametersOfTypes(nameof(ICanHandleAggregateEvent.Handle), eventType);
                 })
                 // Convert the findings into a record that contains the aggregate event type
                 // and a compiled lambda of its matching "On" method that receives an aggregate
                 // event of the same type.
-                .Select(t => {
+                .Select(t =>
+                {
                     var type = t.GetGenericTypeArgumentsOfType<IAggregateEvent>().First();
 
                     return (
                         Type: type,
-                        Method: t.GetMethodWithParametersOfTypes(nameof(IAggregateEventHandler.On), type)
-                        .CompileMethodInvocation<Action<IAggregateEventApplier, IAggregateEvent>>()
+                        Method: t.GetMethodWithParametersOfTypes(nameof(ICanHandleAggregateEvent.Handle), type)
+                        .CompileMethodInvocation<Action<IAggregateState, IAggregateEvent>>()
                     );
                 })
                 // Return a lookup of the [IAggregateEvent] => Method.
                 .ToLookup(r => r.Type, r => r.Method)))
-            // Return a lookup of the [IAggregateEventApplier] => ILookup.
+            // Return a lookup of the [IAggregateState] => ILookup.
             .ToLookup(r => r.Type, r => r.Lookup);
 
-        private readonly ILookup<Type, Action<IAggregateEventApplier, IAggregateEvent>> _eventApplicationMethods;
+        private readonly ILookup<Type, Action<IAggregateState, IAggregateEvent>> _eventApplicationMethods;
 
         public abstract TState State { get; }
 
-        protected AggregateEventApplier() =>
-            // On construction, get the correct lookup for this IAggregateEventApplier.
+        protected AggregateState()
+        {
+            // On construction, get the correct lookup for this IAggregateState.
             _eventApplicationMethods = s_eventApplicationMethods[GetType()]?.FirstOrDefault() ??
-            throw new TypeDefinitionNotFoundException($"Definition of type has no {nameof(IAggregateEvent)} lookup defined: {GetType().ToPrettyString()}");
+                throw new TypeDefinitionNotFoundException($"Definition of type has no {nameof(IAggregateEvent)} lookup defined: {GetType().ToPrettyString()}");
+        }
 
-        void IAggregateEventApplier.Apply(IAggregateEvent @event) {
+        void IAggregateState.Apply(IAggregateEvent @event)
+        {
             var actions = _eventApplicationMethods[@event.GetType()];
 
-            if (actions is not null && actions.Any()) {
+            if (actions is not null && actions.Any())
+            {
                 actions.Single()(this, @event);
             }
         }
 
-        public void Apply(IAggregateEvent<TState> @event) => ((IAggregateEventApplier)this).Apply(@event);
+        public void Apply(IAggregateEvent<TState> aggregateEvent) => ((IAggregateState)this).Apply(aggregateEvent);
     }
 }

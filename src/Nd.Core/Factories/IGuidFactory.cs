@@ -21,8 +21,10 @@
  * SOFTWARE.
  */
 
-namespace Nd.Core.Factories {
-    public interface IGuidFactory {
+namespace Nd.Core.Factories
+{
+    public interface IGuidFactory
+    {
         Guid Create();
     }
 }

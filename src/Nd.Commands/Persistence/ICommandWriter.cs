@@ -23,8 +23,10 @@
 
 using Nd.Commands.Results;
 
-namespace Nd.Commands.Persistence {
-    public interface ICommandWriter {
+namespace Nd.Commands.Persistence
+{
+    public interface ICommandWriter
+    {
         Task WriteAsync<TCommand, TResult>(TCommand command, TResult result, CancellationToken cancellation = default)
             where TCommand : ICommand
             where TResult : IExecutionResult;
