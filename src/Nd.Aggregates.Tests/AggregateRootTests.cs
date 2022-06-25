@@ -24,6 +24,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,8 +43,8 @@ namespace Nd.Aggregates.Tests
     {
         #region Test types definitions
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        public sealed record class TestIdentity : GuidIdentity, IAggregateIdentity
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        public sealed record class TestIdentity : GuidAggregateIdentity
         {
             public TestIdentity(Guid value) : base(value) { }
 
@@ -64,13 +65,13 @@ namespace Nd.Aggregates.Tests
 
             public override TestAggregateState State => this;
 
-            public void Handle(TestEventA @event) => _events.Enqueue(@event);
+            public void Handle([NotNull] TestEventA @event) => _events.Enqueue(@event);
 
-            public void Handle(TestEventB _) => _events.Enqueue(new TestEventB());
+            public void Handle([NotNull] TestEventB _) => _events.Enqueue(new TestEventB());
 
-            public void Handle(TestEventC _) => _events.Enqueue(new TestEventC());
+            public void Handle([NotNull] TestEventC _) => _events.Enqueue(new TestEventC());
 
-            public void Handle(TestEventCount _) => Counter++;
+            public void Handle([NotNull] TestEventCount _) => Counter++;
 
             public IAggregateEvent? Yield() => _events.TryDequeue(out var e) ? e : default;
         }

@@ -25,8 +25,7 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
-    public interface IAggregateIdentity : IIdentity<Guid>
+    public interface IAggregateIdentity : IIdentity<string>
     {
-        new Guid Value { get; }
     }
 }

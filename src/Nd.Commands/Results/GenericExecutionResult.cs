@@ -25,43 +25,28 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
+using System;
 using Nd.ValueObjects;
 
 namespace Nd.Commands.Results
 {
-    public static class ExecutionResults
+    public record class GenericExecutionResult
+        (
+            ICommand Command,
+            Exception? Exception = default
+        ) : ValueObject, IExecutionResult
     {
-        private record class SuccessExecutionResult
-        (
-            IIdempotencyIdentity IdempotencyIdentity,
-            ICorrelationIdentity CorrelationIdentity
-        ) : ValueObject, IExecutionResult
-        {
-            public bool IsSuccess => true;
+        public bool IsSuccess { get; } = Exception is null;
 
-            public override string ToString() => $"Successful execution: ({IdempotencyIdentity}, {CorrelationIdentity})";
-        }
+        private readonly string _message = Exception is null ?
+            $"Successful execution: ({Command.IdempotencyIdentity}, {Command.CorrelationIdentity})" :
+            $"Failed execution: ({Command.IdempotencyIdentity}, {Command.CorrelationIdentity}): {ResolveExceptionString(Exception)}";
 
-        private record class FailureExecutionResult
-        (
-            IIdempotencyIdentity IdempotencyIdentity,
-            ICorrelationIdentity CorrelationIdentity,
-            IReadOnlyCollection<Exception> Exceptions
-        ) : ValueObject, IExecutionResult
-        {
-            public bool IsSuccess => false;
-        }
+        private static string ResolveExceptionString(Exception exception) =>
+            $"{Environment.NewLine}{Environment.NewLine}{exception}";
 
-        public static IExecutionResult Success(
-            IIdempotencyIdentity idempotencyIdentity,
-            ICorrelationIdentity correlationIdentity) =>
-            new SuccessExecutionResult(idempotencyIdentity, correlationIdentity);
+        public TCommand GetCommandAs<TCommand>() where TCommand : ICommand => (TCommand)Command;
 
-        public static IExecutionResult Failure(
-            IIdempotencyIdentity idempotencyIdentity,
-            ICorrelationIdentity correlationIdentity,
-            IReadOnlyCollection<Exception> exceptions) =>
-            new FailureExecutionResult(idempotencyIdentity, correlationIdentity, exceptions);
+        public override string ToString() => _message;
     }
 }

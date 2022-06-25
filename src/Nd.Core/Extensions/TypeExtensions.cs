@@ -24,9 +24,14 @@
  * SOFTWARE.
  */
 
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Core.Exceptions;
 using Nd.Core.Types.Names;
 using Nd.Core.Types.Versions;
@@ -118,14 +123,14 @@ namespace Nd.Core.Extensions
                 (record.TypeName, record.TypeVersion);
         }
 
-        public static async Task<IVersionedType> UpgradeRecursiveAsync(this IVersionedType type, CancellationToken cancellationToken = default)
+        public static async Task<IVersionedType> UpgradeRecursiveAsync(this IVersionedType type, CancellationToken cancellation = default)
         {
             if (type is null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            var upgraded = await type.UpgradeAsync(cancellationToken).ConfigureAwait(false);
+            var upgraded = await type.UpgradeAsync(cancellation).ConfigureAwait(false);
 
             return upgraded is null
                 ? type
@@ -133,7 +138,7 @@ namespace Nd.Core.Extensions
                 ? throw new TypeUpgradeConflictException(type, upgraded)
                 : type.TypeVersion >= upgraded.TypeVersion
                 ? throw new TypeVersionUpgradeConflictException(type, type.TypeVersion, upgraded.TypeVersion)
-                : await UpgradeRecursiveAsync(upgraded, cancellationToken).ConfigureAwait(false);
+                : await UpgradeRecursiveAsync(upgraded, cancellation).ConfigureAwait(false);
         }
 
         public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)

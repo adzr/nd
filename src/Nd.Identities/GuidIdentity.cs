@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;

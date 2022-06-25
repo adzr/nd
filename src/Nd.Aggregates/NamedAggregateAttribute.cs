@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Types.Names;
 
 namespace Nd.Aggregates

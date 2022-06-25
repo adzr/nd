@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Commands.Results;
 
 namespace Nd.Commands.Persistence

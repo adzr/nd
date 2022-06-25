@@ -21,6 +21,10 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Extensions;
@@ -29,7 +33,7 @@ using Nd.Core.Extensions;
 
 namespace Nd.Aggregates.Persistence
 {
-    public abstract class AggregateReader<TIdentity, TState> : IAggregateReader<TIdentity, TState>
+    public abstract class AggregateReader<TIdentity, TState> : IAggregateReader<TIdentity>
         where TIdentity : IAggregateIdentity
         where TState : class
     {
@@ -46,9 +50,9 @@ namespace Nd.Aggregates.Persistence
             _eventReader = eventReader ?? throw new ArgumentNullException(nameof(eventReader));
         }
 
-        public async Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId,
-                uint version, CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
+        public async Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId,
+                uint version = 0u, CancellationToken cancellation = default)
+            where TAggregate : IAggregateRoot<TIdentity>
         {
             if (aggregateId is null)
             {
@@ -57,11 +61,6 @@ namespace Nd.Aggregates.Persistence
 
             var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity, TState>>(aggregateId, version, cancellation)
                 .ConfigureAwait(false);
-
-            if (!events.Any())
-            {
-                return default;
-            }
 
             (var aggregate, var state) = aggregateId
                 .CreateAggregateAndState(_aggregateFactory, _stateFactory, events.Max(e => e.Metadata.AggregateVersion));
@@ -85,7 +84,7 @@ namespace Nd.Aggregates.Persistence
                 }
             }
 
-            return (TAggregate?)aggregate;
+            return (TAggregate)aggregate;
         }
     }
 }

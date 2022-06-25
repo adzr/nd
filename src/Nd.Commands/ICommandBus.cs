@@ -25,6 +25,8 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
 
@@ -33,7 +35,7 @@ namespace Nd.Commands
     public interface ICommandBus
     {
         Task<TResult> ExecuteAsync<TIdentity, TResult>(
-            ICommand<TIdentity> command,
+            ICommand<TIdentity, TResult> command,
             CancellationToken cancellationToken = default)
             where TIdentity : IAggregateIdentity
             where TResult : IExecutionResult;

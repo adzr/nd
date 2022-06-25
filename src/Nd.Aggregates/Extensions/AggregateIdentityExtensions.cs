@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;

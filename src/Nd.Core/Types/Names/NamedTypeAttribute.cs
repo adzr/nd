@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System;
+
 namespace Nd.Core.Types.Names
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]

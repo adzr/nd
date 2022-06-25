@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Types.Versions;
 
 namespace Nd.Aggregates.Snapshots

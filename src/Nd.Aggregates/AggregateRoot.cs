@@ -28,6 +28,12 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
@@ -68,8 +74,10 @@ namespace Nd.Aggregates
             Version = version;
         }
 
+        [NotNull]
         public TState State => _state.State;
 
+        [NotNull]
         public TIdentity Identity { get; }
 
         IIdentity IAggregateRoot.Identity => Identity;

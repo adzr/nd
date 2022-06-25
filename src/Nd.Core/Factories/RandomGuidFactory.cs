@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System;
+
 namespace Nd.Core.Factories
 {
     public sealed class RandomGuidFactory : IGuidFactory

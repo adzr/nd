@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using System.Runtime.Serialization;
 using Nd.Identities;
 

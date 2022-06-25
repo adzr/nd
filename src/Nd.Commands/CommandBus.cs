@@ -21,6 +21,10 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 using Nd.Commands.Exceptions;
 using Nd.Commands.Persistence;
@@ -65,7 +69,9 @@ namespace Nd.Commands
                 .ToLookup(r => r.CommandType!, r => r.Handler);
         }
 
-        public async Task<TResult> ExecuteAsync<TIdentity, TResult>(ICommand<TIdentity> command, CancellationToken cancellationToken = default)
+        public async Task<TResult> ExecuteAsync<TIdentity, TResult>(
+            ICommand<TIdentity, TResult> command,
+            CancellationToken cancellationToken = default)
             where TIdentity : IAggregateIdentity
             where TResult : IExecutionResult
         {

@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Nd.Aggregates.Events
 {
     public interface ICanHandleAggregateEvent
@@ -31,8 +33,8 @@ namespace Nd.Aggregates.Events
     public interface ICanHandleAggregateEvent<in TEvent> : ICanHandleAggregateEvent
         where TEvent : IAggregateEvent
     {
-        void Handle(TEvent aggregateEvent);
+        void Handle([NotNull] TEvent aggregateEvent);
 
-        protected new void Handle(IAggregateEvent aggregateEvent) => Handle((TEvent)aggregateEvent);
+        protected new void Handle([NotNull] IAggregateEvent aggregateEvent) => Handle((TEvent)aggregateEvent);
     }
 }

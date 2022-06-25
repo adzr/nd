@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System;
+
 namespace Nd.Identities
 {
     public interface ICorrelationIdentity : IIdentity<Guid>

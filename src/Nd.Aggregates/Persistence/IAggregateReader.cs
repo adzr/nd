@@ -21,20 +21,16 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateReader<TIdentity, TState>
+    public interface IAggregateReader<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : class
     {
-        Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId, CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-             => ReadAsync<TAggregate>(aggregateId, 0u, cancellation);
-
-        Task<TAggregate?> ReadAsync<TAggregate>(TIdentity aggregateId, uint version,
-                CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity, TState>;
+        Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId, uint version = 0u, CancellationToken cancellation = default)
+            where TAggregate : IAggregateRoot<TIdentity>;
     }
 }

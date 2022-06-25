@@ -25,16 +25,14 @@
  * SOFTWARE.
  */
 
-using Nd.Identities;
-
 namespace Nd.Commands.Results
 {
     public interface IExecutionResult
     {
+        ICommand Command { get; }
+
+        TCommand GetCommandAs<TCommand>() where TCommand : ICommand;
+
         bool IsSuccess { get; }
-
-        IIdempotencyIdentity IdempotencyIdentity { get; }
-
-        ICorrelationIdentity CorrelationIdentity { get; }
     }
 }

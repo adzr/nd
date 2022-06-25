@@ -25,6 +25,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Identities;
 
 namespace Nd.Aggregates.Identities

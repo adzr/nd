@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Factories;
 
 namespace Nd.Identities

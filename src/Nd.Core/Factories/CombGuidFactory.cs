@@ -25,6 +25,9 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Threading;
+
 namespace Nd.Core.Factories
 {
     public sealed class CombGuidFactory : IGuidFactory

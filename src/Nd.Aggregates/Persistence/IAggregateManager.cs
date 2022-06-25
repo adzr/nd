@@ -21,30 +21,31 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
-using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
     public interface IAggregateManager
     {
-        Task<IAggregateRoot> LoadAsync(IIdentity identity, CancellationToken cancellationToken = default);
+        Task<IAggregateRoot> LoadAsync(IAggregateIdentity identity, uint version = 0u, CancellationToken cancellation = default);
 
-        Task SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken = default);
+        Task SaveAsync(IAggregateRoot aggregate, CancellationToken cancellation = default);
     }
 
     public interface IAggregateManager<TAggregate, TIdentity> : IAggregateManager
         where TAggregate : class, IAggregateRoot<TIdentity>
         where TIdentity : IAggregateIdentity
     {
-        async Task<IAggregateRoot> IAggregateManager.LoadAsync(IIdentity identity, CancellationToken cancellationToken) =>
-            await LoadAsync((TIdentity)identity, cancellationToken).ConfigureAwait(false);
+        async Task<IAggregateRoot> IAggregateManager.LoadAsync(IAggregateIdentity identity, uint version, CancellationToken cancellation) =>
+            await LoadAsync((TIdentity)identity, version, cancellation).ConfigureAwait(false);
 
-        Task IAggregateManager.SaveAsync(IAggregateRoot aggregate, CancellationToken cancellationToken) =>
-            SaveAsync((TAggregate)aggregate, cancellationToken);
+        Task IAggregateManager.SaveAsync(IAggregateRoot aggregate, CancellationToken cancellation) =>
+            SaveAsync((TAggregate)aggregate, cancellation);
 
-        Task<TAggregate> LoadAsync(TIdentity identity, CancellationToken cancellationToken = default);
+        Task<TAggregate> LoadAsync(TIdentity identity, uint version = 0u, CancellationToken cancellation = default);
 
-        Task SaveAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
+        Task SaveAsync(TAggregate aggregate, CancellationToken cancellation = default);
     }
 }

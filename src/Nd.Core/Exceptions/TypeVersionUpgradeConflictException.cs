@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+using System;
 using System.Runtime.Serialization;
 using Nd.Core.Types.Versions;
 

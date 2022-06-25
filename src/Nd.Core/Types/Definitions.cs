@@ -21,6 +21,9 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Names;

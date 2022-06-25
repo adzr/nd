@@ -25,32 +25,23 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Commands.Results;
 
 namespace Nd.Commands
 {
     public interface ICommandHandler
     {
-        Task<TResult> ExecuteAsync<TResult>(ICommand command, CancellationToken cancellationToken)
+        Task<TResult> ExecuteAsync<TResult>([NotNull] ICommand command, CancellationToken cancellation = default)
             where TResult : IExecutionResult;
     }
 
-    public interface ICommandHandler<TCommand, TIdentity>
-            where TCommand : ICommand<TIdentity>
-            where TIdentity : IAggregateIdentity
+    public interface ICommandHandler<TCommand, TResult>
+        where TCommand : ICommand<TResult>
+        where TResult : IExecutionResult
     {
-        Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken)
-            where TResult : IExecutionResult;
-    }
-
-    public abstract class AggregateAwareCommandHandler<TCommand, TIdentity> : ICommandHandler<TCommand, TIdentity>
-        where TCommand : ICommand<TIdentity>
-        where TIdentity : IAggregateIdentity
-    {
-        public Task<TResult> ExecuteAsync<TResult>(TCommand command, CancellationToken cancellationToken) where TResult : IExecutionResult
-        {
-            throw new NotImplementedException();
-        }
+        Task<TResult> ExecuteAsync([NotNull] TCommand command, CancellationToken cancellation = default);
     }
 }

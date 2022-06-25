@@ -45,7 +45,7 @@ namespace Nd.Core.Tests.VersionedTypes
     {
         public abstract uint TypeVersion { get; }
         public abstract string TypeName { get; }
-        public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+        public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(default);
     }
 
     [VersionedTest(nameof(UpgradableVersion), 1)]
@@ -57,7 +57,7 @@ namespace Nd.Core.Tests.VersionedTypes
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 2)]
@@ -69,7 +69,7 @@ namespace Nd.Core.Tests.VersionedTypes
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 3)]
@@ -91,7 +91,7 @@ namespace Nd.Core.Tests.VersionedTypes
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     [VersionedTest(nameof(UpgradableVersion), 4)]
@@ -103,7 +103,7 @@ namespace Nd.Core.Tests.VersionedTypes
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
     }
 
     [VersionedTest("NonUpgradableVersion", 2)]
@@ -115,7 +115,7 @@ namespace Nd.Core.Tests.VersionedTypes
 
         public override string TypeName => s_nameAndVersion.Name;
 
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
     }
 
     #endregion

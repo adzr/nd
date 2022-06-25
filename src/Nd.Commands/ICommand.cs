@@ -26,6 +26,7 @@
  */
 
 using Nd.Aggregates.Identities;
+using Nd.Commands.Results;
 using Nd.Core.Types.Versions;
 using Nd.Identities;
 
@@ -37,8 +38,13 @@ namespace Nd.Commands
         ICorrelationIdentity CorrelationIdentity { get; }
     }
 
-    public interface ICommand<TIdentity> : ICommand
+    public interface ICommand<TResult> : ICommand
+        where TResult : IExecutionResult
+    { }
+
+    public interface ICommand<TIdentity, TResult> : ICommand<TResult>
         where TIdentity : IAggregateIdentity
+        where TResult : IExecutionResult
     {
         TIdentity AggregateIdentity { get; }
     }

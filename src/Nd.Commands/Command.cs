@@ -29,6 +29,7 @@
  */
 
 using Nd.Aggregates.Identities;
+using Nd.Commands.Results;
 using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types;
@@ -37,8 +38,9 @@ using Nd.ValueObjects;
 
 namespace Nd.Commands
 {
-    public abstract record class Command<TIdentity> : ValueObject, ICommand<TIdentity>
+    public abstract record class Command<TIdentity, TResult> : ValueObject, ICommand<TIdentity, TResult>
         where TIdentity : IAggregateIdentity
+        where TResult : IExecutionResult
     {
         protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity)
         {
@@ -59,5 +61,13 @@ namespace Nd.Commands
         public IIdempotencyIdentity IdempotencyIdentity { get; }
 
         public ICorrelationIdentity CorrelationIdentity { get; }
+    }
+
+    public abstract record class Command<TIdentity> : Command<TIdentity, GenericExecutionResult>
+        where TIdentity : IAggregateIdentity
+    {
+        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity) :
+            base(idempotencyIdentity, correlationIdentity, aggregateIdentity)
+        { }
     }
 }

@@ -21,6 +21,9 @@
  * SOFTWARE.
  */
 
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 
 namespace Nd.Aggregates.Persistence

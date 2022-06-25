@@ -25,6 +25,8 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Nd.Core.Types.Names;
 
 namespace Nd.Core.Types.Versions
@@ -36,8 +38,8 @@ namespace Nd.Core.Types.Versions
         /// <summary>
         /// Upgrades an instance of a type to an instance of a type with the same TypeName and a greater TypeVersion.
         /// </summary>
-        /// <param name="cancellationToken"></param>
+        /// <param name="cancellation"></param>
         /// <returns>An instance of a type with the same TypeName and a greater TypeVersion if this type is upgradable, otherwise null.</returns>
-        Task<IVersionedType?> UpgradeAsync(CancellationToken cancellationToken) => Task.FromResult<IVersionedType?>(default);
+        Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(default);
     }
 }

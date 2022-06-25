@@ -1,4 +1,4 @@
-namespace Nd.Samples.ECommerce
+namespace WebApplication1
 {
     public class WeatherForecast
     {

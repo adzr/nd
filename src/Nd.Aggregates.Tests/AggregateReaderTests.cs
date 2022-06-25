@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,15 +22,15 @@ namespace Nd.Aggregates.Tests
     {
         #region Test types definitions
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        public sealed record class TestIdentity : GuidIdentity, IAggregateIdentity
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        public sealed record class TestIdentity : GuidAggregateIdentity
         {
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         public sealed record class TestAggregateState : AggregateState<TestAggregateState>,
             ICanHandleAggregateEvent<TestEventA>,
             ICanHandleAggregateEvent<TestEventB>,
@@ -44,15 +45,15 @@ namespace Nd.Aggregates.Tests
 
             public override TestAggregateState State => this;
 
-            public void Handle(TestEventA aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle([NotNull] TestEventA aggregateEvent) => _events.Enqueue(aggregateEvent);
 
-            public void Handle(TestEventB aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle([NotNull] TestEventB aggregateEvent) => _events.Enqueue(aggregateEvent);
 
-            public void Handle(TestEventC2 aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle([NotNull] TestEventC2 aggregateEvent) => _events.Enqueue(aggregateEvent);
 
 
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1725:Parameter names should match base declaration", Justification = "Useless parameter.")]
-            public void Handle(TestEventCount _) => Counter++;
+            [SuppressMessage("Naming", "CA1725:Parameter names should match base declaration", Justification = "Useless parameter.")]
+            public void Handle([NotNull] TestEventCount _) => Counter++;
 
             public IAggregateEvent<TestAggregateState>? Yield() => _events.TryDequeue(out var e) ? e : default;
         }
@@ -62,26 +63,26 @@ namespace Nd.Aggregates.Tests
             string Value { get; }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         [VersionedEvent(nameof(TestEventA), 1)]
         public sealed record class TestEventA(string Value) : AggregateEvent<TestAggregateState>, IHasValue;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         [VersionedEvent(nameof(TestEventB), 1)]
         public sealed record class TestEventB : AggregateEvent<TestAggregateState>;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         [VersionedEvent("TestEventC", 1)]
         public sealed record class TestEventC1(string Value) : AggregateEvent<TestAggregateState>, IHasValue, IVersionedType
         {
             Task<IVersionedType?> IVersionedType.UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new TestEventC2(Value));
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         [VersionedEvent("TestEventC", 2)]
         public sealed record class TestEventC2(string Value) : AggregateEvent<TestAggregateState>, IHasValue;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         public sealed record class TestEventCount : AggregateEvent<TestAggregateState>;
 
         internal class TestAggregateRoot : AggregateRoot<TestIdentity, TestAggregateState>
@@ -110,7 +111,7 @@ namespace Nd.Aggregates.Tests
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         public record class TestAggregateCommittedEvent : ICommittedEvent<TestIdentity, TestAggregateState>
         {
             public TestAggregateCommittedEvent(IAggregateEvent<TestAggregateState> aggregateEvent, IAggregateEventMetadata<TestIdentity> metadata)
@@ -137,14 +138,14 @@ namespace Nd.Aggregates.Tests
 
             var eventReader = A.Fake<IAggregateEventReader<TestIdentity, TestAggregateState>>();
 
-            IAggregateReader<TestIdentity, TestAggregateState> reader = new TestAggregateReader(
+            IAggregateReader<TestIdentity> reader = new TestAggregateReader(
                 () => new TestAggregateState(),
                 (identity, stateFactory, version) => new TestAggregateRoot(identity, stateFactory, version),
                 eventReader);
 
             ExpectEvents(expectedIdentity, expectedAggregateName, new AggregateEvent<TestAggregateState>[] { expectedEventA, expectedEventB }, eventReader);
 
-            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, CancellationToken.None).GetAwaiter().GetResult();
+            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, cancellation: CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.NotNull(aggregate);
 
@@ -163,14 +164,14 @@ namespace Nd.Aggregates.Tests
 
             var eventReader = A.Fake<IAggregateEventReader<TestIdentity, TestAggregateState>>();
 
-            IAggregateReader<TestIdentity, TestAggregateState> reader = new TestAggregateReader(
+            IAggregateReader<TestIdentity> reader = new TestAggregateReader(
                 () => new TestAggregateState(),
                 (identity, stateFactory, version) => new TestAggregateRoot(identity, stateFactory, version),
                 eventReader);
 
             ExpectEvents(expectedIdentity, expectedAggregateName, new AggregateEvent<TestAggregateState>[] { expectedEventA, expectedEventB }, eventReader);
 
-            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, CancellationToken.None).GetAwaiter().GetResult();
+            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, cancellation: CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.NotNull(aggregate);
 
