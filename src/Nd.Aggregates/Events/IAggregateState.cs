@@ -25,8 +25,6 @@
  * SOFTWARE.
  */
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Nd.Aggregates.Events
 {
     public interface IAggregateState
@@ -35,11 +33,10 @@ namespace Nd.Aggregates.Events
     }
 
     public interface IAggregateState<TState> : IAggregateState
-        where TState : class
+        where TState : notnull
     {
         void Apply(IAggregateEvent<TState> aggregateEvent);
 
-        [NotNull]
         TState State { get; }
     }
 }

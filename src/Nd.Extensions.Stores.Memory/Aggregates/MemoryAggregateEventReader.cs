@@ -21,44 +21,33 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Caching.Distributed;
 using Nd.Aggregates.Identities;
+using Nd.Aggregates.Persistence;
 
-namespace Nd.Aggregates.Persistence
+namespace Nd.Extensions.Stores.Memory.Aggregates
 {
-    public abstract class AggregateManager<TAggregate, TIdentity> : IAggregateManager<TAggregate, TIdentity>
-        where TAggregate : class, IAggregateRoot<TIdentity>
+    public abstract class MemoryAggregateEventReader<TIdentity, TState> : IAggregateEventReader<TIdentity, TState>
         where TIdentity : IAggregateIdentity
+        where TState : notnull
     {
-        private readonly IAggregateReader<TIdentity> _reader;
-        private readonly IAggregateEventWriter<TIdentity> _writer;
-        private readonly IDistributedCache? _cache;
+        private readonly IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> _events;
 
-        protected AggregateManager(IAggregateReader<TIdentity> reader, IAggregateEventWriter<TIdentity> writer, IDistributedCache? cache)
+        protected MemoryAggregateEventReader(IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> events)
         {
-            _reader = reader;
-            _writer = writer;
-            _cache = cache;
+            _events = events;
         }
 
-        public Task<TAggregate> LoadAsync(TIdentity identity, uint version = 0, CancellationToken cancellation = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task SaveAsync(TAggregate aggregate, CancellationToken cancellation = default)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-
-    public record class AggregateCacheRecord<TIdentity, TState>(TIdentity Identity, uint Version, TState State)
-    {
-        public TAggregate ToAggregate<TAggregate>()
-        {
-
-        }
+        public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
+            where TEvent : ICommittedEvent<TIdentity, TState> =>
+            Task.FromResult(_events.TryGetValue(aggregateId, out var events) ?
+                events
+                .Where(e => e.Metadata.AggregateVersion >= versionStart && (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))
+                .Select(e => (TEvent)e) :
+                Array.Empty<TEvent>());
     }
 }

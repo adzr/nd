@@ -39,11 +39,11 @@ namespace Nd.Aggregates.Events
     }
 
     public interface IAggregateEventMetadata<out TIdentity> : IAggregateEventMetadata
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
+        TIdentity AggregateIdentity { get; }
         string AggregateName { get; }
         IAggregateEventIdentity EventIdentity { get; }
         DateTimeOffset Timestamp { get; }
-        TIdentity AggregateIdentity { get; }
     }
 }

@@ -27,10 +27,8 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
-    public record class GuidAggregateIdentity : GuidIdentity, IAggregateIdentity
+    public abstract record class GuidAggregateIdentity : GuidIdentity, IAggregateIdentity<Guid>
     {
-        string IIdentity<string>.Value => Value.ToString("D").ToUpperInvariant();
-
         protected GuidAggregateIdentity(Guid value) : base(value) { }
 
         protected GuidAggregateIdentity(IGuidFactory factory) : base(factory) { }

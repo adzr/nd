@@ -1,5 +1,5 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -30,6 +30,7 @@ namespace Nd.ValueObjects.Tests
             string Name
         ) : ValueObject;
 
+    [Trait("Category", "Unit")]
     public class ValueObjectTests
     {
         [Theory]

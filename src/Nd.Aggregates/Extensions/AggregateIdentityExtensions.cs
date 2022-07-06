@@ -22,6 +22,8 @@
  */
 
 using System;
+using System.Diagnostics;
+using Nd.Aggregates.Common;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
@@ -36,10 +38,9 @@ namespace Nd.Aggregates.Extensions
             AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
             AggregateStateFactoryFunc<TState> initializeState,
             uint version)
-
-            where TAggregate : IAggregateRoot<TIdentity, TState>
-            where TIdentity : IAggregateIdentity
-            where TState : class
+            where TAggregate : notnull, IAggregateRoot<TIdentity, TState>
+            where TIdentity : notnull, IAggregateIdentity
+            where TState : notnull
         {
             if (initializeState is null)
             {
@@ -76,5 +77,14 @@ namespace Nd.Aggregates.Extensions
 
             return (aggregate, state);
         }
+    }
+
+    public static class ActivityExtensions
+    {
+        public static Activity AddCorrelationsTag(this Activity activity, Guid[]? correlationIds) =>
+            activity?.AddTag(ActivityConstants.CorrelationsTag, correlationIds) ?? throw new ArgumentNullException(nameof(activity));
+
+        public static Activity AddDomainAggregatesTag<T>(this Activity activity, T[]? aggregatesIds) =>
+            activity?.AddTag(ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
     }
 }

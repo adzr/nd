@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Nd.Aggregates.Tests
 {
+    [Trait("Category", "Unit")]
     public class AggregateReaderTests
     {
         #region Test types definitions
@@ -45,15 +46,15 @@ namespace Nd.Aggregates.Tests
 
             public override TestAggregateState State => this;
 
-            public void Handle([NotNull] TestEventA aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle(TestEventA aggregateEvent) => _events.Enqueue(aggregateEvent);
 
-            public void Handle([NotNull] TestEventB aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle(TestEventB aggregateEvent) => _events.Enqueue(aggregateEvent);
 
-            public void Handle([NotNull] TestEventC2 aggregateEvent) => _events.Enqueue(aggregateEvent);
+            public void Handle(TestEventC2 aggregateEvent) => _events.Enqueue(aggregateEvent);
 
 
             [SuppressMessage("Naming", "CA1725:Parameter names should match base declaration", Justification = "Useless parameter.")]
-            public void Handle([NotNull] TestEventCount _) => Counter++;
+            public void Handle(TestEventCount _) => Counter++;
 
             public IAggregateEvent<TestAggregateState>? Yield() => _events.TryDequeue(out var e) ? e : default;
         }

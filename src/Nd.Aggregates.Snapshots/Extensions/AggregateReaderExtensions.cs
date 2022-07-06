@@ -38,17 +38,16 @@ namespace Nd.Aggregates.Snapshots.Extensions
 {
     public static class AggregateReaderExtensions
     {
-
-        public static async Task<TAggregate?> ReadAsync<TIdentity, TState, TAggregate>(
+        public static async Task<TAggregate> ReadAsync<TIdentity, TState, TAggregate>(
             TIdentity aggregateId, uint version,
             IAggregateEventReader<TIdentity, TState> eventReader,
             IAggregateSnapshotReader<TIdentity> snapshotReader,
             AggregateFactoryFunc<TIdentity, TState, TAggregate> initializeAggregate,
             AggregateStateFactoryFunc<TState> initializeState,
             CancellationToken cancellation = default)
-            where TAggregate : AggregateRoot<TIdentity, TState>
-            where TIdentity : IAggregateIdentity
-            where TState : class, IVersionedType
+            where TAggregate : notnull, AggregateRoot<TIdentity, TState>
+            where TIdentity : notnull, IAggregateIdentity
+            where TState : notnull, IVersionedType
         {
 
             if (aggregateId is null)
@@ -74,8 +73,6 @@ namespace Nd.Aggregates.Snapshots.Extensions
 
             if (storedSnapshot is not null)
             {
-
-
                 try
                 {
                     snapshot = await storedSnapshot.State.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is TState upgradedState
@@ -97,11 +94,6 @@ namespace Nd.Aggregates.Snapshots.Extensions
                 snapshot is null ? 0 : snapshot.AggregateVersion + 1,
                 version,
                 cancellation).ConfigureAwait(false));
-
-            if (!events.Any())
-            {
-                return default;
-            }
 
             (var aggregate, var state) = aggregateId
                 .CreateAggregateAndState(initializeAggregate, initializeState, events.Max(e => e.Metadata.AggregateVersion));

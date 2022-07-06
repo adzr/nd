@@ -39,6 +39,7 @@ using Xunit;
 
 namespace Nd.Aggregates.Tests
 {
+    [Trait("Category", "Unit")]
     public class AggregateRootTests
     {
         #region Test types definitions
@@ -65,13 +66,13 @@ namespace Nd.Aggregates.Tests
 
             public override TestAggregateState State => this;
 
-            public void Handle([NotNull] TestEventA @event) => _events.Enqueue(@event);
+            public void Handle(TestEventA @event) => _events.Enqueue(@event);
 
-            public void Handle([NotNull] TestEventB _) => _events.Enqueue(new TestEventB());
+            public void Handle(TestEventB _) => _events.Enqueue(new TestEventB());
 
-            public void Handle([NotNull] TestEventC _) => _events.Enqueue(new TestEventC());
+            public void Handle(TestEventC _) => _events.Enqueue(new TestEventC());
 
-            public void Handle([NotNull] TestEventCount _) => Counter++;
+            public void Handle(TestEventCount _) => Counter++;
 
             public IAggregateEvent? Yield() => _events.TryDequeue(out var e) ? e : default;
         }

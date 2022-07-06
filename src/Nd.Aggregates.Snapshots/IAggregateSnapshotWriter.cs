@@ -29,8 +29,8 @@ using Nd.Core.Types.Versions;
 namespace Nd.Aggregates.Snapshots
 {
     public interface IAggregateSnapshotWriter<in TIdentity>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
-        Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : class, IVersionedType;
+        Task WriteAsync<TState>(IAggregateSnapshot<TIdentity, TState> snapshot, CancellationToken cancellation = default) where TState : notnull, IVersionedType;
     }
 }

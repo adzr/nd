@@ -21,18 +21,20 @@
  * SOFTWARE.
  */
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
+using Nd.Aggregates.Persistence;
 
-namespace Nd.Aggregates.Persistence.Memory
+namespace Nd.Extensions.Stores.Memory.Aggregates
 {
     public abstract class MemoryAggregateEventWriter<TIdentity, TState> : IAggregateEventWriter<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : class
+        where TState : notnull
     {
         private readonly ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity, TState>>> _events;
 
@@ -45,7 +47,7 @@ namespace Nd.Aggregates.Persistence.Memory
         {
             if (events is null)
             {
-                return Task.CompletedTask;
+                throw new ArgumentNullException(nameof(events));
             }
 
             foreach (var e in events)
@@ -60,7 +62,7 @@ namespace Nd.Aggregates.Persistence.Memory
 
     internal class CommittedEvent<TIdentity, TState> : ICommittedEvent<TIdentity, TState>
         where TIdentity : IAggregateIdentity
-        where TState : class
+        where TState : notnull
     {
         public CommittedEvent(IAggregateEvent<TState> aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
         {

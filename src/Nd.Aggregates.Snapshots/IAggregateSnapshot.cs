@@ -27,8 +27,8 @@ using Nd.Core.Types.Versions;
 namespace Nd.Aggregates.Snapshots
 {
     public interface IAggregateSnapshot<out TIdentity, out TState>
-        where TIdentity : IAggregateIdentity
-        where TState : class, IVersionedType
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull, IVersionedType
     {
         TState State { get; }
 
@@ -40,7 +40,7 @@ namespace Nd.Aggregates.Snapshots
     }
 
     public interface ICanConsumeState<in TState>
-        where TState : class, IVersionedType
+        where TState : notnull, IVersionedType
     {
         public void ConsumeState(TState state);
     }

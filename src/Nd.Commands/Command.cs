@@ -39,8 +39,8 @@ using Nd.ValueObjects;
 namespace Nd.Commands
 {
     public abstract record class Command<TIdentity, TResult> : ValueObject, ICommand<TIdentity, TResult>
-        where TIdentity : IAggregateIdentity
-        where TResult : IExecutionResult
+        where TIdentity : notnull, IAggregateIdentity
+        where TResult : notnull, IExecutionResult
     {
         protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity)
         {
@@ -64,7 +64,7 @@ namespace Nd.Commands
     }
 
     public abstract record class Command<TIdentity> : Command<TIdentity, GenericExecutionResult>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
         protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity) :
             base(idempotencyIdentity, correlationIdentity, aggregateIdentity)

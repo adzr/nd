@@ -24,10 +24,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
+using Nd.Core.Types.Names;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateManager
+    public interface IAggregateManager : INamedType
     {
         Task<IAggregateRoot> LoadAsync(IAggregateIdentity identity, uint version = 0u, CancellationToken cancellation = default);
 
@@ -35,8 +36,8 @@ namespace Nd.Aggregates.Persistence
     }
 
     public interface IAggregateManager<TAggregate, TIdentity> : IAggregateManager
-        where TAggregate : class, IAggregateRoot<TIdentity>
-        where TIdentity : IAggregateIdentity
+        where TAggregate : notnull, IAggregateRoot<TIdentity>
+        where TIdentity : notnull, IAggregateIdentity
     {
         async Task<IAggregateRoot> IAggregateManager.LoadAsync(IAggregateIdentity identity, uint version, CancellationToken cancellation) =>
             await LoadAsync((TIdentity)identity, version, cancellation).ConfigureAwait(false);

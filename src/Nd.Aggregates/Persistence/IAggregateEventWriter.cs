@@ -30,9 +30,9 @@ using Nd.Aggregates.Identities;
 namespace Nd.Aggregates.Persistence
 {
     public interface IAggregateEventWriter<TIdentity>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
         Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
-            where TEvent : IUncommittedEvent<TIdentity>;
+            where TEvent : notnull, IUncommittedEvent<TIdentity>;
     }
 }

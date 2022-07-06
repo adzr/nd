@@ -121,6 +121,7 @@ namespace Nd.Core.Tests.VersionedTypes
     #endregion
 
     [VersionedTest(nameof(VersionedTypeAttributeTests), 7)]
+    [Trait("Category", "Unit")]
     public class VersionedTypeAttributeTests
     {
         [Fact]

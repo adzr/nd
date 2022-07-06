@@ -25,7 +25,6 @@
  * SOFTWARE.
  */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Commands.Results;
@@ -34,14 +33,14 @@ namespace Nd.Commands
 {
     public interface ICommandHandler
     {
-        Task<TResult> ExecuteAsync<TResult>([NotNull] ICommand command, CancellationToken cancellation = default)
-            where TResult : IExecutionResult;
+        Task<TResult> ExecuteAsync<TResult>(ICommand command, CancellationToken cancellation = default)
+            where TResult : notnull, IExecutionResult;
     }
 
     public interface ICommandHandler<TCommand, TResult>
-        where TCommand : ICommand<TResult>
-        where TResult : IExecutionResult
+        where TCommand : notnull, ICommand<TResult>
+        where TResult : notnull, IExecutionResult
     {
-        Task<TResult> ExecuteAsync([NotNull] TCommand command, CancellationToken cancellation = default);
+        Task<TResult> ExecuteAsync(TCommand command, CancellationToken cancellation = default);
     }
 }

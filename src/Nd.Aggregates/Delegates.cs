@@ -21,17 +21,18 @@
  * SOFTWARE.
  */
 
+using System.Diagnostics.CodeAnalysis;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 
 namespace Nd.Aggregates
 {
-    public delegate IAggregateState<TState> AggregateStateFactoryFunc<TState>() where TState : class;
+    public delegate IAggregateState<TState> AggregateStateFactoryFunc<TState>() where TState : notnull;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1005:Avoid excessive parameters on generic types", Justification = "All the generic types declared are required.")]
+    [SuppressMessage("Design", "CA1005:Avoid excessive parameters on generic types", Justification = "All the generic types declared are required.")]
     public delegate TAggregate AggregateFactoryFunc<TIdentity, TState, TAggregate>(
         TIdentity identity, AggregateStateFactoryFunc<TState> initializeState, uint version = default)
         where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IAggregateIdentity
-        where TState : class;
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull;
 }

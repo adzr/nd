@@ -30,7 +30,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,8 +46,8 @@ using Nd.Identities;
 namespace Nd.Aggregates
 {
     public abstract class AggregateRoot<TIdentity, TState> : IAggregateRoot<TIdentity, TState>
-        where TIdentity : IAggregateIdentity
-        where TState : class
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull
     {
 
         private readonly object _uncommittedEventsLock = new();
@@ -74,13 +73,11 @@ namespace Nd.Aggregates
             Version = version;
         }
 
-        [NotNull]
         public TState State => _state.State;
 
-        [NotNull]
         public TIdentity Identity { get; }
 
-        IIdentity IAggregateRoot.Identity => Identity;
+        IAggregateIdentity IAggregateRoot.Identity => Identity;
 
         public string TypeName { get; }
 

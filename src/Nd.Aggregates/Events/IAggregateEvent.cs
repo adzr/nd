@@ -34,7 +34,7 @@ namespace Nd.Aggregates.Events
     }
 
     public interface IAggregateEvent<TState> : IAggregateEvent
-        where TState : class
+        where TState : notnull
     {
     }
 }

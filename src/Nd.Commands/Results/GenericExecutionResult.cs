@@ -45,7 +45,7 @@ namespace Nd.Commands.Results
         private static string ResolveExceptionString(Exception exception) =>
             $"{Environment.NewLine}{Environment.NewLine}{exception}";
 
-        public TCommand GetCommandAs<TCommand>() where TCommand : ICommand => (TCommand)Command;
+        public TCommand GetCommandAs<TCommand>() where TCommand : notnull, ICommand => (TCommand)Command;
 
         public override string ToString() => _message;
     }

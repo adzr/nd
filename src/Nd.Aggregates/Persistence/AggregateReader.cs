@@ -34,8 +34,8 @@ using Nd.Core.Extensions;
 namespace Nd.Aggregates.Persistence
 {
     public abstract class AggregateReader<TIdentity, TState> : IAggregateReader<TIdentity>
-        where TIdentity : IAggregateIdentity
-        where TState : class
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull
     {
         private readonly AggregateFactoryFunc<TIdentity, TState, IAggregateRoot<TIdentity, TState>> _aggregateFactory;
         private readonly AggregateStateFactoryFunc<TState> _stateFactory;
@@ -52,7 +52,7 @@ namespace Nd.Aggregates.Persistence
 
         public async Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId,
                 uint version = 0u, CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity>
+            where TAggregate : notnull, IAggregateRoot<TIdentity>
         {
             if (aggregateId is null)
             {

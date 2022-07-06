@@ -32,11 +32,11 @@ namespace Nd.Aggregates.Snapshots.Extensions
     public static class AggregateRootExtensions
     {
         public static Task TakeSnapshotAsync<TIdentity, TState>(
-            this AggregateRoot<TIdentity, TState> aggregate,
+            this IAggregateRoot<TIdentity, TState> aggregate,
             IAggregateSnapshotWriter<TIdentity> writer, CancellationToken cancellation = default)
-        where TIdentity : IAggregateIdentity
-        where TState : class, IVersionedType
-            => writer?.WriteAsync(new AggregateSnapshot<TIdentity, TState>(aggregate?.State ?? throw new ArgumentNullException(nameof(aggregate)),
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull, IVersionedType
+            => writer?.WriteAsync(new AggregateSnapshot<TIdentity, TState>((aggregate ?? throw new ArgumentNullException(nameof(aggregate))).State,
                 aggregate.Version, aggregate.Identity, aggregate.TypeName), cancellation) ??
             throw new ArgumentNullException(nameof(writer));
     }

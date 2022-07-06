@@ -31,6 +31,7 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
+    [NamedIdentity("event")]
     public sealed record class AggregateEventIdentity : GuidIdentity, IAggregateEventIdentity
     {
         public static readonly Guid NamespaceIdentifier = Guid.ParseExact("8a563c72-5604-4ca2-9d5f-bb6eb7f960c7", "D");

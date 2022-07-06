@@ -33,8 +33,8 @@ namespace Nd.Aggregates.Persistence
     }
 
     public interface ICommittedEvent<TIdentity, TState> : ICommittedEvent
-        where TIdentity : IAggregateIdentity
-        where TState : class
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull
     {
         public new IAggregateEvent<TState> AggregateEvent { get; }
         public new IAggregateEventMetadata<TIdentity> Metadata { get; }

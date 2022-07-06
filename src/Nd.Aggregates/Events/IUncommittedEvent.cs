@@ -36,7 +36,7 @@ namespace Nd.Aggregates.Events
     }
 
     public interface IUncommittedEvent<TIdentity> : IUncommittedEvent
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
         public new IAggregateEvent AggregateEvent { get; }
         public new IAggregateEventMetadata<TIdentity> Metadata { get; }

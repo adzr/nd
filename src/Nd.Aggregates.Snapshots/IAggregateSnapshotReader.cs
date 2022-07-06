@@ -32,10 +32,10 @@ namespace Nd.Aggregates.Snapshots
         where TIdentity : IAggregateIdentity
     {
         Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, CancellationToken cancellation = default)
-            where TState : class, IVersionedType
+            where TState : notnull, IVersionedType
             => ReadAsync<TState>(aggregateId, 0u, cancellation);
 
         Task<IAggregateSnapshot<TIdentity, TState>?> ReadAsync<TState>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
-            where TState : class, IVersionedType;
+            where TState : notnull, IVersionedType;
     }
 }

@@ -30,10 +30,16 @@ using Nd.Core.Types.Names;
 
 namespace Nd.Identities
 {
-    public interface IIdentity : INamedType, IComparable { }
+    public interface IIdentity : INamedType, IComparable
+    {
+        object Value { get; }
+    }
 
     public interface IIdentity<out T> : IIdentity
+        where T : notnull
     {
-        T Value { get; }
+        object IIdentity.Value => Value;
+
+        new T Value { get; }
     }
 }

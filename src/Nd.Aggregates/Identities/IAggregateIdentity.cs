@@ -25,7 +25,12 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
-    public interface IAggregateIdentity : IIdentity<string>
+    public interface IAggregateIdentity : IIdentity
+    {
+    }
+
+    public interface IAggregateIdentity<out T> : IIdentity<T>, IAggregateIdentity
+        where T : notnull
     {
     }
 }

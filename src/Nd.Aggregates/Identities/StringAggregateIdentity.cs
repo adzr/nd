@@ -25,7 +25,7 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
-    public record class StringAggregateIdentity : StringIdentity, IAggregateIdentity
+    public abstract record class StringAggregateIdentity : StringIdentity, IAggregateIdentity<string>
     {
         protected StringAggregateIdentity(string value) : base(value) { }
     }

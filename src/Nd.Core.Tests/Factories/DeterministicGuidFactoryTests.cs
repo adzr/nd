@@ -28,6 +28,7 @@ using Xunit;
 
 namespace Nd.Core.Tests.Factories
 {
+    [Trait("Category", "Unit")]
     public class DeterministicGuidFactoryTests
     {
         private const int GuidCount = 1000;

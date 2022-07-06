@@ -38,7 +38,7 @@ using Nd.ValueObjects;
 namespace Nd.Aggregates.Events
 {
     public abstract record class AggregateState<TState> : ValueObject, IAggregateState<TState>
-        where TState : class
+        where TState : notnull
     {
         /// <summary>
         /// Contains a cached lookup of aggregate events and a lambda method to help

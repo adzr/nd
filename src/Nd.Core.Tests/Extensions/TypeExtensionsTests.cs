@@ -35,6 +35,7 @@ using Xunit;
 
 namespace Nd.Core.Tests.Extensions
 {
+    [Trait("Category", "Unit")]
     public class TypeExtensionsTests
     {
         [Theory]

@@ -39,12 +39,12 @@ namespace Nd.Commands
     }
 
     public interface ICommand<TResult> : ICommand
-        where TResult : IExecutionResult
+        where TResult : notnull, IExecutionResult
     { }
 
     public interface ICommand<TIdentity, TResult> : ICommand<TResult>
-        where TIdentity : IAggregateIdentity
-        where TResult : IExecutionResult
+        where TIdentity : notnull, IAggregateIdentity
+        where TResult : notnull, IExecutionResult
     {
         TIdentity AggregateIdentity { get; }
     }

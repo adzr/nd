@@ -31,7 +31,7 @@ namespace Nd.Commands.Results
     {
         ICommand Command { get; }
 
-        TCommand GetCommandAs<TCommand>() where TCommand : ICommand;
+        TCommand GetCommandAs<TCommand>() where TCommand : notnull, ICommand;
 
         bool IsSuccess { get; }
     }

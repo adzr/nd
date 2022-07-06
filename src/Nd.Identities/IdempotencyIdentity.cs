@@ -26,6 +26,7 @@ using Nd.Core.Factories;
 
 namespace Nd.Identities
 {
+    [NamedIdentity("idempotency")]
     public record class IdempotencyIdentity : GuidIdentity, IIdempotencyIdentity
     {
         public IdempotencyIdentity(Guid value) : base(value) { }

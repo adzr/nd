@@ -28,27 +28,32 @@
  * SOFTWARE.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
+using Nd.Aggregates.Identities;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Types.Names;
-using Nd.Identities;
 
 namespace Nd.Aggregates
 {
     public interface IAggregateRoot : INamedType
     {
-        IIdentity Identity { get; }
+        IAggregateIdentity Identity { get; }
         uint Version { get; }
         bool IsNew { get; }
     }
 
-    public interface IAggregateRoot<out TIdentity> : IAggregateRoot
-        where TIdentity : IIdentity
+    public interface IAggregateRoot<TIdentity> : IAggregateRoot
+        where TIdentity : notnull, IAggregateIdentity
     {
         new TIdentity Identity { get; }
+
+        Task CommitAsync(IAggregateEventWriter<TIdentity> writer, CancellationToken cancellation = default);
     }
 
-    public interface IAggregateRoot<out TIdentity, out TState> : IAggregateRoot<TIdentity>
-        where TIdentity : IIdentity
-        where TState : class
+    public interface IAggregateRoot<TIdentity, out TState> : IAggregateRoot<TIdentity>
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull
     {
         TState State { get; }
     }

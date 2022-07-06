@@ -1,5 +1,5 @@
-/*
- * Copyright � 2022 Ahmed Zaher
+﻿/*
+ * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
@@ -27,6 +27,7 @@ using Xunit;
 
 namespace Nd.Core.Tests.Extensions
 {
+    [Trait("Category", "Unit")]
     public class StringExtensionsTests
     {
         [Theory]

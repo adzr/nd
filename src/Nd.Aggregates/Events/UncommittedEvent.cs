@@ -29,5 +29,5 @@ namespace Nd.Aggregates.Events
         IAggregateEvent AggregateEvent,
         IAggregateEventMetadata<TIdentity> Metadata
     ) : IUncommittedEvent<TIdentity>
-        where TIdentity : IAggregateIdentity;
+        where TIdentity : notnull, IAggregateIdentity;
 }

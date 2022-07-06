@@ -22,31 +22,29 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Aggregates.Identities;
+using Nd.Core.Exceptions;
+using Nd.Core.Extensions;
+using Nd.Core.Types;
+using Nd.ValueObjects;
 
-namespace Nd.Aggregates.Persistence.Memory
+namespace Nd.Identities
 {
-    public abstract class MemoryAggregateEventReader<TIdentity, TState> : IAggregateEventReader<TIdentity, TState>
-        where TIdentity : IAggregateIdentity
-        where TState : class
+    public abstract record class UnsignedLongIdentity : ValueObject, IIdentity<ulong>
     {
-        private readonly IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> _events;
+        private readonly string _stringValue;
 
-        protected MemoryAggregateEventReader(IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> events)
+        public ulong Value { get; }
+
+        protected UnsignedLongIdentity(ulong value)
         {
-            _events = events;
+            TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
+                throw new TypeDefinitionNotFoundException($"Definition of type has no Name defined: {GetType().ToPrettyString()}");
+            Value = value;
+            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value}";
         }
 
-        public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : ICommittedEvent<TIdentity, TState> =>
-            Task.FromResult(_events.TryGetValue(aggregateId, out var events) ?
-                events
-                .Where(e => e.Metadata.AggregateVersion >= versionStart && (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))
-                .Select(e => (TEvent)e) :
-                Array.Empty<TEvent>());
+        public string TypeName { get; }
+
+        public sealed override string ToString() => _stringValue;
     }
 }

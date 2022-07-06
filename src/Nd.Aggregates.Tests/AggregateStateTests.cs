@@ -24,13 +24,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Nd.Aggregates.Events;
 using Xunit;
 
 namespace Nd.Aggregates.Tests
 {
+    [Trait("Category", "Unit")]
     public class AggregateStateTests
     {
         #region Test types definitions
@@ -46,11 +46,11 @@ namespace Nd.Aggregates.Tests
 
             public override TestAggregateState State => this;
 
-            public void Handle([NotNull] TestEventA _) => _events.Enqueue(new TestEventA());
+            public void Handle(TestEventA _) => _events.Enqueue(new TestEventA());
 
-            public void Handle([NotNull] TestEventB _) => _events.Enqueue(new TestEventB());
+            public void Handle(TestEventB _) => _events.Enqueue(new TestEventB());
 
-            public void Handle([NotNull] TestEventC _) => _events.Enqueue(new TestEventC());
+            public void Handle(TestEventC _) => _events.Enqueue(new TestEventC());
         }
 
         internal sealed record class TestEventA : AggregateEvent<TestAggregateState>;

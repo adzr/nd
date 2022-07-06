@@ -43,6 +43,7 @@ namespace Nd.Entities.Tests
         public string Text { get; }
     }
 
+    [Trait("Category", "Unit")]
     public class EntityTests
     {
         private const string DefaultText = "Value";

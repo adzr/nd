@@ -29,6 +29,7 @@ using Xunit;
 
 namespace Nd.Core.Tests.Factories
 {
+    [Trait("Category", "Unit")]
     public class CombGuidFactoryTests
     {
         private const int GuidCount = 1000;

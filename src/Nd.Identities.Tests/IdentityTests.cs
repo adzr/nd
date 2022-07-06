@@ -35,6 +35,7 @@ namespace Nd.Identities.Tests
         public SampleIdentity(IGuidFactory factory) : base(factory) { }
     }
 
+    [Trait("Category", "Unit")]
     public class IdentityTests
     {
         [Theory]

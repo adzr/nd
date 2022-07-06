@@ -37,7 +37,7 @@ namespace Nd.Commands
         Task<TResult> ExecuteAsync<TIdentity, TResult>(
             ICommand<TIdentity, TResult> command,
             CancellationToken cancellationToken = default)
-            where TIdentity : IAggregateIdentity
-            where TResult : IExecutionResult;
+            where TIdentity : notnull, IAggregateIdentity
+            where TResult : notnull, IExecutionResult;
     }
 }

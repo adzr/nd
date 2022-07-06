@@ -35,6 +35,7 @@ namespace Nd.Core.Tests.NamedTypes
     }
 
     [NamedTest(nameof(NamedTypeAttributeTests))]
+    [Trait("Category", "Unit")]
     public class NamedTypeAttributeTests
     {
         [Fact]

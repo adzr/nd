@@ -2,6 +2,7 @@
 
 namespace Nd.Commands.Tests
 {
+    [Trait("Category", "Unit")]
     public class CommandBusTests
     {
         [Fact]

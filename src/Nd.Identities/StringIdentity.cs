@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using System;
 using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types;
@@ -30,6 +31,8 @@ namespace Nd.Identities
 {
     public abstract record class StringIdentity : ValueObject, IIdentity<string>
     {
+        private readonly string _stringValue;
+
         public string Value { get; }
 
         protected StringIdentity(string value)
@@ -37,10 +40,11 @@ namespace Nd.Identities
             TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
                 throw new TypeDefinitionNotFoundException($"Definition of type has no Name defined: {GetType().ToPrettyString()}");
             Value = value;
+            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value}";
         }
 
         public string TypeName { get; }
 
-        public sealed override string ToString() => Value;
+        public sealed override string ToString() => _stringValue;
     }
 }

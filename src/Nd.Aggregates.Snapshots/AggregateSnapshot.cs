@@ -33,6 +33,6 @@ namespace Nd.Aggregates.Snapshots
             TIdentity AggregateIdentity,
             string AggregateName
         ) : IAggregateSnapshot<TIdentity, TState>
-        where TIdentity : IAggregateIdentity
-        where TState : class, IVersionedType;
+        where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull, IVersionedType;
 }

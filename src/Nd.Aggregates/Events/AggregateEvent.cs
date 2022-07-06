@@ -30,7 +30,7 @@ namespace Nd.Aggregates.Events
 {
     public abstract record class AggregateEvent<TState> :
         ValueObject, IAggregateEvent<TState>
-        where TState : class
+        where TState : notnull
     {
         protected AggregateEvent()
         {

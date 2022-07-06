@@ -28,9 +28,9 @@ using Nd.Aggregates.Identities;
 namespace Nd.Aggregates.Persistence
 {
     public interface IAggregateReader<TIdentity>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
         Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId, uint version = 0u, CancellationToken cancellation = default)
-            where TAggregate : IAggregateRoot<TIdentity>;
+            where TAggregate : notnull, IAggregateRoot<TIdentity>;
     }
 }
