@@ -25,6 +25,7 @@ using System;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Names;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Core.Tests.NamedTypes
 {
@@ -35,7 +36,7 @@ namespace Nd.Core.Tests.NamedTypes
     }
 
     [NamedTest(nameof(NamedTypeAttributeTests))]
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class NamedTypeAttributeTests
     {
         [Fact]

@@ -27,10 +27,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Nd.Aggregates.Events;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Aggregates.Tests
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class AggregateStateTests
     {
         #region Test types definitions

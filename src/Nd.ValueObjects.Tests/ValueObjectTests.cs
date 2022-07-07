@@ -22,6 +22,7 @@
  */
 
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.ValueObjects.Tests
 {
@@ -30,7 +31,7 @@ namespace Nd.ValueObjects.Tests
             string Name
         ) : ValueObject;
 
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class ValueObjectTests
     {
         [Theory]

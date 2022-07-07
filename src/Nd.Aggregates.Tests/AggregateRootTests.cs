@@ -36,10 +36,11 @@ using Nd.Aggregates.Persistence;
 using Nd.Core.Factories;
 using Nd.Identities;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Aggregates.Tests
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class AggregateRootTests
     {
         #region Test types definitions

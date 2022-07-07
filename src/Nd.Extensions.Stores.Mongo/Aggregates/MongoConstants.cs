@@ -21,33 +21,27 @@
  * SOFTWARE.
  */
 
-using System;
-using System.Runtime.Serialization;
-
-namespace Nd.Extensions.Stores.MongoDB.Exceptions
+namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    [Serializable]
-    public class MongoReaderEventDefinitionException : Exception
+    internal static class MongoConstants
     {
-        public MongoReaderEventDefinitionException()
-        {
-        }
+        public const string AggregateIdKey = "_id";
+        public const string AggregateNameKey = "Name";
+        public const string AggregateVersionKey = "Version";
+        public const string AggregateEvents = "Events";
+        public const string EventIdKey = "EventId";
+    }
 
-        public MongoReaderEventDefinitionException(string? message) : base(message)
-        {
-        }
+    internal static class MongoActivityConstants
+    {
+        public const string MongoResultTag = "MongoResult";
+        public const string MongoResultFailureTagValue = "Failure";
+        public const string MongoResultSuccessTagValue = "Success";
+    }
 
-        public MongoReaderEventDefinitionException(string typeName, uint typeVersion) :
-            this($"Failed to find a type definition with name and version ({typeName}, {typeVersion})")
-        {
-        }
-
-        public MongoReaderEventDefinitionException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-        protected MongoReaderEventDefinitionException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+    internal static class MongoLoggingEventsConstants
+    {
+        public const int MongoResultReceived = 611;
+        public const int MongoResultMissing = 612;
     }
 }

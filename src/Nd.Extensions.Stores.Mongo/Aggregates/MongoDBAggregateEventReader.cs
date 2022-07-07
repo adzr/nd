@@ -35,10 +35,10 @@ using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Core.Types;
-using Nd.Extensions.Stores.MongoDB.Exceptions;
+using Nd.Extensions.Stores.Mongo.Exceptions;
 using Nd.Identities;
 
-namespace Nd.Extensions.Stores.MongoDB.Aggregates
+namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public abstract class MongoDBAggregateEventReader<TIdentity, TState> : MongoAccessor, IAggregateEventReader<TIdentity, TState>
         where TIdentity : IAggregateIdentity

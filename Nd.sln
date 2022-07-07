@@ -61,7 +61,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Essentials", "src\Nd.Ess
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Memory", "src\Nd.Extensions.Stores.Memory\Nd.Extensions.Stores.Memory.csproj", "{D32DE227-331B-4511-8DE7-084E1BDF7821}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.MongoDB", "src\Nd.Extensions.Stores.MongoDB\Nd.Extensions.Stores.MongoDB.csproj", "{217CE1BE-8D96-49E5-B508-11E0EE6AA921}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo", "src\Nd.Extensions.Stores.Mongo\Nd.Extensions.Stores.Mongo.csproj", "{217CE1BE-8D96-49E5-B508-11E0EE6AA921}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{47C62899-4D07-453E-AD66-DC7044EEB77E}"
 	ProjectSection(SolutionItems) = preProject

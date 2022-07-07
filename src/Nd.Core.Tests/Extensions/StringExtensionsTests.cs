@@ -24,10 +24,11 @@
 using System;
 using Nd.Core.Extensions;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Core.Tests.Extensions
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class StringExtensionsTests
     {
         [Theory]

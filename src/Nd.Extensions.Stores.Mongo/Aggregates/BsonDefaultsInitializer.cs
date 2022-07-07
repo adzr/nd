@@ -21,7 +21,7 @@
 * SOFTWARE.
 */
 
-namespace Nd.Extensions.Stores.MongoDB.Aggregates
+namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public static class BsonDefaultsInitializer
     {

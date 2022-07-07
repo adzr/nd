@@ -21,27 +21,28 @@
  * SOFTWARE.
  */
 
-namespace Nd.Extensions.Stores.MongoDB.Aggregates
+using System;
+using System.Runtime.Serialization;
+
+namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
-    internal static class MongoConstants
+    [Serializable]
+    public class MongoSessionException : Exception
     {
-        public const string AggregateIdKey = "_id";
-        public const string AggregateNameKey = "Name";
-        public const string AggregateVersionKey = "Version";
-        public const string AggregateEvents = "Events";
-        public const string EventIdKey = "EventId";
-    }
+        public MongoSessionException()
+        {
+        }
 
-    internal static class MongoActivityConstants
-    {
-        public const string MongoResultTag = "MongoResult";
-        public const string MongoResultFailureTagValue = "Failure";
-        public const string MongoResultSuccessTagValue = "Success";
-    }
+        public MongoSessionException(string? message) : base(message)
+        {
+        }
 
-    internal static class MongoLoggingEventsConstants
-    {
-        public const int MongoResultReceived = 611;
-        public const int MongoResultMissing = 612;
+        public MongoSessionException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected MongoSessionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

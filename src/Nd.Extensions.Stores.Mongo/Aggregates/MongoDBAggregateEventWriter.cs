@@ -35,9 +35,9 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
-using Nd.Extensions.Stores.MongoDB.Exceptions;
+using Nd.Extensions.Stores.Mongo.Exceptions;
 
-namespace Nd.Extensions.Stores.MongoDB.Aggregates
+namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public abstract class MongoDBAggregateEventWriter<TIdentity, TIdentityValue> : MongoAccessor, IAggregateEventWriter<TIdentity>
         where TIdentity : IAggregateIdentity

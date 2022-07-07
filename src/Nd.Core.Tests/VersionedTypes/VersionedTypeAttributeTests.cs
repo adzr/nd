@@ -28,6 +28,7 @@ using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Core.Tests.VersionedTypes
 {
@@ -121,7 +122,7 @@ namespace Nd.Core.Tests.VersionedTypes
     #endregion
 
     [VersionedTest(nameof(VersionedTypeAttributeTests), 7)]
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class VersionedTypeAttributeTests
     {
         [Fact]

@@ -26,10 +26,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Nd.Core.Factories;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Core.Tests.Factories
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class CombGuidFactoryTests
     {
         private const int GuidCount = 1000;

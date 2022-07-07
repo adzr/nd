@@ -25,7 +25,7 @@ using System;
 using System.Runtime.Serialization;
 using Nd.Core.Extensions;
 
-namespace Nd.Extensions.Stores.MongoDB.Exceptions
+namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
     public class MongoReaderEventDeserializationException : Exception

@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace Nd.Extensions.Stores.MongoDB.Aggregates
+namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public class MongoAggregateDocument
     {

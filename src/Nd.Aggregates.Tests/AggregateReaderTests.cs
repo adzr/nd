@@ -15,10 +15,11 @@ using Nd.Core.Types;
 using Nd.Core.Types.Versions;
 using Nd.Identities;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Aggregates.Tests
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class AggregateReaderTests
     {
         #region Test types definitions

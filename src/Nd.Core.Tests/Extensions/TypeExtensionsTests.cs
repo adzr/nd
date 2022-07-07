@@ -32,10 +32,11 @@ using System.Reflection;
 using Nd.Core.Extensions;
 using Nd.Core.Types.Versions;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Core.Tests.Extensions
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class TypeExtensionsTests
     {
         [Theory]

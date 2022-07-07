@@ -24,6 +24,7 @@
 using System;
 using Nd.Identities;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Entities.Tests
 {
@@ -43,7 +44,7 @@ namespace Nd.Entities.Tests
         public string Text { get; }
     }
 
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class EntityTests
     {
         private const string DefaultText = "Value";

@@ -24,6 +24,7 @@
 using System;
 using Nd.Core.Factories;
 using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Identities.Tests
 {
@@ -35,7 +36,7 @@ namespace Nd.Identities.Tests
         public SampleIdentity(IGuidFactory factory) : base(factory) { }
     }
 
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class IdentityTests
     {
         [Theory]

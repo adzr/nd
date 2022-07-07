@@ -24,24 +24,29 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Nd.Extensions.Stores.MongoDB.Exceptions
+namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
-    public class MongoSessionException : Exception
+    public class MongoReaderEventDefinitionException : Exception
     {
-        public MongoSessionException()
+        public MongoReaderEventDefinitionException()
         {
         }
 
-        public MongoSessionException(string? message) : base(message)
+        public MongoReaderEventDefinitionException(string? message) : base(message)
         {
         }
 
-        public MongoSessionException(string? message, Exception? innerException) : base(message, innerException)
+        public MongoReaderEventDefinitionException(string typeName, uint typeVersion) :
+            this($"Failed to find a type definition with name and version ({typeName}, {typeVersion})")
         {
         }
 
-        protected MongoSessionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        public MongoReaderEventDefinitionException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected MongoReaderEventDefinitionException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

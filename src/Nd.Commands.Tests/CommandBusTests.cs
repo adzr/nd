@@ -1,8 +1,9 @@
 ﻿using Xunit;
+using Xunit.Categories;
 
 namespace Nd.Commands.Tests
 {
-    [Trait("Category", "Unit")]
+    [UnitTest]
     public class CommandBusTests
     {
         [Fact]
