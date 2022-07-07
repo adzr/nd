@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nd.ValueObjects\Nd.ValueObjects.csproj" />
+    <ProjectReference Include="..\..\..\src\Essentials\Nd.ValueObjects\Nd.ValueObjects.csproj" />
   </ItemGroup>
 
 </Project>

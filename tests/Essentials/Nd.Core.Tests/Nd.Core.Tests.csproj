@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nd.Core\Nd.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Essentials\Nd.Core\Nd.Core.csproj" />
   </ItemGroup>
 
 </Project>

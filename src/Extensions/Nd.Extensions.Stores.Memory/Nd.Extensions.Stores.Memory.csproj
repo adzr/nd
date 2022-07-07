@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nd.Commands\Nd.Commands.csproj" />
+    <ProjectReference Include="..\..\Essentials\Nd.Commands\Nd.Commands.csproj" />
   </ItemGroup>
 
 </Project>
