@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+    <PackageReference Include="Docker.DotNet.BasicAuth" Version="3.125.3" />
+    <PackageReference Include="Docker.DotNet.X509" Version="3.125.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Essentials\Nd.Core\Nd.Core.csproj" />
+  </ItemGroup>
+
+</Project>

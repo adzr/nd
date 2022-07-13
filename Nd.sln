@@ -3,39 +3,39 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.ValueObjects", "src/Essentials/Nd.ValueObjects/Nd.ValueObjects.csproj", "{3B6281D5-00CF-42A0-8039-D2901EDD8111}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.ValueObjects", "src\Essentials\Nd.ValueObjects\Nd.ValueObjects.csproj", "{3B6281D5-00CF-42A0-8039-D2901EDD8111}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02-Fragments", "02-Fragments", "{5C853A9B-CEB2-40A5-B8BE-205FCCC17EA8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01-Core", "01-Core", "{BF5C3632-5A9B-4D8E-9F9E-6287275AF8F0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core", "src/Essentials/Nd.Core/Nd.Core.csproj", "{37FE87C8-E98A-485F-95EF-368C50633CAF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core", "src\Essentials\Nd.Core\Nd.Core.csproj", "{37FE87C8-E98A-485F-95EF-368C50633CAF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Entities", "src/Essentials/Nd.Entities/Nd.Entities.csproj", "{18C5B043-50AF-4571-B6F6-C52C6EBDA318}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Entities", "src\Essentials\Nd.Entities\Nd.Entities.csproj", "{18C5B043-50AF-4571-B6F6-C52C6EBDA318}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03-Aggregates", "03-Aggregates", "{72369685-5A14-45E3-8F3C-0C4190AA0C38}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates", "src/Essentials/Nd.Aggregates/Nd.Aggregates.csproj", "{267892C3-4258-4A89-B0BC-E4B11F82FE6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates", "src\Essentials\Nd.Aggregates\Nd.Aggregates.csproj", "{267892C3-4258-4A89-B0BC-E4B11F82FE6E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.ValueObjects.Tests", "tests/Essentials/Nd.ValueObjects.Tests/Nd.ValueObjects.Tests.csproj", "{42BC794E-4534-4989-9059-CF4B564710BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.ValueObjects.Tests", "tests\Essentials\Nd.ValueObjects.Tests\Nd.ValueObjects.Tests.csproj", "{42BC794E-4534-4989-9059-CF4B564710BF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Entities.Tests", "tests/Essentials/Nd.Entities.Tests/Nd.Entities.Tests.csproj", "{20A987AD-A853-4A5B-BB99-B8F6B1F083C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Entities.Tests", "tests\Essentials\Nd.Entities.Tests\Nd.Entities.Tests.csproj", "{20A987AD-A853-4A5B-BB99-B8F6B1F083C5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core.Tests", "tests/Essentials/Nd.Core.Tests/Nd.Core.Tests.csproj", "{3F738E70-DA76-4928-9320-30A5FC4EFF10}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Core.Tests", "tests\Essentials\Nd.Core.Tests\Nd.Core.Tests.csproj", "{3F738E70-DA76-4928-9320-30A5FC4EFF10}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates.Tests", "tests/Essentials/Nd.Aggregates.Tests/Nd.Aggregates.Tests.csproj", "{E25B4DCD-EE9A-48C4-BB48-6CAB36E15099}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Aggregates.Tests", "tests\Essentials\Nd.Aggregates.Tests\Nd.Aggregates.Tests.csproj", "{E25B4DCD-EE9A-48C4-BB48-6CAB36E15099}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Commands", "04-Commands", "{8E8238A0-4217-4D01-917A-617553CF06E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands", "src/Essentials/Nd.Commands/Nd.Commands.csproj", "{481290AB-E457-4389-AD86-D9DADD9D5362}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands", "src\Essentials\Nd.Commands\Nd.Commands.csproj", "{481290AB-E457-4389-AD86-D9DADD9D5362}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities", "src/Essentials/Nd.Identities/Nd.Identities.csproj", "{52B8678D-BB58-4949-B6B2-6537F3F81D5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities", "src\Essentials\Nd.Identities\Nd.Identities.csproj", "{52B8678D-BB58-4949-B6B2-6537F3F81D5A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities.Tests", "tests/Essentials/Nd.Identities.Tests/Nd.Identities.Tests.csproj", "{629612CB-3F31-420C-8FF4-B5ED21CAE7C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Identities.Tests", "tests\Essentials\Nd.Identities.Tests\Nd.Identities.Tests.csproj", "{629612CB-3F31-420C-8FF4-B5ED21CAE7C8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands.Tests", "tests/Essentials/Nd.Commands.Tests/Nd.Commands.Tests.csproj", "{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands.Tests", "tests\Essentials\Nd.Commands.Tests\Nd.Commands.Tests.csproj", "{9994A032-72FA-40A8-AF7C-DDFB2AC1CAF8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{014491D0-3E2E-4FAE-834B-A3D0CF28D8E6}"
 	ProjectSection(SolutionItems) = preProject
@@ -43,7 +43,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		build.cake = build.cake
-		.github/dependabot.yml = .github/dependabot.yml
+		.github\dependabot.yml = .github\dependabot.yml
 		NuGet.Config = NuGet.Config
 	EndProjectSection
 EndProject
@@ -51,17 +51,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{E74D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Queries", "04-Queries", "{AF5A5615-C478-4701-B7F5-BD29E3E8F908}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Queries", "src/Essentials/Nd.Queries/Nd.Queries.csproj", "{D1D41A47-9825-46B6-A524-BA7E45D34420}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Queries", "src\Essentials\Nd.Queries\Nd.Queries.csproj", "{D1D41A47-9825-46B6-A524-BA7E45D34420}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "06-Extensions", "06-Extensions", "{8D877BB2-AAD6-43D0-927B-96006B88AC37}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05-Essentials", "05-Essentials", "{238BA7BA-418D-4A8C-BC1B-17D766ED47DC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Essentials", "src/Essentials/Nd.Essentials/Nd.Essentials.csproj", "{34587CB2-F3A8-464E-8E1B-68D5897785B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Essentials", "src\Essentials\Nd.Essentials\Nd.Essentials.csproj", "{34587CB2-F3A8-464E-8E1B-68D5897785B8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Memory", "src/Extensions/Nd.Extensions.Stores.Memory/Nd.Extensions.Stores.Memory.csproj", "{D32DE227-331B-4511-8DE7-084E1BDF7821}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Memory", "src\Extensions\Nd.Extensions.Stores.Memory\Nd.Extensions.Stores.Memory.csproj", "{D32DE227-331B-4511-8DE7-084E1BDF7821}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo", "src/Extensions/Nd.Extensions.Stores.Mongo/Nd.Extensions.Stores.Mongo.csproj", "{217CE1BE-8D96-49E5-B508-11E0EE6AA921}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo", "src\Extensions\Nd.Extensions.Stores.Mongo\Nd.Extensions.Stores.Mongo.csproj", "{217CE1BE-8D96-49E5-B508-11E0EE6AA921}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{47C62899-4D07-453E-AD66-DC7044EEB77E}"
 	ProjectSection(SolutionItems) = preProject
@@ -71,7 +71,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{9C33B8D8-1C93-4C5A-A614-D379BC846AED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Extensions.Stores.Mongo.Tests", "tests/Extensions/Nd.Extensions.Stores.Mongo.Tests/Nd.Extensions.Stores.Mongo.Tests.csproj", "{A073A0CE-015B-43EF-8F76-D0C72515D54B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo.Tests", "tests\Extensions\Nd.Extensions.Stores.Mongo.Tests\Nd.Extensions.Stores.Mongo.Tests.csproj", "{A073A0CE-015B-43EF-8F76-D0C72515D54B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Containers", "tests\Harness\Nd.Containers\Nd.Containers.csproj", "{C30F80EB-380A-4DE8-A7EA-F775629701EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -147,6 +149,10 @@ Global
 		{A073A0CE-015B-43EF-8F76-D0C72515D54B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A073A0CE-015B-43EF-8F76-D0C72515D54B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A073A0CE-015B-43EF-8F76-D0C72515D54B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -170,6 +176,7 @@ Global
 		{217CE1BE-8D96-49E5-B508-11E0EE6AA921} = {8D877BB2-AAD6-43D0-927B-96006B88AC37}
 		{9C33B8D8-1C93-4C5A-A614-D379BC846AED} = {014491D0-3E2E-4FAE-834B-A3D0CF28D8E6}
 		{A073A0CE-015B-43EF-8F76-D0C72515D54B} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
+		{C30F80EB-380A-4DE8-A7EA-F775629701EB} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E90C591-5B90-440A-83A7-A6B425A1325D}
