@@ -59,10 +59,10 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 nameof(MongoLoggingEventsConstants.MongoResultMissing)),
                                 "Mongo document not found");
 
-        protected MongoDBAggregateEventReader(MongoClient client, string databaseName, string collectionName, ILogger? logger, ActivitySource? activitySource) :
+        protected MongoDBAggregateEventReader(MongoClient client, string databaseName, string collectionName, ILoggerFactory? loggerFactory, ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = logger;
+            _logger = loggerFactory?.CreateLogger(GetType());
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 

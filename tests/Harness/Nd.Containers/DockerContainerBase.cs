@@ -31,18 +31,6 @@ using Version = System.Version;
 
 namespace Nd.Containers
 {
-    public class ConfigurationParameters
-    {
-        public Uri? Uri { get; private set; }
-        public X509Certificate? Certificate { get; private set; }
-        public string? AccessToken { get; private set; } = "7b821549-0412-40c9-92b5-6892a9f8411d";
-        public string Image { get; private set; } = "mongo";
-        public string Tag { get; private set; } = "latest";
-        public string? Version { get; internal set; }
-        public string? Username { get; internal set; }
-        public string? Password { get; internal set; }
-    }
-
     public abstract class DockerContainerBase : IDisposable
     {
         private readonly IAsyncLocker _locker;
@@ -60,7 +48,6 @@ namespace Nd.Containers
         protected DockerContainerBase(ConfigurationParameters config)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
-
             _certificate = _config.Certificate is null ? null : new X509Certificate2(_config.Certificate);
 
             _credentials = _certificate is not null ?
@@ -84,13 +71,6 @@ namespace Nd.Containers
         {
             using var @lock = await _locker.WaitAsync(cancellation).ConfigureAwait(false);
 
-            var progress = new Progress<JSONMessage>();
-
-            progress.ProgressChanged += (e, m) =>
-            {
-                // TODO: log progress.
-            };
-
             await _client.Images.CreateImageAsync(
                 new ImagesCreateParameters
                 {
@@ -101,14 +81,17 @@ namespace Nd.Containers
                 {
                     IdentityToken = _config.AccessToken
                 },
-                progress,
+                new Progress<JSONMessage>(),
                 cancellation
             ).ConfigureAwait(false);
 
             _container = await _client.Containers.CreateContainerAsync(
                 new CreateContainerParameters
                 {
-                    Image = _config.Image
+                    Image = $"{_config.Image}:{_config.Tag}",
+                    AttachStderr = true,
+                    AttachStdout = true,
+                    Name = $"{_config.Image}_{_config.Tag}-{Guid.NewGuid()}"
                 }, cancellation).ConfigureAwait(false);
 
             _started = await _client.Containers.StartContainerAsync(_container.ID,
@@ -133,7 +116,6 @@ namespace Nd.Containers
                     await _client.Containers.RemoveContainerAsync(_container.ID,
                         new ContainerRemoveParameters
                         {
-                            RemoveLinks = true,
                             RemoveVolumes = true
                         }, cancellation).ConfigureAwait(false);
                 }
@@ -174,13 +156,6 @@ namespace Nd.Containers
             _certificate?.Dispose();
             _certificate = null;
             _locker.Dispose();
-        }
-    }
-
-    public sealed class MongoContainer : DockerContainerBase
-    {
-        public MongoContainer(ConfigurationParameters config) : base(config)
-        {
         }
     }
 }

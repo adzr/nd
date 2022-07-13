@@ -5,6 +5,7 @@
 var target = Argument("target", "Test");
 var configuration = Argument("configuration", "Release");
 var sln = Argument("sln", "./nd.sln");
+var includeIntegration = Argument<bool>("integration", false);
 
 //////////////////////////////////////////////////////////////////////
 // TASKS
@@ -19,7 +20,7 @@ Task("Validate")
 Task("Clean")
     .IsDependentOn("Validate")
     .WithCriteria(c => HasArgument("rebuild"))
-    .DoesForEach(GetDirectories("./src/*"), (parent) =>
+    .DoesForEach(GetDirectories("./src/*/*"), (parent) =>
 {
     var directoryObj = $"{parent}/obj/{configuration}";
     var directoryBin = $"{parent}/bin/{configuration}";
@@ -58,6 +59,8 @@ Task("Test")
     {
         Configuration = configuration,
         NoBuild = true,
+        Filter = "Category=UnitTest" +
+          (includeIntegration ? "|Category=IntegrationTest" : "")
     });
 });
 

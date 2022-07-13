@@ -58,10 +58,10 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         private readonly ILogger? _logger;
         private readonly ActivitySource _activitySource;
 
-        protected MongoDBAggregateEventWriter(MongoClient client, string databaseName, string collectionName, ILogger? logger, ActivitySource? activitySource) :
+        protected MongoDBAggregateEventWriter(MongoClient client, string databaseName, string collectionName, ILoggerFactory? loggerFactory, ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = logger;
+            _logger = loggerFactory?.CreateLogger(GetType());
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
