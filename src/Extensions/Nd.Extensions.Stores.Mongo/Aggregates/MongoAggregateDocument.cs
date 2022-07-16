@@ -31,16 +31,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
     public class MongoAggregateDocument
     {
         [BsonConstructor("_id", "Name", "Version", "Events")]
-        public MongoAggregateDocument(object identity, string name, uint version, IEnumerable<MongoAggregateEventDocument> events)
+        public MongoAggregateDocument(ObjectId id, string name, uint version, IEnumerable<MongoAggregateEventDocument> events)
         {
-            Identity = identity;
+            Id = id;
             Name = name;
             Version = version;
             Events = events;
         }
 
         [BsonId]
-        public object Identity { get; }
+        [BsonElement("_id")]
+        public ObjectId Id { get; }
 
         [BsonElement("Name")]
         public string Name { get; }

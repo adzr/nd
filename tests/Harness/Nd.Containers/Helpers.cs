@@ -21,24 +21,41 @@
  * SOFTWARE.
  */
 
-using System.Threading.Tasks;
-using Nd.Containers;
-using Xunit;
-using Xunit.Categories;
+using System.Net.NetworkInformation;
+using System.Security.Cryptography;
+using Nd.Containers.Exceptions;
 
-namespace Nd.Extensions.Stores.Mongo.Tests
+namespace Nd.Containers
 {
-    [IntegrationTest]
-    public class MongoDBAggregateEventWriterTests
+    public static class Helpers
     {
-        [Fact]
-        public async Task CanWriteAggregateToMongoAsync()
+        public static string GetRandomSecureString(int lengthInBytes = 32)
         {
-            using var container = new MongoContainer();
+            using var generator = RandomNumberGenerator.Create();
+            var bytes = new byte[lengthInBytes];
+            generator.GetBytes(bytes);
+            return Convert.ToBase64String(bytes);
+        }
 
-            await container.StartAsync().ConfigureAwait(false);
+        public static string GetOpenPort()
+        {
+            var portStartIndex = 10000;
+            var portEndIndex = 60000;
 
+            var properties = IPGlobalProperties.GetIPGlobalProperties();
+            var tcpEndPoints = properties.GetActiveTcpListeners();
 
+            var usedPorts = tcpEndPoints.Select(p => p.Port).ToList();
+
+            for (var port = portStartIndex; port < portEndIndex; port++)
+            {
+                if (!usedPorts.Contains(port))
+                {
+                    return $"{port}";
+                }
+            }
+
+            throw new UnavailableTCPPortException("Failed to find free port");
         }
     }
 }

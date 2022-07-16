@@ -30,6 +30,7 @@ using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
@@ -51,7 +52,7 @@ namespace Nd.Aggregates.Persistence
         }
 
         public async Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId,
-                uint version = 0u, CancellationToken cancellation = default)
+                ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default)
             where TAggregate : notnull, IAggregateRoot<TIdentity>
         {
             if (aggregateId is null)
@@ -59,7 +60,7 @@ namespace Nd.Aggregates.Persistence
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity, TState>>(aggregateId, version, cancellation)
+            var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity, TState>>(aggregateId, correlationId, version, cancellation)
                 .ConfigureAwait(false);
 
             (var aggregate, var state) = aggregateId

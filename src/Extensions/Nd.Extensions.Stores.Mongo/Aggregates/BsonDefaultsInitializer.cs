@@ -21,13 +21,15 @@
 * SOFTWARE.
 */
 
+using MongoDB.Bson.Serialization;
+
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public static class BsonDefaultsInitializer
     {
         static BsonDefaultsInitializer()
         {
-
+            _ = BsonClassMap.RegisterClassMap<MongoAggregateDocument>();
         }
     }
 }

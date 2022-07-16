@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
@@ -37,32 +38,35 @@ namespace Nd.Aggregates.Persistence
         /// </summary>
         /// <typeparam name="TIdentity">The aggregate identity type.</typeparam>
         /// <param name="aggregateId">The aggregate identity, must never be null.</param>
+        /// <param name="correlationId">The correlation identity, must never be null.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, CancellationToken cancellation = default)
-            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, 0u, cancellation);
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, CancellationToken cancellation = default)
+            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified up to the specified aggregate version.
         /// </summary>
         /// <typeparam name="TIdentity">The aggregate identity type.</typeparam>
         /// <param name="aggregateId">The aggregate identity, must never be null.</param>
+        /// <param name="correlationId">The correlation identity, must never be null.</param>
         /// <param name="version">The aggregate version, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint version, CancellationToken cancellation = default)
-            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, 0u, 0u, cancellation);
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint version, CancellationToken cancellation = default)
+            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified within the specified aggregate version range inclusive.
         /// </summary>
         /// <typeparam name="TIdentity">The aggregate identity type.</typeparam>
         /// <param name="aggregateId">The aggregate identity, must never be null.</param>
+        /// <param name="correlationId">The correlation identity, must never be null.</param>
         /// <param name="versionStart">The aggregate version lower range bound, should be ignored if zero.</param>
         /// <param name="versionEnd">The aggregate version upper range bound, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
+        Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
             where TEvent : notnull, ICommittedEvent<TIdentity, TState>;
     }
 }

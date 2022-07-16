@@ -21,15 +21,49 @@
  * SOFTWARE.
  */
 
+using Docker.DotNet.Models;
+
 namespace Nd.Containers
 {
     public sealed class MongoContainer : DockerContainerBase
     {
-        public MongoContainer() : base(new ConfigurationParameters
+        private const string HostIPAddress = "127.0.0.1";
+        private readonly string _host;
+        private readonly string _port;
+        private readonly string _username;
+        private readonly string _password;
+
+        public MongoContainer(
+            string host = HostIPAddress,
+            string port = "27017",
+            string username = "mongoroot",
+            string password = "secret") :
+            base(new ConfigurationParameters
+            {
+                Image = "mongo",
+                Tag = "5.0.9-focal",
+                PortBindings = new Dictionary<string, IList<PortBinding>>
+                {
+                    ["27017/tcp"] = new List<PortBinding> {
+                        new PortBinding {
+                            HostIP = host,
+                            HostPort = port
+                        }
+                    }
+                },
+                EnrironmentVariables = new Dictionary<string, string>
+                {
+                    ["MONGO_INITDB_ROOT_USERNAME"] = username,
+                    ["MONGO_INITDB_ROOT_PASSWORD"] = password
+                }
+            })
         {
-            Image = "mongo",
-            Tag = "5.0.9-focal"
-        })
-        { }
+            _host = host;
+            _port = port;
+            _username = username;
+            _password = password;
+        }
+
+        public string ConnectionString => $"mongodb://{_username}:{_password}@{_host}:{_port}";
     }
 }

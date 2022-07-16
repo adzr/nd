@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Extensions\Nd.Extensions.Stores.Mongo\Nd.Extensions.Stores.Mongo.csproj" />
     <ProjectReference Include="..\..\Harness\Nd.Containers\Nd.Containers.csproj" />
   </ItemGroup>
 

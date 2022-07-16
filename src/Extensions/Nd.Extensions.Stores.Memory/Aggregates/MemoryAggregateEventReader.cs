@@ -28,6 +28,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
+using Nd.Identities;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
@@ -42,7 +43,7 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
             _events = events;
         }
 
-        public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
+        public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
             where TEvent : ICommittedEvent<TIdentity, TState> =>
             Task.FromResult(_events.TryGetValue(aggregateId, out var events) ?
                 events

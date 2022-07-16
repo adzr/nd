@@ -155,6 +155,7 @@ namespace Nd.Aggregates.Tests
         [Fact]
         public void CanReadEvents()
         {
+            var expectedCorrelationId = new CorrelationIdentity(Guid.NewGuid());
             var expectedIdentity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var expectedAggregateName = typeof(TestAggregateRoot).GetName();
 
@@ -170,7 +171,7 @@ namespace Nd.Aggregates.Tests
 
             ExpectEvents(expectedIdentity, expectedAggregateName, new AggregateEvent<TestAggregateState>[] { expectedEventA, expectedEventB }, eventReader);
 
-            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, cancellation: CancellationToken.None).GetAwaiter().GetResult();
+            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, expectedCorrelationId, cancellation: CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.NotNull(aggregate);
 
@@ -181,6 +182,7 @@ namespace Nd.Aggregates.Tests
         [Fact]
         public void CanUpgradeEvents()
         {
+            var expectedCorrelationId = new CorrelationIdentity(Guid.NewGuid());
             var expectedIdentity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var expectedAggregateName = typeof(TestAggregateRoot).GetName();
 
@@ -196,7 +198,7 @@ namespace Nd.Aggregates.Tests
 
             ExpectEvents(expectedIdentity, expectedAggregateName, new AggregateEvent<TestAggregateState>[] { expectedEventA, expectedEventB }, eventReader);
 
-            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, cancellation: CancellationToken.None).GetAwaiter().GetResult();
+            var aggregate = reader.ReadAsync<TestAggregateRoot>(expectedIdentity, expectedCorrelationId, cancellation: CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.NotNull(aggregate);
 
@@ -206,7 +208,7 @@ namespace Nd.Aggregates.Tests
 
         private static void ExpectEvents(TestIdentity expectedIdentity, string expectedAggregateName, IEnumerable<AggregateEvent<TestAggregateState>> events, IAggregateEventReader<TestIdentity, TestAggregateState> eventReader)
         {
-            _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity, TestAggregateState>>(A<TestIdentity>._, A<uint>._, A<CancellationToken>._))
+            _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity, TestAggregateState>>(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
                 .ReturnsLazily(() => events.Select(e =>
                 {
                     var eventType = Definitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?

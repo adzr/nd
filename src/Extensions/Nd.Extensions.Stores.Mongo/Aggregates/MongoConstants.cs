@@ -43,5 +43,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
     {
         public const int MongoResultReceived = 611;
         public const int MongoResultMissing = 612;
+        public const int MongoNotSupportingTransactions = 613;
     }
 }

@@ -24,13 +24,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
     public interface IAggregateReader<TIdentity>
         where TIdentity : notnull, IAggregateIdentity
     {
-        Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId, uint version = 0u, CancellationToken cancellation = default)
+        Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default)
             where TAggregate : notnull, IAggregateRoot<TIdentity>;
     }
 }

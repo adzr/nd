@@ -30,7 +30,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Nd.Aggregates.Common;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
@@ -40,7 +39,7 @@ using Nd.Extensions.Stores.Mongo.Exceptions;
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public abstract class MongoDBAggregateEventWriter<TIdentity, TIdentityValue> : MongoAccessor, IAggregateEventWriter<TIdentity>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
     {
         private static readonly Action<ILogger, string, Exception?> s_mongoResultReceived =
             LoggerMessage.Define<string>(LogLevel.Trace, new EventId(
@@ -54,11 +53,22 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 nameof(MongoLoggingEventsConstants.MongoResultMissing)),
                                 "Mongo result missing");
 
+        private static readonly Action<ILogger, Exception?> s_mongoNotSupportingTransactions =
+            LoggerMessage.Define(LogLevel.Warning, new EventId(
+                                MongoLoggingEventsConstants.MongoNotSupportingTransactions,
+                                nameof(MongoLoggingEventsConstants.MongoNotSupportingTransactions)),
+                                "Mongo transactions are not supported");
+
 
         private readonly ILogger? _logger;
         private readonly ActivitySource _activitySource;
 
-        protected MongoDBAggregateEventWriter(MongoClient client, string databaseName, string collectionName, ILoggerFactory? loggerFactory, ActivitySource? activitySource) :
+        protected MongoDBAggregateEventWriter(
+            MongoClient client,
+            string databaseName,
+            string collectionName,
+            ILoggerFactory? loggerFactory,
+            ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
             _logger = loggerFactory?.CreateLogger(GetType());
@@ -95,7 +105,22 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
         private async Task WriteInternalAsync<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation) where TEvent : IUncommittedEvent<TIdentity>
         {
-            StartTransaction(session, activity, eventList);
+            try
+            {
+                StartTransaction(session, activity, eventList);
+            }
+            catch (NotSupportedException e)
+            {
+                if (_logger is not null)
+                {
+                    using var _ = _logger.WithCorrelationId(
+                        eventList
+                        .First(e => e.Metadata.CorrelationIdentity is not null)
+                        .Metadata.CorrelationIdentity);
+
+                    s_mongoNotSupportingTransactions(_logger, e);
+                }
+            }
 
             try
             {
@@ -134,14 +159,11 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
         private void LogMongoResult(IAggregateEventMetadata<TIdentity> metadata, UpdateResult? updateResult)
         {
-            using var scope = _logger?.BeginScope(new Dictionary<string, object>
-            {
-                [LoggingScopeConstants.CorrelationKey] = metadata.CorrelationIdentity.Value,
-                [LoggingScopeConstants.DomainAggregateKey] = metadata.AggregateIdentity
-            });
-
             if (_logger is not null)
             {
+                using var correlationIdScope = _logger.WithCorrelationId(metadata.CorrelationIdentity);
+                using var aggregateIdScope = _logger.WithAggregateId(metadata.AggregateIdentity);
+
                 if (updateResult is not null)
                 {
                     s_mongoResultReceived(_logger, updateResult.ToJson(), default);
@@ -172,18 +194,24 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 }));
 
         private static FilterDefinition<MongoAggregateDocument> CreateAggregateFilteringCriteria(TIdentity aggregateId) =>
-            Builders<MongoAggregateDocument>.Filter.Eq(d => d.Identity, aggregateId.Value);
+            Builders<MongoAggregateDocument>.Filter.Eq(d => d.Id, aggregateId.Value);
 
         private static async Task CommitTranaction(IClientSessionHandle session, Activity? activity, CancellationToken cancellation)
         {
-            await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
-            _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultSuccessTagValue);
+            if (session.IsInTransaction)
+            {
+                await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
+                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultSuccessTagValue);
+            }
         }
 
         private static async Task AbortTransaction(IClientSessionHandle session, Activity? activity, CancellationToken cancellation)
         {
-            await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
-            _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultFailureTagValue);
+            if (session.IsInTransaction)
+            {
+                await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
+                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultFailureTagValue);
+            }
         }
 
         private static void StartTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity>

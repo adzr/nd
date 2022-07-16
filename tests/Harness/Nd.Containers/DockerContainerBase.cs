@@ -91,7 +91,14 @@ namespace Nd.Containers
                     Image = $"{_config.Image}:{_config.Tag}",
                     AttachStderr = true,
                     AttachStdout = true,
-                    Name = $"{_config.Image}_{_config.Tag}-{Guid.NewGuid()}"
+                    Name = $"{_config.Image}_{_config.Tag}-{Guid.NewGuid()}",
+                    HostConfig = new HostConfig
+                    {
+                        PortBindings = _config.PortBindings
+                    },
+                    Env = _config.EnrironmentVariables?
+                        .Select(i => $"{i.Key}={i.Value}")
+                        .ToList(),
                 }, cancellation).ConfigureAwait(false);
 
             _started = await _client.Containers.StartContainerAsync(_container.ID,

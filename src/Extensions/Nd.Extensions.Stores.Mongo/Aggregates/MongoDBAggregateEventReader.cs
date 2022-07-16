@@ -41,7 +41,7 @@ using Nd.Identities;
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public abstract class MongoDBAggregateEventReader<TIdentity, TState> : MongoAccessor, IAggregateEventReader<TIdentity, TState>
-        where TIdentity : IAggregateIdentity
+        where TIdentity : notnull, IAggregateIdentity
         where TState : notnull
     {
         private readonly ILogger? _logger;
@@ -59,14 +59,19 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 nameof(MongoLoggingEventsConstants.MongoResultMissing)),
                                 "Mongo document not found");
 
-        protected MongoDBAggregateEventReader(MongoClient client, string databaseName, string collectionName, ILoggerFactory? loggerFactory, ActivitySource? activitySource) :
+        protected MongoDBAggregateEventReader(
+            MongoClient client,
+            string databaseName,
+            string collectionName,
+            ILoggerFactory? loggerFactory,
+            ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
             _logger = loggerFactory?.CreateLogger(GetType());
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
-        public async Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
+        public async Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
             where TEvent : ICommittedEvent<TIdentity, TState>
         {
             if (aggregateId is null)
@@ -80,10 +85,10 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             cancellation.ThrowIfCancellationRequested();
 
-            return await FindEvents<TEvent>(aggregateId, CreateIdentity, GetCollection<MongoAggregateDocument>(), _logger, cancellation).ConfigureAwait(false);
+            return await FindEvents<TEvent>(aggregateId, correlationId, CreateIdentity, GetCollection<MongoAggregateDocument>(), _logger, cancellation).ConfigureAwait(false);
         }
 
-        private static async Task<IEnumerable<TEvent>> FindEvents<TEvent>(TIdentity aggregateId, Func<object, TIdentity> createIdentity, IMongoCollection<MongoAggregateDocument> collection, ILogger? logger, CancellationToken cancellation)
+        private static async Task<IEnumerable<TEvent>> FindEvents<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, Func<object, TIdentity> createIdentity, IMongoCollection<MongoAggregateDocument> collection, ILogger? logger, CancellationToken cancellation)
             where TEvent : ICommittedEvent<TIdentity, TState>
         {
             var events = new List<CommittedEvent<TIdentity, TState>>();
@@ -94,6 +99,9 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 cancellationToken: cancellation).ConfigureAwait(false);
 
             var documemt = await cursor.SingleOrDefaultAsync(cancellation).ConfigureAwait(false);
+
+            using var correlationIdScope = logger.WithCorrelationId(correlationId);
+            using var aggregateIdScope = logger.WithAggregateId(aggregateId);
 
             if (documemt is not null)
             {
@@ -133,7 +141,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                         new AggregateEventIdentity(e.Identity),
                         e.TypeName,
                         e.TypeVersion,
-                        createIdentity(documemt.Identity),
+                        createIdentity(documemt.Id),
                         documemt.Name,
                         e.AggregateVersion,
                         e.Timestamp));

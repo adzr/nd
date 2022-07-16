@@ -21,22 +21,18 @@
  * SOFTWARE.
  */
 
-using System.Security.Cryptography.X509Certificates;
-using Docker.DotNet.Models;
+using System;
+using System.Diagnostics;
+using Nd.Aggregates.Common;
 
-namespace Nd.Containers
+namespace Nd.Aggregates.Extensions
 {
-    public class ConfigurationParameters
+    public static class ActivityExtensions
     {
-        public Uri? Uri { get; internal set; }
-        public X509Certificate? Certificate { get; internal set; }
-        public string? AccessToken { get; internal set; }
-        public string? Image { get; internal set; }
-        public string? Tag { get; internal set; }
-        public string? Version { get; internal set; }
-        public string? Username { get; internal set; }
-        public string? Password { get; internal set; }
-        public IDictionary<string, IList<PortBinding>>? PortBindings { get; internal set; } = new Dictionary<string, IList<PortBinding>>();
-        public IDictionary<string, string>? EnrironmentVariables { get; internal set; }
+        public static Activity AddCorrelationsTag(this Activity activity, Guid[]? correlationIds) =>
+            activity?.AddTag(ActivityConstants.CorrelationsTag, correlationIds) ?? throw new ArgumentNullException(nameof(activity));
+
+        public static Activity AddDomainAggregatesTag<T>(this Activity activity, T[]? aggregatesIds) =>
+            activity?.AddTag(ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
     }
 }

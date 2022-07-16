@@ -22,12 +22,14 @@
  */
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using Nd.Aggregates.Common;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Extensions
 {
@@ -79,12 +81,33 @@ namespace Nd.Aggregates.Extensions
         }
     }
 
-    public static class ActivityExtensions
+    public static class LoggerExtensions
     {
-        public static Activity AddCorrelationsTag(this Activity activity, Guid[]? correlationIds) =>
-            activity?.AddTag(ActivityConstants.CorrelationsTag, correlationIds) ?? throw new ArgumentNullException(nameof(activity));
+        internal sealed class EmptyDisposable : IDisposable
+        {
+            public void Dispose()
+            {
 
-        public static Activity AddDomainAggregatesTag<T>(this Activity activity, T[]? aggregatesIds) =>
-            activity?.AddTag(ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
+            }
+        }
+
+        public static IDisposable With(this ILogger? logger, string key, object value) =>
+            logger is null
+                ? new EmptyDisposable()
+                : logger.BeginScope(new Dictionary<string, object>
+                {
+                    [key] = value
+                });
+
+        public static IDisposable WithCorrelationId<TIdentity>(this ILogger? logger, TIdentity value)
+            where TIdentity : notnull, ICorrelationIdentity =>
+            WithCorrelationId(logger, value.Value);
+
+        public static IDisposable WithCorrelationId(this ILogger? logger, Guid value) =>
+            With(logger, LoggingScopeConstants.CorrelationKey, value);
+
+        public static IDisposable WithAggregateId<TIdentity>(this ILogger? logger, TIdentity value)
+            where TIdentity : notnull, IAggregateIdentity =>
+            With(logger, LoggingScopeConstants.DomainAggregateKey, value);
     }
 }

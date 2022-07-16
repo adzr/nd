@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
@@ -52,7 +53,7 @@ namespace Nd.Aggregates.Persistence
 
         public string TypeName { get; }
 
-        public async Task<TAggregate> LoadAsync(TIdentity identity, uint version = 0u, CancellationToken cancellation = default)
+        public async Task<TAggregate> LoadAsync(TIdentity identity, ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default)
         {
             if (identity is null)
             {
@@ -77,7 +78,7 @@ namespace Nd.Aggregates.Persistence
                 }
             }
 
-            var storedAggregate = await _reader.ReadAsync<TAggregate>(identity, version, cancellation).ConfigureAwait(false);
+            var storedAggregate = await _reader.ReadAsync<TAggregate>(identity, correlationId, version, cancellation).ConfigureAwait(false);
 
             if (_cache is not null)
             {

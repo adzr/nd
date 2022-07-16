@@ -21,22 +21,27 @@
  * SOFTWARE.
  */
 
-using System.Security.Cryptography.X509Certificates;
-using Docker.DotNet.Models;
+using System.Runtime.Serialization;
 
-namespace Nd.Containers
+namespace Nd.Containers.Exceptions
 {
-    public class ConfigurationParameters
+    [Serializable]
+    public class UnavailableTCPPortException : Exception
     {
-        public Uri? Uri { get; internal set; }
-        public X509Certificate? Certificate { get; internal set; }
-        public string? AccessToken { get; internal set; }
-        public string? Image { get; internal set; }
-        public string? Tag { get; internal set; }
-        public string? Version { get; internal set; }
-        public string? Username { get; internal set; }
-        public string? Password { get; internal set; }
-        public IDictionary<string, IList<PortBinding>>? PortBindings { get; internal set; } = new Dictionary<string, IList<PortBinding>>();
-        public IDictionary<string, string>? EnrironmentVariables { get; internal set; }
+        public UnavailableTCPPortException()
+        {
+        }
+
+        public UnavailableTCPPortException(string? message) : base(message)
+        {
+        }
+
+        public UnavailableTCPPortException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected UnavailableTCPPortException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }
