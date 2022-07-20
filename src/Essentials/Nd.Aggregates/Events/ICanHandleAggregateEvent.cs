@@ -25,7 +25,7 @@ namespace Nd.Aggregates.Events
 {
     public interface ICanHandleAggregateEvent
     {
-        virtual void Handle(IAggregateEvent aggregateEvent) { }
+        void Handle(IAggregateEvent aggregateEvent) { }
     }
 
     public interface ICanHandleAggregateEvent<in TEvent> : ICanHandleAggregateEvent
@@ -33,6 +33,6 @@ namespace Nd.Aggregates.Events
     {
         void Handle(TEvent aggregateEvent);
 
-        protected new void Handle(IAggregateEvent aggregateEvent) => Handle((TEvent)aggregateEvent);
+        protected new sealed void Handle(IAggregateEvent aggregateEvent) => Handle((TEvent)aggregateEvent!);
     }
 }

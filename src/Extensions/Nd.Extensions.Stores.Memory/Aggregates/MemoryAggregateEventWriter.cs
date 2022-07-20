@@ -32,13 +32,12 @@ using Nd.Aggregates.Persistence;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
-    public abstract class MemoryAggregateEventWriter<TIdentity, TState> : IAggregateEventWriter<TIdentity>
+    public abstract class MemoryAggregateEventWriter<TIdentity> : IAggregateEventWriter<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : notnull
     {
-        private readonly ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity, TState>>> _events;
+        private readonly ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity>>> _events;
 
-        protected MemoryAggregateEventWriter(ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity, TState>>> events)
+        protected MemoryAggregateEventWriter(ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity>>> events)
         {
             _events = events;
         }
@@ -52,25 +51,24 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
 
             foreach (var e in events)
             {
-                _events.GetOrAdd(e.Metadata.AggregateIdentity, (id) => new ConcurrentQueue<ICommittedEvent<TIdentity, TState>>())
-                    .Enqueue(new CommittedEvent<TIdentity, TState>((IAggregateEvent<TState>)e.AggregateEvent, e.Metadata));
+                _events.GetOrAdd(e.Metadata.AggregateIdentity, (id) => new ConcurrentQueue<ICommittedEvent<TIdentity>>())
+                    .Enqueue(new CommittedEvent<TIdentity>(e.AggregateEvent, e.Metadata));
             }
 
             return Task.CompletedTask;
         }
     }
 
-    internal class CommittedEvent<TIdentity, TState> : ICommittedEvent<TIdentity, TState>
+    internal class CommittedEvent<TIdentity> : ICommittedEvent<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : notnull
     {
-        public CommittedEvent(IAggregateEvent<TState> aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
+        public CommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
         {
             AggregateEvent = aggregateEvent;
             Metadata = metadata;
         }
 
-        public IAggregateEvent<TState> AggregateEvent { get; }
+        public IAggregateEvent AggregateEvent { get; }
 
         public IAggregateEventMetadata<TIdentity> Metadata { get; }
     }

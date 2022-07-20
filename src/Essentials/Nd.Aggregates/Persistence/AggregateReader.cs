@@ -40,11 +40,11 @@ namespace Nd.Aggregates.Persistence
     {
         private readonly AggregateFactoryFunc<TIdentity, TState, IAggregateRoot<TIdentity, TState>> _aggregateFactory;
         private readonly AggregateStateFactoryFunc<TState> _stateFactory;
-        private readonly IAggregateEventReader<TIdentity, TState> _eventReader;
+        private readonly IAggregateEventReader<TIdentity> _eventReader;
 
         protected AggregateReader(AggregateStateFactoryFunc<TState> stateFactory,
             AggregateFactoryFunc<TIdentity, TState, IAggregateRoot<TIdentity, TState>> aggregateFactory,
-            IAggregateEventReader<TIdentity, TState> eventReader)
+            IAggregateEventReader<TIdentity> eventReader)
         {
             _aggregateFactory = aggregateFactory ?? throw new ArgumentNullException(nameof(aggregateFactory));
             _stateFactory = stateFactory ?? throw new ArgumentNullException(nameof(stateFactory));
@@ -60,7 +60,7 @@ namespace Nd.Aggregates.Persistence
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity, TState>>(aggregateId, correlationId, version, cancellation)
+            var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity>>(aggregateId, correlationId, version, cancellation)
                 .ConfigureAwait(false);
 
             (var aggregate, var state) = aggregateId

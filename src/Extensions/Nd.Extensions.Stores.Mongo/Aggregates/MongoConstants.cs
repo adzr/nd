@@ -23,15 +23,6 @@
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    internal static class MongoConstants
-    {
-        public const string AggregateIdKey = "_id";
-        public const string AggregateNameKey = "Name";
-        public const string AggregateVersionKey = "Version";
-        public const string AggregateEvents = "Events";
-        public const string EventIdKey = "EventId";
-    }
-
     internal static class MongoActivityConstants
     {
         public const string MongoResultTag = "MongoResult";

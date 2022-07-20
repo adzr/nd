@@ -48,7 +48,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         #region Test types definitions
 
         [NamedIdentity("TestIdentity")]
-        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
         public sealed record class TestIdentity : GuidAggregateIdentity
         {
             public TestIdentity(Guid value) : base(value) { }
@@ -56,7 +56,8 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             public TestIdentity(IGuidFactory factory) : base(factory) { }
         }
 
-        internal record class TestAggregateState : AggregateState<TestAggregateState>,
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
+        public record class TestAggregateState : AggregateState<TestAggregateState>,
             ICanHandleAggregateEvent<TestEventCountV1>,
             ICanHandleAggregateEvent<TestEventCountV2>
         {
@@ -67,18 +68,20 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             public uint Counter { get; private set; }
 
             public override TestAggregateState State => this;
-            public void Handle(TestEventCountV1 _) => Counter++;
+            public void Handle(TestEventCountV1 aggregateEvent) => Counter++;
 
-            public void Handle(TestEventCountV2 e) => Counter += e.Amount;
+            public void Handle(TestEventCountV2 aggregateEvent) => Counter += aggregateEvent?.Amount ?? 0;
         }
 
         [VersionedEvent("TestEventCount", 1)]
-        internal sealed record class TestEventCountV1 : AggregateEvent<TestAggregateState>;
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
+        public sealed record class TestEventCountV1 : AggregateEvent<TestAggregateState>;
 
         [VersionedEvent("TestEventCount", 2)]
-        internal sealed record class TestEventCountV2(uint Amount) : AggregateEvent<TestAggregateState>;
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
+        public sealed record class TestEventCountV2(uint Amount) : AggregateEvent<TestAggregateState>;
 
-        internal class TestReader : MongoDBAggregateEventReader<TestIdentity, TestAggregateState>
+        internal class TestReader : MongoDBAggregateEventReader<TestIdentity, Guid>
         {
             public TestReader(
                 MongoClient client,
@@ -131,7 +134,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
         public MongoDBAggregateEventStoreTests()
         {
-            _mongoContainer = new MongoContainer(port: Helpers.GetOpenPort(), password: Helpers.GetRandomSecureString(8));
+            _mongoContainer = new MongoContainer(port: Helpers.GetOpenPort(), password: Helpers.GetRandomSecureHex(16));
 
             _mongoContainer.StartAsync().GetAwaiter().GetResult();
 
@@ -185,7 +188,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 .ConfigureAwait(false);
 
             var events = await _mongoReader
-                .ReadAsync<ICommittedEvent<TestIdentity, TestAggregateState>>(identity, correlationId, uint.MinValue, uint.MaxValue, default)
+                .ReadAsync<ICommittedEvent<TestIdentity>>(identity, correlationId, uint.MinValue, uint.MaxValue, default)
                 .ConfigureAwait(false);
 
             events.GetHashCode();

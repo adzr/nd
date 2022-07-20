@@ -131,21 +131,21 @@ namespace Nd.Aggregates.Tests
             public TestAggregateReader(
                 AggregateStateFactoryFunc<TestAggregateState> stateFactory,
                 AggregateFactoryFunc<TestIdentity, TestAggregateState, IAggregateRoot<TestIdentity, TestAggregateState>> aggregateFactory,
-                IAggregateEventReader<TestIdentity, TestAggregateState> eventReader) : base(stateFactory, aggregateFactory, eventReader)
+                IAggregateEventReader<TestIdentity> eventReader) : base(stateFactory, aggregateFactory, eventReader)
             {
             }
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        public record class TestAggregateCommittedEvent : ICommittedEvent<TestIdentity, TestAggregateState>
+        public record class TestAggregateCommittedEvent : ICommittedEvent<TestIdentity>
         {
-            public TestAggregateCommittedEvent(IAggregateEvent<TestAggregateState> aggregateEvent, IAggregateEventMetadata<TestIdentity> metadata)
+            public TestAggregateCommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata<TestIdentity> metadata)
             {
                 AggregateEvent = aggregateEvent;
                 Metadata = metadata;
             }
 
-            public IAggregateEvent<TestAggregateState> AggregateEvent { get; }
+            public IAggregateEvent AggregateEvent { get; }
 
             public IAggregateEventMetadata<TestIdentity> Metadata { get; }
         }
@@ -162,7 +162,7 @@ namespace Nd.Aggregates.Tests
             var expectedEventA = new TestEventA(RandomGuidFactory.Instance.Create().ToString());
             var expectedEventB = new TestEventB();
 
-            var eventReader = A.Fake<IAggregateEventReader<TestIdentity, TestAggregateState>>();
+            var eventReader = A.Fake<IAggregateEventReader<TestIdentity>>();
 
             IAggregateReader<TestIdentity> reader = new TestAggregateReader(
                 () => new TestAggregateState(),
@@ -189,7 +189,7 @@ namespace Nd.Aggregates.Tests
             var expectedEventA = new TestEventC1(RandomGuidFactory.Instance.Create().ToString());
             var expectedEventB = new TestEventC2(RandomGuidFactory.Instance.Create().ToString());
 
-            var eventReader = A.Fake<IAggregateEventReader<TestIdentity, TestAggregateState>>();
+            var eventReader = A.Fake<IAggregateEventReader<TestIdentity>>();
 
             IAggregateReader<TestIdentity> reader = new TestAggregateReader(
                 () => new TestAggregateState(),
@@ -206,9 +206,9 @@ namespace Nd.Aggregates.Tests
             AssertEvent(expectedEventB, aggregate!.State.Yield());
         }
 
-        private static void ExpectEvents(TestIdentity expectedIdentity, string expectedAggregateName, IEnumerable<AggregateEvent<TestAggregateState>> events, IAggregateEventReader<TestIdentity, TestAggregateState> eventReader)
+        private static void ExpectEvents(TestIdentity expectedIdentity, string expectedAggregateName, IEnumerable<AggregateEvent<TestAggregateState>> events, IAggregateEventReader<TestIdentity> eventReader)
         {
-            _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity, TestAggregateState>>(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
+            _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity>>(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
                 .ReturnsLazily(() => events.Select(e =>
                 {
                     var eventType = Definitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?

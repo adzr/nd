@@ -29,9 +29,8 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateEventReader<TIdentity, TState>
+    public interface IAggregateEventReader<TIdentity>
         where TIdentity : notnull, IAggregateIdentity
-        where TState : notnull
     {
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified.
@@ -42,7 +41,7 @@ namespace Nd.Aggregates.Persistence
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
         Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, CancellationToken cancellation = default)
-            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, cancellation);
+            where TEvent : notnull, ICommittedEvent<TIdentity> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified up to the specified aggregate version.
@@ -54,7 +53,7 @@ namespace Nd.Aggregates.Persistence
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
         Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint version, CancellationToken cancellation = default)
-            where TEvent : notnull, ICommittedEvent<TIdentity, TState> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, 0u, cancellation);
+            where TEvent : notnull, ICommittedEvent<TIdentity> => ReadAsync<TEvent>(aggregateId, correlationId, 0u, 0u, cancellation);
 
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified within the specified aggregate version range inclusive.
@@ -67,6 +66,6 @@ namespace Nd.Aggregates.Persistence
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
         Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : notnull, ICommittedEvent<TIdentity, TState>;
+            where TEvent : notnull, ICommittedEvent<TIdentity>;
     }
 }

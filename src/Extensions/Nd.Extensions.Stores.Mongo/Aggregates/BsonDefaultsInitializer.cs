@@ -21,15 +21,53 @@
 * SOFTWARE.
 */
 
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
     public static class BsonDefaultsInitializer
     {
-        static BsonDefaultsInitializer()
+        private static bool s_initialized;
+        private static readonly object s_lock = new();
+        private static readonly ConcurrentBag<Type> s_mappedBag = new();
+
+        public static void Initialize()
         {
-            _ = BsonClassMap.RegisterClassMap<MongoAggregateDocument>();
+            lock (s_lock)
+            {
+                if (!s_initialized)
+                {
+                    s_initialized = true;
+
+                    BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+                    BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer());
+
+#pragma warning disable CS0618 // Type or member is obsolete
+                    BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
+#pragma warning restore CS0618 // Type or member is obsolete
+                }
+            }
+        }
+
+        public static void RegisterMongoAggregateDocument<T>()
+            where T : notnull
+        {
+            lock (s_lock)
+            {
+                if (s_mappedBag.Contains(typeof(MongoAggregateDocument<T>)))
+                {
+                    return;
+                }
+
+                //_ = BsonClassMap.RegisterClassMap<MongoAggregateDocument<T>>();
+
+                s_mappedBag.Add(typeof(MongoAggregateDocument<T>));
+            }
         }
     }
 }

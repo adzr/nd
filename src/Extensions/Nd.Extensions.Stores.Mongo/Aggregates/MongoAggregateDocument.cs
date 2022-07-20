@@ -25,88 +25,45 @@ using System;
 using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.IdGenerators;
+using Nd.Aggregates.Events;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    public class MongoAggregateDocument
+    public class MongoAggregateDocument<T> where T : notnull
     {
-        [BsonConstructor("_id", "Name", "Version", "Events")]
-        public MongoAggregateDocument(ObjectId id, string name, uint version, IEnumerable<MongoAggregateEventDocument> events)
-        {
-            Id = id;
-            Name = name;
-            Version = version;
-            Events = events;
-        }
-
-        [BsonId]
-        [BsonElement("_id")]
-        public ObjectId Id { get; }
+        [BsonId(IdGenerator = typeof(NullIdChecker))]
+        public T? Id { get; set; }
 
         [BsonElement("Name")]
-        public string Name { get; }
+        public string Name { get; set; } = string.Empty;
 
         [BsonElement("Version")]
-        public uint Version { get; }
+        public uint Version { get; set; }
 
         [BsonElement("Events")]
         [BsonIgnoreIfDefault]
-        public IEnumerable<MongoAggregateEventDocument> Events { get; }
+        public IEnumerable<MongoAggregateEventDocument> Events { get; set; } = Array.Empty<MongoAggregateEventDocument>();
     }
 
     public class MongoAggregateEventDocument
     {
-        [BsonConstructor(
-            "Id",
-            "Timestamp",
-            "Version",
-            "CorrelationId",
-            "IdempotencyId",
-            "TypeName",
-            "TypeVersion",
-            "Content")]
-        public MongoAggregateEventDocument(
-            Guid identity,
-            DateTimeOffset timestamp,
-            uint aggregateVersion,
-            Guid correlationIdentity,
-            Guid idempotencyIdentity,
-            string typeName,
-            uint typeVersion,
-            BsonDocument content)
-        {
-            Identity = identity;
-            Timestamp = timestamp;
-            AggregateVersion = aggregateVersion;
-            CorrelationIdentity = correlationIdentity;
-            IdempotencyIdentity = idempotencyIdentity;
-            TypeName = typeName;
-            TypeVersion = typeVersion;
-            Content = content;
-        }
-
         [BsonElement("Id")]
-        public Guid Identity { get; }
+        public Guid Id { get; set; }
 
         [BsonElement("Timestamp")]
-        public DateTimeOffset Timestamp { get; }
+        public DateTimeOffset Timestamp { get; set; }
 
         [BsonElement("Version")]
-        public uint AggregateVersion { get; }
+        public uint AggregateVersion { get; set; }
 
         [BsonElement("CorrelationId")]
-        public Guid CorrelationIdentity { get; }
+        public Guid CorrelationIdentity { get; set; }
 
         [BsonElement("IdempotencyId")]
-        public Guid IdempotencyIdentity { get; }
-
-        [BsonElement("TypeName")]
-        public string TypeName { get; }
-
-        [BsonElement("TypeVersion")]
-        public uint TypeVersion { get; }
+        public Guid IdempotencyIdentity { get; set; }
 
         [BsonElement("Content")]
-        public BsonDocument Content { get; }
+        public IAggregateEvent? Content { get; set; }
     }
 }

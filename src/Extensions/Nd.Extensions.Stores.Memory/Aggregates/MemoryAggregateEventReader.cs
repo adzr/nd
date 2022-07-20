@@ -32,19 +32,18 @@ using Nd.Identities;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
-    public abstract class MemoryAggregateEventReader<TIdentity, TState> : IAggregateEventReader<TIdentity, TState>
+    public abstract class MemoryAggregateEventReader<TIdentity> : IAggregateEventReader<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : notnull
     {
-        private readonly IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> _events;
+        private readonly IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity>>> _events;
 
-        protected MemoryAggregateEventReader(IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity, TState>>> events)
+        protected MemoryAggregateEventReader(IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity>>> events)
         {
             _events = events;
         }
 
         public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : ICommittedEvent<TIdentity, TState> =>
+            where TEvent : ICommittedEvent<TIdentity> =>
             Task.FromResult(_events.TryGetValue(aggregateId, out var events) ?
                 events
                 .Where(e => e.Metadata.AggregateVersion >= versionStart && (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))

@@ -38,8 +38,9 @@ using Nd.Extensions.Stores.Mongo.Exceptions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    public abstract class MongoDBAggregateEventWriter<TIdentity, TIdentityValue> : MongoAccessor, IAggregateEventWriter<TIdentity>
+    public abstract class MongoDBAggregateEventWriter<TIdentity, TValue> : MongoAccessor, IAggregateEventWriter<TIdentity>
         where TIdentity : notnull, IAggregateIdentity
+        where TValue : notnull
     {
         private static readonly Action<ILogger, string, Exception?> s_mongoResultReceived =
             LoggerMessage.Define<string>(LogLevel.Trace, new EventId(
@@ -62,6 +63,12 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
         private readonly ILogger? _logger;
         private readonly ActivitySource _activitySource;
+
+        static MongoDBAggregateEventWriter()
+        {
+            BsonDefaultsInitializer.Initialize();
+            BsonDefaultsInitializer.RegisterMongoAggregateDocument<TValue>();
+        }
 
         protected MongoDBAggregateEventWriter(
             MongoClient client,
@@ -135,8 +142,8 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                     var aggregateId = metadata.AggregateIdentity;
                     var aggregateName = metadata.AggregateName;
 
-                    var updateResult = await GetCollection<MongoAggregateDocument>().UpdateOneAsync(session,
-                        MongoDBAggregateEventWriter<TIdentity, TIdentityValue>.CreateAggregateFilteringCriteria(aggregateId),
+                    var updateResult = await GetCollection<MongoAggregateDocument<TValue>>().UpdateOneAsync(session,
+                        MongoDBAggregateEventWriter<TIdentity, TValue>.CreateAggregateFilteringCriteria(aggregateId),
                         CreateAggregateUpdateSettings(aggregateId, aggregateName, aggregateLatestVersion, aggregate),
                         new UpdateOptions
                         {
@@ -175,26 +182,26 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             }
         }
 
-        private static UpdateDefinition<MongoAggregateDocument> CreateAggregateUpdateSettings<TEvent>(TIdentity aggregateId, string aggregateName, uint aggregateLatestVersion, IEnumerable<TEvent> events)
+        private static UpdateDefinition<MongoAggregateDocument<TValue>> CreateAggregateUpdateSettings<TEvent>(TIdentity aggregateId, string aggregateName, uint aggregateLatestVersion, IEnumerable<TEvent> events)
             where TEvent : IUncommittedEvent<TIdentity> =>
-            Builders<MongoAggregateDocument>.Update
-            .SetOnInsert(MongoConstants.AggregateIdKey, BsonValue.Create(aggregateId.Value))
-            .SetOnInsert(MongoConstants.AggregateNameKey, BsonValue.Create(aggregateName))
-            .Set(MongoConstants.AggregateVersionKey, BsonValue.Create(aggregateLatestVersion))
-            .AddToSetEach(MongoConstants.AggregateEvents, events
+            Builders<MongoAggregateDocument<TValue>>.Update
+            .SetOnInsert(d => d.Id, aggregateId.Value)
+            .SetOnInsert(d => d.Name, aggregateName)
+            .Set(d => d.Version, aggregateLatestVersion)
+            .AddToSetEach(d => d.Events, events
                 .OrderBy(e => e.Metadata.AggregateVersion)
-                .Select(e => new BsonDocument
+                .Select(e => new MongoAggregateEventDocument
                 {
-                    {  MongoConstants.EventIdKey, BsonValue.Create(e.Metadata.EventIdentity.Value) },
-                    {  MongoConstants.EventIdKey, BsonValue.Create(e.Metadata.Timestamp) },
-                    {  MongoConstants.EventIdKey, BsonValue.Create(e.Metadata.AggregateVersion) },
-                    {  MongoConstants.EventIdKey, BsonValue.Create(e.Metadata.CorrelationIdentity.Value) },
-                    {  MongoConstants.EventIdKey, BsonValue.Create(e.Metadata.IdempotencyIdentity.Value) },
-                    {  MongoConstants.EventIdKey, BsonDocument.Create(e.AggregateEvent) },
+                    Id = e.Metadata.EventIdentity.Value,
+                    Timestamp = e.Metadata.Timestamp,
+                    AggregateVersion = e.Metadata.AggregateVersion,
+                    CorrelationIdentity = e.Metadata.CorrelationIdentity.Value,
+                    IdempotencyIdentity = e.Metadata.IdempotencyIdentity.Value,
+                    Content = e.AggregateEvent
                 }));
 
-        private static FilterDefinition<MongoAggregateDocument> CreateAggregateFilteringCriteria(TIdentity aggregateId) =>
-            Builders<MongoAggregateDocument>.Filter.Eq(d => d.Id, aggregateId.Value);
+        private static FilterDefinition<MongoAggregateDocument<TValue>> CreateAggregateFilteringCriteria(TIdentity aggregateId) =>
+            Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value);
 
         private static async Task CommitTranaction(IClientSessionHandle session, Activity? activity, CancellationToken cancellation)
         {

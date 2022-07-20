@@ -28,21 +28,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
-using Nd.Core.Types;
 using Nd.Extensions.Stores.Mongo.Exceptions;
 using Nd.Identities;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    public abstract class MongoDBAggregateEventReader<TIdentity, TState> : MongoAccessor, IAggregateEventReader<TIdentity, TState>
+    public abstract class MongoDBAggregateEventReader<TIdentity, TValue> : MongoAccessor, IAggregateEventReader<TIdentity>
         where TIdentity : notnull, IAggregateIdentity
-        where TState : notnull
+        where TValue : notnull
     {
         private readonly ILogger? _logger;
         private readonly ActivitySource _activitySource;
@@ -59,6 +57,12 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 nameof(MongoLoggingEventsConstants.MongoResultMissing)),
                                 "Mongo document not found");
 
+        static MongoDBAggregateEventReader()
+        {
+            BsonDefaultsInitializer.Initialize();
+            BsonDefaultsInitializer.RegisterMongoAggregateDocument<TValue>();
+        }
+
         protected MongoDBAggregateEventReader(
             MongoClient client,
             string databaseName,
@@ -72,7 +76,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         }
 
         public async Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : ICommittedEvent<TIdentity, TState>
+            where TEvent : ICommittedEvent<TIdentity>
         {
             if (aggregateId is null)
             {
@@ -85,17 +89,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             cancellation.ThrowIfCancellationRequested();
 
-            return await FindEvents<TEvent>(aggregateId, correlationId, CreateIdentity, GetCollection<MongoAggregateDocument>(), _logger, cancellation).ConfigureAwait(false);
+            return await FindEvents<TEvent>(aggregateId, correlationId, CreateIdentity, GetCollection<MongoAggregateDocument<TValue>>(), _logger, cancellation).ConfigureAwait(false);
         }
 
-        private static async Task<IEnumerable<TEvent>> FindEvents<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, Func<object, TIdentity> createIdentity, IMongoCollection<MongoAggregateDocument> collection, ILogger? logger, CancellationToken cancellation)
-            where TEvent : ICommittedEvent<TIdentity, TState>
+        private static async Task<IEnumerable<TEvent>> FindEvents<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, Func<object, TIdentity> createIdentity, IMongoCollection<MongoAggregateDocument<TValue>> collection, ILogger? logger, CancellationToken cancellation)
+            where TEvent : ICommittedEvent<TIdentity>
         {
-            var events = new List<CommittedEvent<TIdentity, TState>>();
+            var events = new List<CommittedEvent<TIdentity>>();
 
             using var cursor = await collection
-                .FindAsync<MongoAggregateDocument>(
-                Builders<MongoAggregateDocument>.Filter.Eq(MongoConstants.AggregateIdKey, aggregateId.Value),
+                .FindAsync<MongoAggregateDocument<TValue>>(
+                Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value),
                 cancellationToken: cancellation).ConfigureAwait(false);
 
             var documemt = await cursor.SingleOrDefaultAsync(cancellation).ConfigureAwait(false);
@@ -110,14 +114,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                     s_mongoResultReceived(logger, documemt.ToJson(), default);
                 }
 
-                foreach (var e in documemt.Events)
+                if (documemt.Events is not null)
                 {
-                    if (!Definitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type))
+                    foreach (var e in documemt.Events)
                     {
-                        throw new MongoReaderEventDefinitionException(e.TypeName, e.TypeVersion);
-                    }
+                        if (e.Content is null)
+                        {
+                            throw new MongoReaderEventDefinitionException("Null event content found, cannot resolve type and version");
+                        }
 
-                    events.Add(MapEvent(e, documemt, createIdentity, type));
+                        events.Add(MapEvent(e, documemt, createIdentity));
+                    }
                 }
             }
             else if (logger is not null)
@@ -128,20 +135,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             return (IEnumerable<TEvent>)events;
         }
 
-        private static CommittedEvent<TIdentity, TState> MapEvent(
+        private static CommittedEvent<TIdentity> MapEvent(
             MongoAggregateEventDocument e,
-            MongoAggregateDocument documemt,
-            Func<object, TIdentity> createIdentity,
-            Type type) =>
-            new((IAggregateEvent<TState>)(BsonSerializer.Deserialize(e.Content, type) ??
-                throw new MongoReaderEventDeserializationException(type)),
-                    new AggregateEventMetadata<TIdentity>(
+            MongoAggregateDocument<TValue> documemt,
+            Func<object, TIdentity> createIdentity) =>
+            new(e.Content!, new AggregateEventMetadata<TIdentity>(
                         new IdempotencyIdentity(e.IdempotencyIdentity),
                         new CorrelationIdentity(e.CorrelationIdentity),
-                        new AggregateEventIdentity(e.Identity),
-                        e.TypeName,
-                        e.TypeVersion,
-                        createIdentity(documemt.Id),
+                        new AggregateEventIdentity(e.Id),
+                        e.Content!.TypeName,
+                        e.Content.TypeVersion,
+                        createIdentity(documemt.Id!),
                         documemt.Name,
                         e.AggregateVersion,
                         e.Timestamp));
@@ -150,17 +154,16 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
     }
 
 
-    internal class CommittedEvent<TIdentity, TState> : ICommittedEvent<TIdentity, TState>
+    internal class CommittedEvent<TIdentity> : ICommittedEvent<TIdentity>
         where TIdentity : IAggregateIdentity
-        where TState : notnull
     {
-        public CommittedEvent(IAggregateEvent<TState> aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
+        public CommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
         {
             AggregateEvent = aggregateEvent;
             Metadata = metadata;
         }
 
-        public IAggregateEvent<TState> AggregateEvent { get; }
+        public IAggregateEvent AggregateEvent { get; }
 
         public IAggregateEventMetadata<TIdentity> Metadata { get; }
     }

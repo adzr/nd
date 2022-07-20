@@ -29,12 +29,18 @@ namespace Nd.Containers
 {
     public static class Helpers
     {
-        public static string GetRandomSecureString(int lengthInBytes = 32)
+        public static string GetRandomSecureBase64(int lengthInBytes = 32) =>
+            Convert.ToBase64String(GetRandomSecureBytes(lengthInBytes));
+
+        public static string GetRandomSecureHex(int lengthInBytes = 32) =>
+            Convert.ToHexString(GetRandomSecureBytes(lengthInBytes));
+
+        private static byte[] GetRandomSecureBytes(int lengthInBytes = 32)
         {
             using var generator = RandomNumberGenerator.Create();
             var bytes = new byte[lengthInBytes];
             generator.GetBytes(bytes);
-            return Convert.ToBase64String(bytes);
+            return bytes;
         }
 
         public static string GetOpenPort()
