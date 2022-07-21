@@ -26,6 +26,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -33,8 +34,8 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Containers;
-using Nd.Core.Extensions;
 using Nd.Core.Factories;
+using Nd.Core.Types;
 using Nd.Extensions.Stores.Mongo.Aggregates;
 using Nd.Identities;
 using Xunit;
@@ -155,11 +156,11 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var aggregateName = "TestAggregateRoot";
 
-            var v1NameAndVersion = typeof(TestEventCountV1).GetNameAndVersion();
-            var v2NameAndVersion = typeof(TestEventCountV2).GetNameAndVersion();
+            var v1NameAndVersion = Definitions.GetNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = Definitions.GetNameAndVersion(typeof(TestEventCountV2));
             var timestamp = DateTime.UtcNow;
 
-            await _mongoWriter.WriteAsync(new[] {
+            var expectedEvents = new[] {
                 new UncommittedEvent(
                     Metadata: new AggregateEventMetadata<TestIdentity>(
                         IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
@@ -184,14 +185,22 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                         AggregateVersion: 2,
                         Timestamp: timestamp),
                     AggregateEvent: new TestEventCountV2(100)),
-            }, default)
+            };
+
+            await _mongoWriter.WriteAsync(expectedEvents, default)
                 .ConfigureAwait(false);
 
             var events = await _mongoReader
                 .ReadAsync<ICommittedEvent<TestIdentity>>(identity, correlationId, uint.MinValue, uint.MaxValue, default)
                 .ConfigureAwait(false);
 
-            events.GetHashCode();
+            Assert.Equal(
+                expectedEvents
+                .Select(e => (e.AggregateEvent, e.Metadata))
+                .ToArray(),
+                events
+                .Select(e => (e.AggregateEvent, e.Metadata))
+                .ToArray());
         }
 
         public void Dispose()

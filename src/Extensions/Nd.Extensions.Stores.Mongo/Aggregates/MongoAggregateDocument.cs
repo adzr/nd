@@ -54,7 +54,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         [BsonElement("Timestamp")]
         public DateTimeOffset Timestamp { get; set; }
 
-        [BsonElement("Version")]
+        [BsonElement("AggregateVersion")]
         public uint AggregateVersion { get; set; }
 
         [BsonElement("CorrelationId")]

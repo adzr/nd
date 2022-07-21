@@ -22,11 +22,16 @@
 */
 
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using MongoDB.Bson;
+using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
+using Nd.Aggregates.Events;
+using Nd.Core.Types;
+using Nd.Core.Types.Names;
+using Nd.Extensions.Stores.Mongo.Exceptions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
@@ -34,7 +39,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
     {
         private static bool s_initialized;
         private static readonly object s_lock = new();
-        private static readonly ConcurrentBag<Type> s_mappedBag = new();
 
         public static void Initialize()
         {
@@ -46,6 +50,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
                     BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
                     BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer());
+                    BsonSerializer.RegisterDiscriminatorConvention(typeof(IAggregateEvent), new NamedTypeDiscriminatorConvention());
+
+                    var eventTypes = Definitions
+                        .Catalog
+                        .Select(((string Name, uint Version, Type Type) v) => v.Type)
+                        .Where(t => typeof(IAggregateEvent).IsAssignableFrom(t));
+
+                    foreach (var type in eventTypes)
+                    {
+                        BsonSerializer.RegisterDiscriminatorConvention(type, new NamedTypeDiscriminatorConvention());
+                    }
 
 #pragma warning disable CS0618 // Type or member is obsolete
                     BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
@@ -53,21 +68,81 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 }
             }
         }
+    }
 
-        public static void RegisterMongoAggregateDocument<T>()
-            where T : notnull
+    public class NamedTypeDiscriminatorConvention : IDiscriminatorConvention
+    {
+        private const string TypeNameKey = "_t";
+        private const string TypeNameAndVersionSeparator = "#";
+
+        public string ElementName => TypeNameKey;
+
+        public Type GetActualType(IBsonReader bsonReader, Type nominalType)
         {
-            lock (s_lock)
+            if (bsonReader is null)
             {
-                if (s_mappedBag.Contains(typeof(MongoAggregateDocument<T>)))
+                throw new ArgumentNullException(nameof(bsonReader));
+            }
+
+            if (!typeof(INamedType).IsAssignableFrom(nominalType))
+            {
+                throw new NamedTypeDiscriminationException(
+                    $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
+            }
+
+            var typeName = string.Empty;
+            var typeVersion = 0u;
+
+            var bookmark = bsonReader.GetBookmark();
+
+            bsonReader.ReadStartDocument();
+
+            if (bsonReader.FindElement(ElementName))
+            {
+                var typeString = bsonReader.ReadString();
+
+                var typeNameAndVersion = typeString?
+                    .Split(TypeNameAndVersionSeparator,
+                    StringSplitOptions.RemoveEmptyEntries) ??
+                    Array.Empty<string>();
+
+                if (typeNameAndVersion.Length != 2)
                 {
-                    return;
+                    throw new NamedTypeDiscriminationException($"Invalid discriminator string: {typeString}");
                 }
 
-                //_ = BsonClassMap.RegisterClassMap<MongoAggregateDocument<T>>();
+                typeName = typeNameAndVersion[0].Trim();
 
-                s_mappedBag.Add(typeof(MongoAggregateDocument<T>));
+                if (!uint.TryParse(typeNameAndVersion[1].Trim(), out typeVersion))
+                {
+                    throw new NamedTypeDiscriminationException($"Invalid type version in type: {typeString}");
+                }
             }
+            else
+            {
+                throw new NamedTypeDiscriminationException($"Missing discriminator element {ElementName}");
+            }
+
+            bsonReader.ReturnToBookmark(bookmark);
+
+            return Definitions.NamesAndVersionsTypes
+                .TryGetValue((typeName, typeVersion), out var type)
+                ? type
+                : throw new NamedTypeDiscriminationException(
+                    $"Cannot find type of name {typeName} and version {typeVersion}");
+        }
+
+        public BsonValue GetDiscriminator(Type nominalType, Type actualType)
+        {
+            if (!typeof(INamedType).IsAssignableFrom(actualType))
+            {
+                throw new NamedTypeDiscriminationException(
+                    $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
+            }
+
+            var nameAndVersion = Definitions.GetNameAndVersion(actualType);
+
+            return BsonValue.Create($"{nameAndVersion.Name}#{nameAndVersion.Version}");
         }
     }
 }

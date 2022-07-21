@@ -21,25 +21,46 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Exceptions;
-using Nd.Core.Extensions;
 using Nd.Core.Types;
 using Nd.ValueObjects;
 
 namespace Nd.Aggregates.Events
 {
-    public abstract record class AggregateEvent<TState> :
-        ValueObject, IAggregateEvent<TState>
-        where TState : notnull
+    public abstract record class AggregateEvent : ValueObject, IAggregateEvent
     {
-        protected AggregateEvent()
+        private string? _cachedTypeName;
+        private uint? _cachedTypeVersion;
+
+        protected AggregateEvent() { }
+
+        public string TypeName
         {
-            (TypeName, TypeVersion) = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry :
-                throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
+            get
+            {
+                if (_cachedTypeName is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                }
+
+                return _cachedTypeName;
+            }
         }
 
-        public virtual string TypeName { get; }
+        public uint TypeVersion
+        {
+            get
+            {
+                if (_cachedTypeVersion is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                }
 
-        public virtual uint TypeVersion { get; }
+                return _cachedTypeVersion ?? 0u;
+            }
+        }
     }
+
+    public abstract record class AggregateEvent<TState> :
+        AggregateEvent, IAggregateEvent<TState>
+        where TState : notnull;
 }

@@ -67,7 +67,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         static MongoDBAggregateEventWriter()
         {
             BsonDefaultsInitializer.Initialize();
-            BsonDefaultsInitializer.RegisterMongoAggregateDocument<TValue>();
         }
 
         protected MongoDBAggregateEventWriter(

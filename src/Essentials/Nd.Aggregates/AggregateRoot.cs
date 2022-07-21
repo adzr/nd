@@ -37,8 +37,6 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
-using Nd.Core.Exceptions;
-using Nd.Core.Extensions;
 using Nd.Core.Factories;
 using Nd.Core.Types;
 using Nd.Identities;
@@ -49,6 +47,7 @@ namespace Nd.Aggregates
         where TIdentity : notnull, IAggregateIdentity
         where TState : notnull
     {
+        private string? _cachedTypeName;
 
         private readonly object _uncommittedEventsLock = new();
 
@@ -60,9 +59,6 @@ namespace Nd.Aggregates
 
         protected AggregateRoot(TIdentity identity, AggregateStateFactoryFunc<TState> initialStateProvider, uint version)
         {
-            TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
-                throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
-
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
 
             var createState = initialStateProvider ?? throw new ArgumentNullException(nameof(initialStateProvider));
@@ -79,7 +75,18 @@ namespace Nd.Aggregates
 
         IAggregateIdentity IAggregateRoot.Identity => Identity;
 
-        public string TypeName { get; }
+        public string TypeName
+        {
+            get
+            {
+                if (_cachedTypeName is null)
+                {
+                    _cachedTypeName = Definitions.GetNameAndVersion(GetType()).Name;
+                }
+
+                return _cachedTypeName;
+            }
+        }
 
         public uint Version { get; private set; }
 

@@ -30,8 +30,6 @@
 
 using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
-using Nd.Core.Exceptions;
-using Nd.Core.Extensions;
 using Nd.Core.Types;
 using Nd.Identities;
 using Nd.ValueObjects;
@@ -42,19 +40,41 @@ namespace Nd.Commands
         where TIdentity : notnull, IAggregateIdentity
         where TResult : notnull, IExecutionResult
     {
+        private string? _cachedTypeName;
+        private uint? _cachedTypeVersion;
+
         protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity)
         {
-            (TypeName, TypeVersion) = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry :
-                throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {GetType().ToPrettyString()}");
-
             IdempotencyIdentity = idempotencyIdentity;
             CorrelationIdentity = correlationIdentity;
             AggregateIdentity = aggregateIdentity;
         }
 
-        public virtual string TypeName { get; }
+        public string TypeName
+        {
+            get
+            {
+                if (_cachedTypeName is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                }
 
-        public virtual uint TypeVersion { get; }
+                return _cachedTypeName;
+            }
+        }
+
+        public uint TypeVersion
+        {
+            get
+            {
+                if (_cachedTypeVersion is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                }
+
+                return _cachedTypeVersion ?? 0u;
+            }
+        }
 
         public TIdentity AggregateIdentity { get; }
 

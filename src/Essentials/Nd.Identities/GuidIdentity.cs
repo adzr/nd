@@ -22,7 +22,6 @@
  */
 
 using System;
-using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;
 using Nd.Core.Types;
@@ -38,8 +37,7 @@ namespace Nd.Identities
 
         protected GuidIdentity(Guid value)
         {
-            TypeName = Definitions.TypesNamesAndVersions.TryGetValue(GetType(), out (string TypeName, uint TypeVersion) entry) ? entry.TypeName :
-                throw new TypeDefinitionNotFoundException($"Definition of type has no Name defined: {GetType().ToPrettyString()}");
+            TypeName = Definitions.GetNameAndVersion(GetType()).Name;
             Value = value;
             _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value.ToString("N").ToUpperInvariant()}";
         }
