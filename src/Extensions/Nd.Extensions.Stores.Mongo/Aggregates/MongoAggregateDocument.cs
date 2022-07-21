@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.IdGenerators;
-using Nd.Aggregates.Events;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
@@ -44,26 +43,5 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         [BsonElement("Events")]
         [BsonIgnoreIfDefault]
         public IEnumerable<MongoAggregateEventDocument> Events { get; set; } = Array.Empty<MongoAggregateEventDocument>();
-    }
-
-    public class MongoAggregateEventDocument
-    {
-        [BsonElement("Id")]
-        public Guid Id { get; set; }
-
-        [BsonElement("Timestamp")]
-        public DateTimeOffset Timestamp { get; set; }
-
-        [BsonElement("AggregateVersion")]
-        public uint AggregateVersion { get; set; }
-
-        [BsonElement("CorrelationId")]
-        public Guid CorrelationIdentity { get; set; }
-
-        [BsonElement("IdempotencyId")]
-        public Guid IdempotencyIdentity { get; set; }
-
-        [BsonElement("Content")]
-        public IAggregateEvent? Content { get; set; }
     }
 }

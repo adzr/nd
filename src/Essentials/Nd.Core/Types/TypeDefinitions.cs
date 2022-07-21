@@ -30,7 +30,7 @@ using Nd.Core.Types.Names;
 
 namespace Nd.Core.Types
 {
-    public static class Definitions
+    public static class TypeDefinitions
     {
         public static readonly (string Name, uint Version, Type Type)[] Catalog =
             GetAllImplementations<INamedType>()

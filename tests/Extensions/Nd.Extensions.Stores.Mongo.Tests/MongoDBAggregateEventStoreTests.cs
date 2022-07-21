@@ -156,8 +156,8 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
             var aggregateName = "TestAggregateRoot";
 
-            var v1NameAndVersion = Definitions.GetNameAndVersion(typeof(TestEventCountV1));
-            var v2NameAndVersion = Definitions.GetNameAndVersion(typeof(TestEventCountV2));
+            var v1NameAndVersion = TypeDefinitions.GetNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = TypeDefinitions.GetNameAndVersion(typeof(TestEventCountV2));
             var timestamp = DateTime.UtcNow;
 
             var expectedEvents = new[] {

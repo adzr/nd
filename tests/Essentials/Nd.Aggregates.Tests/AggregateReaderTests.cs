@@ -211,7 +211,7 @@ namespace Nd.Aggregates.Tests
             _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity>>(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
                 .ReturnsLazily(() => events.Select(e =>
                 {
-                    var eventType = Definitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?
+                    var eventType = TypeDefinitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?
                         type : throw new InvalidOperationException($"Definition of type name and version: ({e.TypeName}, {e.TypeVersion}) has no Type defined");
 
 

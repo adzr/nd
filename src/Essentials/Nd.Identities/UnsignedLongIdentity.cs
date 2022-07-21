@@ -36,7 +36,7 @@ namespace Nd.Identities
 
         protected UnsignedLongIdentity(ulong value)
         {
-            TypeName = Definitions.GetNameAndVersion(GetType()).Name;
+            TypeName = TypeDefinitions.GetNameAndVersion(GetType()).Name;
             Value = value;
             _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value}";
         }

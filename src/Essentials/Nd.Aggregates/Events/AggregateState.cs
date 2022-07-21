@@ -45,7 +45,7 @@ namespace Nd.Aggregates.Events
         /// applying the received events based on types to the correct event handler interface.
         /// </summary>
         private static readonly ILookup<Type, ILookup<Type, Action<IAggregateState, IAggregateEvent>>> s_eventApplicationMethods =
-            Definitions
+            TypeDefinitions
             .GetAllImplementations<IAggregateState>()
             .Select(t => (Type: t,
                 // Get all the interfaces of type IAggregateEventHandler that IAggregateState implements.

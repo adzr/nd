@@ -56,7 +56,7 @@ namespace Nd.Commands
             {
                 if (_cachedTypeName is null)
                 {
-                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                    (_cachedTypeName, _cachedTypeVersion) = TypeDefinitions.GetNameAndVersion(GetType());
                 }
 
                 return _cachedTypeName;
@@ -69,7 +69,7 @@ namespace Nd.Commands
             {
                 if (_cachedTypeVersion is null)
                 {
-                    (_cachedTypeName, _cachedTypeVersion) = Definitions.GetNameAndVersion(GetType());
+                    (_cachedTypeName, _cachedTypeVersion) = TypeDefinitions.GetNameAndVersion(GetType());
                 }
 
                 return _cachedTypeVersion ?? 0u;

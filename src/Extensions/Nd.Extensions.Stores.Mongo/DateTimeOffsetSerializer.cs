@@ -22,13 +22,33 @@
 */
 
 using System;
-using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 
-namespace Nd.Extensions.Stores.Mongo.Aggregates.Extensions
+namespace Nd.Extensions.Stores.Mongo
 {
-    public static class GuidExtensions
+    public class DateTimeOffsetSerializer : IBsonSerializer<DateTimeOffset>
     {
-        public static BsonBinaryData ToBsonBinaryData(this Guid value) =>
-            new(value.ToByteArray(), BsonBinarySubType.UuidStandard);
+        public Type ValueType => typeof(DateTimeOffset);
+
+        public DateTimeOffset Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            if (context is null)
+            {
+                return new DateTimeOffset(0L, TimeSpan.Zero);
+            }
+
+            var timestamp = context.Reader.ReadTimestamp();
+
+            return new DateTimeOffset(timestamp, TimeSpan.Zero);
+        }
+
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, DateTimeOffset value) =>
+            context?.Writer.WriteTimestamp(value.UtcTicks);
+
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value) =>
+            Serialize(context, args, (DateTimeOffset)value);
+
+        object IBsonSerializer.Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args) =>
+            Deserialize(context, args);
     }
 }

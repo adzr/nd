@@ -81,7 +81,7 @@ namespace Nd.Aggregates
             {
                 if (_cachedTypeName is null)
                 {
-                    _cachedTypeName = Definitions.GetNameAndVersion(GetType()).Name;
+                    _cachedTypeName = TypeDefinitions.GetNameAndVersion(GetType()).Name;
                 }
 
                 return _cachedTypeName;

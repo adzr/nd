@@ -21,31 +21,19 @@
  * SOFTWARE.
  */
 
-using System;
-using Nd.Core.Extensions;
-using Nd.Core.Factories;
-using Nd.Core.Types;
-using Nd.ValueObjects;
-
-namespace Nd.Identities
+namespace Nd.Extensions.Stores.Mongo
 {
-    public abstract record class GuidIdentity : ValueObject, IIdentity<Guid>
+    internal static class MongoActivityConstants
     {
-        private readonly string _stringValue;
+        public const string MongoResultTag = "MongoResult";
+        public const string MongoResultFailureTagValue = "Failure";
+        public const string MongoResultSuccessTagValue = "Success";
+    }
 
-        public Guid Value { get; }
-
-        protected GuidIdentity(Guid value)
-        {
-            TypeName = TypeDefinitions.GetNameAndVersion(GetType()).Name;
-            Value = value;
-            _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value.ToString("N").ToUpperInvariant()}";
-        }
-
-        protected GuidIdentity(IGuidFactory factory) : this(factory?.Create() ?? throw new ArgumentNullException(nameof(factory))) { }
-
-        public string TypeName { get; }
-
-        public sealed override string ToString() => _stringValue;
+    internal static class MongoLoggingEventsConstants
+    {
+        public const int MongoResultReceived = 611;
+        public const int MongoResultMissing = 612;
+        public const int MongoNotSupportingTransactions = 613;
     }
 }

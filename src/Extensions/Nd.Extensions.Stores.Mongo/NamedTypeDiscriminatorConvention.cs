@@ -22,54 +22,15 @@
 */
 
 using System;
-using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
-using MongoDB.Bson.Serialization.Serializers;
-using Nd.Aggregates.Events;
 using Nd.Core.Types;
 using Nd.Core.Types.Names;
 using Nd.Extensions.Stores.Mongo.Exceptions;
 
-namespace Nd.Extensions.Stores.Mongo.Aggregates
+namespace Nd.Extensions.Stores.Mongo
 {
-    public static class BsonDefaultsInitializer
-    {
-        private static bool s_initialized;
-        private static readonly object s_lock = new();
-
-        public static void Initialize()
-        {
-            lock (s_lock)
-            {
-                if (!s_initialized)
-                {
-                    s_initialized = true;
-
-                    BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
-                    BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer());
-                    BsonSerializer.RegisterDiscriminatorConvention(typeof(IAggregateEvent), new NamedTypeDiscriminatorConvention());
-
-                    var eventTypes = Definitions
-                        .Catalog
-                        .Select(((string Name, uint Version, Type Type) v) => v.Type)
-                        .Where(t => typeof(IAggregateEvent).IsAssignableFrom(t));
-
-                    foreach (var type in eventTypes)
-                    {
-                        BsonSerializer.RegisterDiscriminatorConvention(type, new NamedTypeDiscriminatorConvention());
-                    }
-
-#pragma warning disable CS0618 // Type or member is obsolete
-                    BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
-#pragma warning restore CS0618 // Type or member is obsolete
-                }
-            }
-        }
-    }
-
     public class NamedTypeDiscriminatorConvention : IDiscriminatorConvention
     {
         private const string TypeNameKey = "_t";
@@ -125,7 +86,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             bsonReader.ReturnToBookmark(bookmark);
 
-            return Definitions.NamesAndVersionsTypes
+            return TypeDefinitions.NamesAndVersionsTypes
                 .TryGetValue((typeName, typeVersion), out var type)
                 ? type
                 : throw new NamedTypeDiscriminationException(
@@ -140,7 +101,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                     $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
             }
 
-            var nameAndVersion = Definitions.GetNameAndVersion(actualType);
+            var nameAndVersion = TypeDefinitions.GetNameAndVersion(actualType);
 
             return BsonValue.Create($"{nameAndVersion.Name}#{nameAndVersion.Version}");
         }

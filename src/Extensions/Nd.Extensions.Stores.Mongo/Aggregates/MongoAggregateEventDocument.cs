@@ -21,19 +21,31 @@
  * SOFTWARE.
  */
 
+using System;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using Nd.Aggregates.Events;
+
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    internal static class MongoActivityConstants
+    public class MongoAggregateEventDocument
     {
-        public const string MongoResultTag = "MongoResult";
-        public const string MongoResultFailureTagValue = "Failure";
-        public const string MongoResultSuccessTagValue = "Success";
-    }
+        [BsonElement("Id")]
+        public Guid Id { get; set; }
 
-    internal static class MongoLoggingEventsConstants
-    {
-        public const int MongoResultReceived = 611;
-        public const int MongoResultMissing = 612;
-        public const int MongoNotSupportingTransactions = 613;
+        [BsonElement("Timestamp")]
+        public DateTimeOffset Timestamp { get; set; }
+
+        [BsonElement("AggregateVersion")]
+        public uint AggregateVersion { get; set; }
+
+        [BsonElement("CorrelationId")]
+        public Guid CorrelationIdentity { get; set; }
+
+        [BsonElement("IdempotencyId")]
+        public Guid IdempotencyIdentity { get; set; }
+
+        [BsonElement("Content")]
+        public IAggregateEvent? Content { get; set; }
     }
 }

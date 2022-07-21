@@ -22,7 +22,7 @@
 * SOFTWARE.
 */
 
-namespace Nd.Extensions.Stores.Mongo.Aggregates
+namespace Nd.Extensions.Stores.Mongo
 {
     public abstract class MongoAccessor
     {
