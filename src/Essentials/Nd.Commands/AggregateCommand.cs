@@ -1,4 +1,11 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
+ * Copyright © 2018 - 2021 Lutando Ngqakaza
+ * Modified from original source https://github.com/Lutando/Akkatecture
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,15 +28,23 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
+using System;
+using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
+using Nd.Identities;
 
-namespace Nd.Commands.Persistence
+namespace Nd.Commands
 {
-    public interface ICommandWriter
+    public abstract record class AggregateCommand<TIdentity, TResult> : Command<TResult>
+        where TIdentity : notnull, IAggregateIdentity
+        where TResult : notnull, IExecutionResult
     {
-        Task WriteAsync<TResult>(TResult result, CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        protected AggregateCommand(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity, DateTimeOffset? acknowledged = default)
+            : base(idempotencyIdentity, correlationIdentity, acknowledged)
+        {
+            AggregateIdentity = aggregateIdentity;
+        }
+
+        public TIdentity AggregateIdentity { get; }
     }
 }

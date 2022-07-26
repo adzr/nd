@@ -34,10 +34,11 @@ namespace Nd.Commands
 {
     public interface ICommandBus
     {
-        Task<TResult> ExecuteAsync<TIdentity, TResult>(
+        Task<TResult> ExecuteAsync<TIdentity, TValue, TResult>(
             ICommand<TIdentity, TResult> command,
             CancellationToken cancellationToken = default)
-            where TIdentity : notnull, IAggregateIdentity
+            where TIdentity : notnull, IAggregateIdentity<TValue>
+            where TValue : notnull
             where TResult : notnull, IExecutionResult;
     }
 }

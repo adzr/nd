@@ -25,6 +25,8 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 using Nd.Commands.Results;
 using Nd.Core.Types.Versions;
@@ -36,6 +38,8 @@ namespace Nd.Commands
     {
         IIdempotencyIdentity IdempotencyIdentity { get; }
         ICorrelationIdentity CorrelationIdentity { get; }
+        DateTimeOffset? Acknowledged { get; }
+        Task AcknowledgeAsync();
     }
 
     public interface ICommand<TResult> : ICommand

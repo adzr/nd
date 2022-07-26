@@ -22,13 +22,18 @@
  */
 
 using System;
-using Nd.Core.Types.Names;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using Nd.Commands.Results;
 
-namespace Nd.Aggregates
+namespace Nd.Extensions.Stores.Mongo.Commands
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class NamedAggregateAttribute : NamedTypeAttribute
+    public class MongoCommandDocument
     {
-        public NamedAggregateAttribute(string typeName) : base(typeName) { }
+        [BsonId]
+        public Guid Id { get; set; }
+
+        [BsonElement("Result")]
+        public IExecutionResult? Result { get; set; }
     }
 }

@@ -47,7 +47,7 @@ namespace Nd.Extensions.Stores.Mongo
 
             if (!typeof(INamedType).IsAssignableFrom(nominalType))
             {
-                throw new NamedTypeDiscriminationException(
+                throw new DiscriminationException(
                     $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
             }
 
@@ -69,19 +69,19 @@ namespace Nd.Extensions.Stores.Mongo
 
                 if (typeNameAndVersion.Length != 2)
                 {
-                    throw new NamedTypeDiscriminationException($"Invalid discriminator string: {typeString}");
+                    throw new DiscriminationException($"Invalid discriminator string: {typeString}");
                 }
 
                 typeName = typeNameAndVersion[0].Trim();
 
                 if (!uint.TryParse(typeNameAndVersion[1].Trim(), out typeVersion))
                 {
-                    throw new NamedTypeDiscriminationException($"Invalid type version in type: {typeString}");
+                    throw new DiscriminationException($"Invalid type version in type: {typeString}");
                 }
             }
             else
             {
-                throw new NamedTypeDiscriminationException($"Missing discriminator element {ElementName}");
+                throw new DiscriminationException($"Missing discriminator element {ElementName}");
             }
 
             bsonReader.ReturnToBookmark(bookmark);
@@ -89,7 +89,7 @@ namespace Nd.Extensions.Stores.Mongo
             return TypeDefinitions.NamesAndVersionsTypes
                 .TryGetValue((typeName, typeVersion), out var type)
                 ? type
-                : throw new NamedTypeDiscriminationException(
+                : throw new DiscriminationException(
                     $"Cannot find type of name {typeName} and version {typeVersion}");
         }
 
@@ -97,7 +97,7 @@ namespace Nd.Extensions.Stores.Mongo
         {
             if (!typeof(INamedType).IsAssignableFrom(actualType))
             {
-                throw new NamedTypeDiscriminationException(
+                throw new DiscriminationException(
                     $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
             }
 

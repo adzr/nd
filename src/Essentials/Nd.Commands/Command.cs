@@ -28,7 +28,8 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
+using System;
+using System.Threading.Tasks;
 using Nd.Commands.Results;
 using Nd.Core.Types;
 using Nd.Identities;
@@ -36,18 +37,17 @@ using Nd.ValueObjects;
 
 namespace Nd.Commands
 {
-    public abstract record class Command<TIdentity, TResult> : ValueObject, ICommand<TIdentity, TResult>
-        where TIdentity : notnull, IAggregateIdentity
+    public abstract record class Command<TResult> : ValueObject, ICommand<TResult>
         where TResult : notnull, IExecutionResult
     {
         private string? _cachedTypeName;
         private uint? _cachedTypeVersion;
 
-        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity)
+        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, DateTimeOffset? acknowledged = default)
         {
             IdempotencyIdentity = idempotencyIdentity;
             CorrelationIdentity = correlationIdentity;
-            AggregateIdentity = aggregateIdentity;
+            Acknowledged = acknowledged;
         }
 
         public string TypeName
@@ -76,18 +76,16 @@ namespace Nd.Commands
             }
         }
 
-        public TIdentity AggregateIdentity { get; }
-
         public IIdempotencyIdentity IdempotencyIdentity { get; }
 
         public ICorrelationIdentity CorrelationIdentity { get; }
-    }
 
-    public abstract record class Command<TIdentity> : Command<TIdentity, GenericExecutionResult>
-        where TIdentity : notnull, IAggregateIdentity
-    {
-        protected Command(IIdempotencyIdentity idempotencyIdentity, ICorrelationIdentity correlationIdentity, TIdentity aggregateIdentity) :
-            base(idempotencyIdentity, correlationIdentity, aggregateIdentity)
-        { }
+        public DateTimeOffset? Acknowledged { get; private set; }
+
+        public Task AcknowledgeAsync()
+        {
+            Acknowledged ??= DateTimeOffset.UtcNow;
+            return Task.CompletedTask;
+        }
     }
 }

@@ -21,15 +21,14 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
+using System;
+using Nd.Core.Types.Names;
 
-namespace Nd.Commands.Persistence
+namespace Nd.Aggregates
 {
-    public interface ICommandWriter
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public sealed class AggregateAttribute : NamedTypeAttribute
     {
-        Task WriteAsync<TResult>(TResult result, CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        public AggregateAttribute(string typeName) : base($"{typeName}Aggregate") { }
     }
 }

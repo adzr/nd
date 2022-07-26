@@ -69,10 +69,11 @@ namespace Nd.Commands
                 .ToLookup(r => r.CommandType!, r => r.Handler);
         }
 
-        public async Task<TResult> ExecuteAsync<TIdentity, TResult>(
+        public async Task<TResult> ExecuteAsync<TIdentity, TValue, TResult>(
             ICommand<TIdentity, TResult> command,
             CancellationToken cancellationToken = default)
-            where TIdentity : notnull, IAggregateIdentity
+            where TIdentity : notnull, IAggregateIdentity<TValue>
+            where TValue : notnull
             where TResult : notnull, IExecutionResult
         {
             // Validating command reference.
@@ -108,8 +109,20 @@ namespace Nd.Commands
 
             try
             {
+                // Notify that the command is received and about to be executed.
+                await command.AcknowledgeAsync().ConfigureAwait(false);
+
                 // Execute the command and keep the result.
-                result = await handler.ExecuteAsync<TResult>(command, cancellationToken).ConfigureAwait(false);
+                result = await handler.ExecuteAsync<TResult>(command, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (result is null)
+                {
+                    throw new CommandExecutionException($"Command handler {handler.GetType().FullName} cannot return a null result");
+                }
+
+                // Notify that the result is received.
+                await result.AcknowledgeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -119,7 +132,7 @@ namespace Nd.Commands
             try
             {
                 // Store the command and its result.
-                await _commandWriter.WriteAsync(command, result, cancellationToken).ConfigureAwait(false);
+                await _commandWriter.WriteAsync(result, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

@@ -21,12 +21,17 @@
 * SOFTWARE.
 */
 
+using System;
 using System.Linq;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using Nd.Aggregates.Events;
+using Nd.Commands;
+using Nd.Commands.Results;
 using Nd.Core.Types;
+using Nd.Identities;
 
 namespace Nd.Extensions.Stores.Mongo
 {
@@ -45,22 +50,36 @@ namespace Nd.Extensions.Stores.Mongo
 
                     BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
                     BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer());
-                    BsonSerializer.RegisterDiscriminatorConvention(typeof(IAggregateEvent), new NamedTypeDiscriminatorConvention());
 
-                    var eventTypes = TypeDefinitions
-                        .Catalog
-                        .Select((v) => v.Type)
-                        .Where(t => typeof(IAggregateEvent).IsAssignableFrom(t));
-
-                    foreach (var type in eventTypes)
-                    {
-                        BsonSerializer.RegisterDiscriminatorConvention(type, new NamedTypeDiscriminatorConvention());
-                    }
+                    RegisterDiscriminatorConvention(
+                        new NamedTypeDiscriminatorConvention(),
+                        typeof(IAggregateEvent),
+                        typeof(ICommand),
+                        typeof(IExecutionResult),
+                        typeof(ICorrelationIdentity),
+                        typeof(IIdempotencyIdentity));
 
 #pragma warning disable CS0618 // Type or member is obsolete
                     BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
 #pragma warning restore CS0618 // Type or member is obsolete
                 }
+            }
+        }
+
+        private static void RegisterDiscriminatorConvention(IDiscriminatorConvention convention, params Type[] types)
+        {
+            var filter = (Type[])types.Clone();
+
+            types = types
+                .Union(TypeDefinitions
+                        .Catalog
+                        .Select((v) => v.Type)
+                        .Where(t => filter.Any(f => f.IsAssignableFrom(t))))
+                .ToArray();
+
+            foreach (var type in types)
+            {
+                BsonSerializer.RegisterDiscriminatorConvention(type, convention);
             }
         }
     }

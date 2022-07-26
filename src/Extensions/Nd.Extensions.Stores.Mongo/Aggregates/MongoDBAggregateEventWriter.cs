@@ -119,10 +119,10 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             {
                 if (_logger is not null)
                 {
-                    using var _ = _logger.WithCorrelationId(
-                        eventList
-                        .First(e => e.Metadata.CorrelationIdentity is not null)
-                        .Metadata.CorrelationIdentity);
+                    var first = eventList.First(e => e.Metadata.CorrelationIdentity is not null);
+
+                    using var correlationIdScope = _logger.WithCorrelationId(first.Metadata.CorrelationIdentity);
+                    using var aggregateIdScope = _logger.WithAggregateId(first.Metadata.AggregateIdentity);
 
                     s_mongoNotSupportingTransactions(_logger, e);
                 }
@@ -130,18 +130,18 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             try
             {
-                cancellation.ThrowIfCancellationRequested();
-
                 var aggregates = eventList.GroupBy(e => e.Metadata.AggregateIdentity);
 
                 foreach (var aggregate in aggregates)
                 {
+                    cancellation.ThrowIfCancellationRequested();
+
                     var aggregateLatestVersion = aggregate.Max(e => e.Metadata.AggregateVersion);
                     var metadata = aggregate.First().Metadata;
                     var aggregateId = metadata.AggregateIdentity;
                     var aggregateName = metadata.AggregateName;
 
-                    var updateResult = await GetCollection<MongoAggregateDocument<TValue>>().UpdateOneAsync(session,
+                    var mongoResult = await GetCollection<MongoAggregateDocument<TValue>>().UpdateOneAsync(session,
                         MongoDBAggregateEventWriter<TIdentity, TValue>.CreateAggregateFilteringCriteria(aggregateId),
                         CreateAggregateUpdateSettings(aggregateId, aggregateName, aggregateLatestVersion, aggregate),
                         new UpdateOptions
@@ -151,28 +151,28 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                         cancellation)
                     .ConfigureAwait(false);
 
-                    LogMongoResult(metadata, updateResult);
+                    LogMongoResult(metadata, mongoResult);
                 }
             }
             catch
             {
-                await AbortTransaction(session, activity, cancellation).ConfigureAwait(false);
+                await AbortTransaction(session, activity, eventList, cancellation).ConfigureAwait(false);
                 throw;
             }
 
-            await CommitTranaction(session, activity, cancellation).ConfigureAwait(false);
+            await CommitTranaction(session, activity, eventList, cancellation).ConfigureAwait(false);
         }
 
-        private void LogMongoResult(IAggregateEventMetadata<TIdentity> metadata, UpdateResult? updateResult)
+        private void LogMongoResult(IAggregateEventMetadata<TIdentity> metadata, UpdateResult? mongoResult)
         {
             if (_logger is not null)
             {
                 using var correlationIdScope = _logger.WithCorrelationId(metadata.CorrelationIdentity);
                 using var aggregateIdScope = _logger.WithAggregateId(metadata.AggregateIdentity);
 
-                if (updateResult is not null)
+                if (mongoResult is not null)
                 {
-                    s_mongoResultReceived(_logger, updateResult.ToJson(), default);
+                    s_mongoResultReceived(_logger, mongoResult.ToJson(), default);
                 }
                 else
                 {
@@ -202,20 +202,24 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         private static FilterDefinition<MongoAggregateDocument<TValue>> CreateAggregateFilteringCriteria(TIdentity aggregateId) =>
             Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value);
 
-        private static async Task CommitTranaction(IClientSessionHandle session, Activity? activity, CancellationToken cancellation)
+        private static async Task CommitTranaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
+            where TEvent : IUncommittedEvent<TIdentity>
         {
             if (session.IsInTransaction)
             {
                 await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
+                AddActivityTags(activity, eventList);
                 _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultSuccessTagValue);
             }
         }
 
-        private static async Task AbortTransaction(IClientSessionHandle session, Activity? activity, CancellationToken cancellation)
+        private static async Task AbortTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
+            where TEvent : IUncommittedEvent<TIdentity>
         {
             if (session.IsInTransaction)
             {
                 await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
+                AddActivityTags(activity, eventList);
                 _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultFailureTagValue);
             }
         }
@@ -223,10 +227,10 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         private static void StartTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity>
         {
             session.StartTransaction();
-            AddActivityStartingTags(activity, eventList);
+            AddActivityTags(activity, eventList);
         }
 
-        private static void AddActivityStartingTags<TEvent>(Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity> =>
+        private static void AddActivityTags<TEvent>(Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity> =>
             _ = activity?
                 .AddCorrelationsTag(eventList
                     .GroupBy(e => e.Metadata.CorrelationIdentity)

@@ -89,22 +89,22 @@ namespace Nd.Aggregates.Tests
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        [VersionedEvent(nameof(TestEventA), 1)]
+        [Event(nameof(TestEventA), 1)]
         public sealed record class TestEventA(string Value) : AggregateEvent<TestAggregateState>, IHasValue;
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        [VersionedEvent(nameof(TestEventB), 1)]
+        [Event(nameof(TestEventB), 1)]
         public sealed record class TestEventB : AggregateEvent<TestAggregateState>;
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        [VersionedEvent("TestEventC", 1)]
+        [Event("TestEventC", 1)]
         public sealed record class TestEventC1(string Value) : AggregateEvent<TestAggregateState>, IHasValue, IVersionedType
         {
             Task<IVersionedType?> IVersionedType.UpgradeAsync(CancellationToken _) => Task.FromResult<IVersionedType?>(new TestEventC2(Value));
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
-        [VersionedEvent("TestEventC", 2)]
+        [Event("TestEventC", 2)]
         public sealed record class TestEventC2(string Value) : AggregateEvent<TestAggregateState>, IHasValue;
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]

@@ -21,15 +21,14 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
+using System;
+using Nd.Core.Types.Versions;
 
-namespace Nd.Commands.Persistence
+namespace Nd.Commands
 {
-    public interface ICommandWriter
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public sealed class ExecutionResultAttribute : VersionedTypeAttribute
     {
-        Task WriteAsync<TResult>(TResult result, CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        public ExecutionResultAttribute(string typeName, uint typeVersion) : base($"{typeName}ExecutionResult", typeVersion) { }
     }
 }

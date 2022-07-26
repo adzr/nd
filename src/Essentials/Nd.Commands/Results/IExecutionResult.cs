@@ -25,14 +25,25 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Threading.Tasks;
+using Nd.Core.Types.Versions;
+
 namespace Nd.Commands.Results
 {
-    public interface IExecutionResult
+    public interface IExecutionResult : IVersionedType
     {
         ICommand Command { get; }
-
-        TCommand GetCommandAs<TCommand>() where TCommand : notnull, ICommand;
-
+        DateTimeOffset? Acknowledged { get; }
         bool IsSuccess { get; }
+        Task AcknowledgeAsync();
+    }
+
+    public interface IExecutionResult<T> : IExecutionResult
+        where T : notnull, ICommand
+    {
+        new T Command { get; }
+
+        ICommand IExecutionResult.Command => Command;
     }
 }

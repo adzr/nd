@@ -28,7 +28,7 @@ using Xunit.Categories;
 
 namespace Nd.Entities.Tests
 {
-    [NamedIdentity("sample")]
+    [Identity("sample")]
     internal record class SampleId : GuidIdentity
     {
         public SampleId(Guid value) : base(value) { }

@@ -26,27 +26,79 @@
  */
 
 using System;
+using System.Threading.Tasks;
+using Nd.Core.Types;
 using Nd.ValueObjects;
 
 namespace Nd.Commands.Results
 {
-    public record class GenericExecutionResult
-        (
-            ICommand Command,
-            Exception? Exception = default
-        ) : ValueObject, IExecutionResult
+    public record class GenericExecutionResult<T> : ValueObject, IExecutionResult<T>
+        where T : notnull, ICommand
     {
-        public bool IsSuccess { get; } = Exception is null;
+        private string? _message;
+        private string? _cachedTypeName;
+        private uint? _cachedTypeVersion;
 
-        private readonly string _message = Exception is null ?
-            $"Successful execution: ({Command.IdempotencyIdentity}, {Command.CorrelationIdentity})" :
-            $"Failed execution: ({Command.IdempotencyIdentity}, {Command.CorrelationIdentity}): {ResolveExceptionString(Exception)}";
+        public string TypeName
+        {
+            get
+            {
+                if (_cachedTypeName is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = TypeDefinitions.GetNameAndVersion(GetType());
+                }
+
+                return _cachedTypeName;
+            }
+        }
+
+        public uint TypeVersion
+        {
+            get
+            {
+                if (_cachedTypeVersion is null)
+                {
+                    (_cachedTypeName, _cachedTypeVersion) = TypeDefinitions.GetNameAndVersion(GetType());
+                }
+
+                return _cachedTypeVersion ?? 0u;
+            }
+        }
+
+        public GenericExecutionResult(
+            T command,
+            Exception? exception = default,
+            DateTimeOffset? acknowledged = default)
+        {
+            Command = command;
+            Acknowledged = acknowledged;
+            Exception = exception;
+        }
+
+        public T Command { get; private set; }
+        public bool IsSuccess => Exception is null;
+        public DateTimeOffset? Acknowledged { get; private set; }
+        public Exception? Exception { get; private set; }
 
         private static string ResolveExceptionString(Exception exception) =>
             $"{Environment.NewLine}{Environment.NewLine}{exception}";
 
-        public TCommand GetCommandAs<TCommand>() where TCommand : notnull, ICommand => (TCommand)Command;
+        public override string ToString()
+        {
+            if (_message is null)
+            {
+                _message = Exception is null ?
+                    $"Successful execution: {Command}" :
+                    $"Failed execution: {Command}: {ResolveExceptionString(Exception)}";
+            }
 
-        public override string ToString() => _message;
+            return _message;
+        }
+
+        public Task AcknowledgeAsync()
+        {
+            Acknowledged ??= DateTimeOffset.UtcNow;
+            return Task.CompletedTask;
+        }
     }
 }

@@ -27,21 +27,21 @@ using System.Runtime.Serialization;
 namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
-    public class NamedTypeDiscriminationException : Exception
+    public class DiscriminationException : Exception
     {
-        public NamedTypeDiscriminationException()
+        public DiscriminationException()
         {
         }
 
-        public NamedTypeDiscriminationException(string? message) : base(message)
+        public DiscriminationException(string? message) : base(message)
         {
         }
 
-        public NamedTypeDiscriminationException(string? message, Exception? innerException) : base(message, innerException)
+        public DiscriminationException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected NamedTypeDiscriminationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected DiscriminationException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

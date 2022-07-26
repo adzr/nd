@@ -48,7 +48,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
     {
         #region Test types definitions
 
-        [NamedIdentity("TestIdentity")]
+        [Identity("AggregatesTestIdentity")]
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
         public sealed record class TestIdentity : GuidAggregateIdentity
         {
@@ -74,11 +74,11 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             public void Handle(TestEventCountV2 aggregateEvent) => Counter += aggregateEvent?.Amount ?? 0;
         }
 
-        [VersionedEvent("TestEventCount", 1)]
+        [Event("TestEventCount", 1)]
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
         public sealed record class TestEventCountV1 : AggregateEvent<TestAggregateState>;
 
-        [VersionedEvent("TestEventCount", 2)]
+        [Event("TestEventCount", 2)]
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
         public sealed record class TestEventCountV2(uint Amount) : AggregateEvent<TestAggregateState>;
 
@@ -126,7 +126,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         #endregion
 
         private const string DatabaseName = "test_db";
-        private const string CollectionName = "test_collection";
+        private const string CollectionName = "events";
 
         private readonly MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
@@ -149,7 +149,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         }
 
         [Fact]
-        public async Task CanWriteAggregateToMongoAsync()
+        public async Task CanStoreEventsToMongoAsync()
         {
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
             var _ = new TestAggregateState();

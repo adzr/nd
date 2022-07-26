@@ -26,7 +26,7 @@ using Nd.Core.Factories;
 
 namespace Nd.Identities
 {
-    [NamedIdentity("correlation")]
+    [Identity("Correlation")]
     public record class CorrelationIdentity : GuidIdentity, ICorrelationIdentity
     {
         public CorrelationIdentity(Guid value) : base(value) { }
