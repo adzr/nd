@@ -22,10 +22,8 @@
  */
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Nd.Aggregates.Identities;
 using Nd.Commands;
@@ -51,23 +49,6 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
-        }
-
-        internal class TestWriter : MongoDBCommandWriter
-        {
-            public TestWriter(
-                MongoClient client,
-                string databaseName,
-                string collectionName,
-                ILoggerFactory? loggerFactory,
-                ActivitySource? activitySource) :
-                base(
-                    client,
-                    databaseName,
-                    collectionName,
-                    loggerFactory,
-                    activitySource)
-            { }
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
@@ -113,7 +94,8 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
         private readonly MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
-        private readonly TestWriter _mongoWriter;
+        private readonly MongoDBCommandWriter _mongoWriter;
+        private readonly MongoDBCommandReader _mongoReader;
 
         public MongoDBCommandStoreTests()
         {
@@ -125,7 +107,9 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
             _mongoClient = new MongoClient(mongoSettings);
 
-            _mongoWriter = new TestWriter(_mongoClient, DatabaseName, CollectionName, default, default);
+            _mongoWriter = new MongoDBCommandWriter(_mongoClient, DatabaseName, CollectionName, default, default);
+
+            _mongoReader = new MongoDBCommandReader(_mongoClient, DatabaseName, CollectionName);
         }
 
         [Fact]
@@ -133,17 +117,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         {
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
             var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
-
             var timestamp = DateTime.UtcNow;
-
-            var commandAIdentity = new IdempotencyIdentity(Guid.NewGuid());
-            var commandBIdentity = new IdempotencyIdentity(Guid.NewGuid());
 
             var expected = new IExecutionResult[]
             {
                 new CommandAResult(
                     new CommandA(
-                        commandAIdentity,
+                        new IdempotencyIdentity(Guid.NewGuid()),
                         correlationId,
                         identity, timestamp),
                     default,
@@ -151,7 +131,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                     identity.Value.ToString()),
                 new CommandBResult(
                     new CommandB(
-                        commandBIdentity,
+                        new IdempotencyIdentity(Guid.NewGuid()),
                         correlationId,
                         identity, timestamp),
                     default,
@@ -165,7 +145,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 .ConfigureAwait(false);
             }
 
-            Assert.True(true);
+            for (var i = 0; i < expected.Length; i++)
+            {
+                Assert.Equal(expected[i], await _mongoReader
+                    .ReadAsync<IExecutionResult>(
+                    expected[i]?.Command?.IdempotencyIdentity.Value ?? Guid.Empty,
+                    default).ConfigureAwait(false));
+            }
         }
 
         public void Dispose()

@@ -28,6 +28,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.Serializers;
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Identities;
 using Nd.Commands;
 using Nd.Commands.Results;
 using Nd.Core.Types;
@@ -56,8 +57,9 @@ namespace Nd.Extensions.Stores.Mongo
                         typeof(IAggregateEvent),
                         typeof(ICommand),
                         typeof(IExecutionResult),
-                        typeof(ICorrelationIdentity),
-                        typeof(IIdempotencyIdentity));
+                        typeof(IAggregateIdentity),
+                        typeof(IIdempotencyIdentity),
+                        typeof(ICorrelationIdentity));
 
 #pragma warning disable CS0618 // Type or member is obsolete
                     BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
@@ -76,6 +78,12 @@ namespace Nd.Extensions.Stores.Mongo
                         .Select((v) => v.Type)
                         .Where(t => filter.Any(f => f.IsAssignableFrom(t))))
                 .ToArray();
+
+            var pack = new ConventionPack();
+
+            pack.AddClassMapConvention("AlwaysApplyDiscriminatorToNamedTypes", m => m.SetDiscriminatorIsRequired(true));
+
+            ConventionRegistry.Register("NamedTypesConventionPack", pack, f => types.Contains(f));
 
             foreach (var type in types)
             {

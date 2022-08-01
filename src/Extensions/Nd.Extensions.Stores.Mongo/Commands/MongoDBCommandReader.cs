@@ -24,15 +24,42 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MongoDB.Driver;
+using Nd.Commands.Persistence;
 using Nd.Commands.Results;
 
-namespace Nd.Commands.Persistence
+namespace Nd.Extensions.Stores.Mongo.Commands
 {
-    public interface ICommandReader
+    public sealed class MongoDBCommandReader : MongoAccessor, ICommandReader
     {
-        Task<TResult?> ReadAsync<TResult>(
+        static MongoDBCommandReader()
+        {
+            BsonDefaultsInitializer.Initialize();
+        }
+
+
+        public MongoDBCommandReader(MongoClient client,
+            string databaseName,
+            string collectionName) :
+            base(client, databaseName, collectionName)
+        { }
+
+        public async Task<TResult?> ReadAsync<TResult>(
             Guid commandId,
             CancellationToken cancellation = default)
-            where TResult : IExecutionResult;
+            where TResult : IExecutionResult
+        {
+            var cursor = await GetCollection<MongoCommandDocument>()
+                .FindAsync<MongoCommandDocument>(
+                Builders<MongoCommandDocument>.Filter.Eq(d => d.Id, commandId),
+                cancellationToken: cancellation)
+                .ConfigureAwait(false);
+
+            var document = await cursor
+                .SingleOrDefaultAsync(cancellation)
+                .ConfigureAwait(false);
+
+            return document?.Result is null ? default : (TResult)document.Result;
+        }
     }
 }

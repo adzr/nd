@@ -35,7 +35,7 @@ using Nd.Extensions.Stores.Mongo.Exceptions;
 
 namespace Nd.Extensions.Stores.Mongo.Commands
 {
-    public abstract class MongoDBCommandWriter : MongoAccessor, ICommandWriter
+    public sealed class MongoDBCommandWriter : MongoAccessor, ICommandWriter
     {
         private static readonly Action<ILogger, Exception?> s_mongoInserted =
             LoggerMessage.Define(LogLevel.Trace, new EventId(
@@ -56,7 +56,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
         private readonly ILogger? _logger;
         private readonly ActivitySource _activitySource;
 
-        protected MongoDBCommandWriter(
+        public MongoDBCommandWriter(
             MongoClient client,
             string databaseName,
             string collectionName,
