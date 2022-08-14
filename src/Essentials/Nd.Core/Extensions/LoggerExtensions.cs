@@ -21,47 +21,52 @@
  * SOFTWARE.
  */
 
-using System.Net.NetworkInformation;
-using System.Security.Cryptography;
-using Nd.Containers.Exceptions;
+using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
-namespace Nd.Containers
+namespace Nd.Core.Extensions
 {
-    public static class Helpers
+    public static class LoggerExtensions
     {
-        public static string GetRandomSecureBase64(int lengthInBytes = 32) =>
-            Convert.ToBase64String(GetRandomSecureBytes(lengthInBytes));
-
-        public static string GetRandomSecureHex(int lengthInBytes = 32) =>
-            Convert.ToHexString(GetRandomSecureBytes(lengthInBytes));
-
-        private static byte[] GetRandomSecureBytes(int lengthInBytes = 32)
+        public interface IScopeBuilder
         {
-            using var generator = RandomNumberGenerator.Create();
-            var bytes = new byte[lengthInBytes];
-            generator.GetBytes(bytes);
-            return bytes;
+            IScopeBuilder WithProperty(string key, object value);
+
+            IDisposable Build();
         }
 
-        public static int GetRandomOpenPort()
+        internal class ScopeBuilder : IScopeBuilder
         {
-            var portStartIndex = 10000;
-            var portEndIndex = 60000;
-
-            var properties = IPGlobalProperties.GetIPGlobalProperties();
-            var tcpEndPoints = properties.GetActiveTcpListeners();
-
-            var usedPorts = tcpEndPoints.Select(p => p.Port).ToList();
-
-            for (var port = portStartIndex; port < portEndIndex; port++)
+            internal sealed class EmptyDisposable : IDisposable
             {
-                if (!usedPorts.Contains(port))
+                public void Dispose()
                 {
-                    return port;
+
                 }
             }
 
-            throw new UnavailableTCPPortException("Failed to find free port");
+            private readonly ILogger? _logger;
+            private readonly IDictionary<string, object> _properties = new Dictionary<string, object>();
+
+            public ScopeBuilder(ILogger? logger)
+            {
+                _logger = logger;
+            }
+
+            public IScopeBuilder WithProperty(string key, object value)
+            {
+                if (_logger is not null)
+                {
+                    _properties[key] = value;
+                }
+
+                return this;
+            }
+
+            public IDisposable Build() => _logger?.BeginScope(_properties) ?? new EmptyDisposable();
         }
+
+        public static IScopeBuilder BeginScope(this ILogger? logger) => new ScopeBuilder(logger);
     }
 }

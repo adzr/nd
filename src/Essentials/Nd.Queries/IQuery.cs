@@ -3,9 +3,6 @@
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
  * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -29,18 +26,18 @@
  */
 
 using System;
+using Nd.Core.Types.Names;
 using Nd.Identities;
 
 namespace Nd.Queries
 {
-    public interface IQuery
+    public interface IQuery : INamedType
     {
         ICorrelationIdentity CorrelationIdentity { get; }
-        IIdempotencyIdentity IdempotencyIdentity { get; }
     }
 
     public interface IQuery<TResult> : IQuery
-        where TResult : class
+        where TResult : notnull
     {
         Type ResultType => typeof(TResult);
     }

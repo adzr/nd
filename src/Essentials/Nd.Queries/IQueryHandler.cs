@@ -3,9 +3,6 @@
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
  * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -35,16 +32,16 @@ namespace Nd.Queries
 {
     public interface IQueryHandler
     {
-        Task<object> ExecuteQueryAsync(object query, CancellationToken cancellation = default);
+        Task<object> ExecuteAsync(object query, CancellationToken cancellation = default);
     }
 
     public interface IQueryHandler<in TQuery, TResult> : IQueryHandler
         where TQuery : notnull, IQuery<TResult>
-        where TResult : class
+        where TResult : notnull
     {
-        async Task<object> IQueryHandler.ExecuteQueryAsync(object query, CancellationToken cancellation) =>
-            await ExecuteQueryAsync((TQuery)query, cancellation).ConfigureAwait(false);
+        async Task<object> IQueryHandler.ExecuteAsync(object query, CancellationToken cancellation) =>
+            await ExecuteAsync((TQuery)query, cancellation).ConfigureAwait(false);
 
-        Task<TResult> ExecuteQueryAsync(TQuery query, CancellationToken cancellation = default);
+        Task<TResult> ExecuteAsync(TQuery query, CancellationToken cancellation = default);
     }
 }

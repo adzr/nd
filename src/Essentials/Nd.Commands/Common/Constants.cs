@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,17 +21,24 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
-
-namespace Nd.Commands
+namespace Nd.Commands.Common
 {
-    public interface ICommandBus
+    public static class ActivityConstants
     {
-        Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
-            CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        public const string CommandResultSuccessTag = "CommandResultSuccess";
+        public const string CommandIdTag = "CommandId";
+    }
+
+    public static class LoggingScopeConstants
+    {
+        public const string CommandResultSuccessKey = "CommandResultSuccess";
+        public const string CommandId = "CommandId";
+    }
+
+    internal static class CommandBusLoggingEventsConstants
+    {
+        public const int CommandReceived = 411;
+        public const int CommandExecuted = 412;
+        public const int CommandStored = 413;
     }
 }

@@ -27,11 +27,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using Nd.Aggregates.Common;
-using Nd.Aggregates.Extensions;
+using Nd.Commands.Extensions;
 using Nd.Commands.Persistence;
 using Nd.Commands.Results;
+using Nd.Core.Extensions;
+using Nd.Extensions.Stores.Mongo.Common;
 using Nd.Extensions.Stores.Mongo.Exceptions;
+using Nd.Identities.Extensions;
 
 namespace Nd.Extensions.Stores.Mongo.Commands
 {
@@ -76,7 +78,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
                 throw new ArgumentNullException(nameof(result));
             }
 
-            using var activity = _activitySource.StartActivity();
+            using var activity = _activitySource.StartActivity(nameof(WriteAsync));
 
             using var session = await Client
                 .StartSessionAsync(cancellationToken: cancellation)
@@ -97,6 +99,12 @@ namespace Nd.Extensions.Stores.Mongo.Commands
         {
             var command = result.Command;
 
+            using var _ = _logger
+                .BeginScope()
+                .WithCorrelationId(command.CorrelationIdentity)
+                .WithCommandId(command.IdempotencyIdentity.Value)
+                .Build();
+
             try
             {
                 StartTransaction(
@@ -106,8 +114,6 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             {
                 if (_logger is not null)
                 {
-                    using var _ = _logger.WithCorrelationId(command.CorrelationIdentity);
-
                     s_mongoNotSupportingTransactions(_logger, e);
                 }
             }
@@ -150,7 +156,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             where TResult : notnull, IExecutionResult =>
             _ = activity?
                 .AddCorrelationsTag(new[] { result.Command.CorrelationIdentity.Value })
-                .AddTag(ActivityConstants.CommandResultSuccessTag, result.IsSuccess);
+                .AddCommandIdTag(result.Command.IdempotencyIdentity.Value);
 
         private void LogMongoResult<TResult>(TResult result)
             where TResult : notnull, IExecutionResult
@@ -159,10 +165,6 @@ namespace Nd.Extensions.Stores.Mongo.Commands
 
             if (_logger is not null)
             {
-                using var correlationIdScope = _logger.WithCorrelationId(command.CorrelationIdentity);
-                using var resultIdScope = _logger.With(LoggingScopeConstants.CommandResultSuccessKey,
-                    result.IsSuccess);
-
                 s_mongoInserted(_logger, default);
             }
         }
@@ -174,7 +176,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             {
                 await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
                 AddActivityTags(activity, result);
-                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultFailureTagValue);
+                _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, false);
             }
         }
 
@@ -185,7 +187,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             {
                 await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
                 AddActivityTags(activity, result);
-                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultSuccessTagValue);
+                _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, true);
             }
         }
     }

@@ -22,34 +22,39 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Queries.Exceptions
 {
     [Serializable]
-    public class CommandNotRegisteredException : Exception
+    public class QueryHandlerConflictException : Exception
     {
-        public CommandNotRegisteredException(ICommand command, Exception? exception = default)
-            : base($"Command \"{command?.TypeName ?? throw new ArgumentNullException(nameof(command))}\" is not found in the command registery, cannot find a handler for an unknown command", exception)
+        public QueryHandlerConflictException(string queryTypeName, string[] queryHandlerTypeNames, Exception? exception = default)
+            : base($"Multiple query handlers {string.Join(", ", queryHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same query \"{queryTypeName}\"", exception)
         {
-            CommandTypeName = command.TypeName;
+            QueryTypeName = queryTypeName;
+            QueryHandlerTypeNames = queryHandlerTypeNames;
         }
 
-        public string? CommandTypeName { get; }
+        public string? QueryTypeName { get; }
 
-        public CommandNotRegisteredException() : this($"Command is not found in the command registery, cannot find a handler for an unknown command")
-        {
-        }
+        public IReadOnlyList<string>? QueryHandlerTypeNames { get; }
 
-        public CommandNotRegisteredException(string message) : base(message)
-        {
-        }
-
-        public CommandNotRegisteredException(string message, Exception innerException) : base(message, innerException)
+        public QueryHandlerConflictException() : this("Multiple query handlers found for the same query")
         {
         }
 
-        protected CommandNotRegisteredException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        public QueryHandlerConflictException(string message) : base(message)
+        {
+        }
+
+        public QueryHandlerConflictException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected QueryHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         {
         }
     }

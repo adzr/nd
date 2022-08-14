@@ -21,19 +21,16 @@
  * SOFTWARE.
  */
 
-namespace Nd.Extensions.Stores.Mongo
-{
-    internal static class MongoActivityConstants
-    {
-        public const string MongoResultTag = "MongoResult";
-        public const string MongoResultFailureTagValue = "Failure";
-        public const string MongoResultSuccessTagValue = "Success";
-    }
+using System;
+using Nd.Queries.Common;
+using static Nd.Core.Extensions.LoggerExtensions;
 
-    internal static class MongoLoggingEventsConstants
+namespace Nd.Queries.Extensions
+{
+    public static class ScopeBuilderExtensions
     {
-        public const int MongoResultReceived = 611;
-        public const int MongoResultMissing = 612;
-        public const int MongoNotSupportingTransactions = 613;
+        public static IScopeBuilder WithQueryId(this IScopeBuilder builder, Guid value) =>
+            builder?.WithProperty(LoggingScopeConstants.QueryIdKey, value) ??
+                throw new ArgumentNullException(nameof(builder));
     }
 }

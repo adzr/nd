@@ -22,26 +22,56 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Nd.Aggregates.Identities;
+using Microsoft.Extensions.Logging;
+using Nd.Commands.Common;
 using Nd.Commands.Exceptions;
+using Nd.Commands.Extensions;
 using Nd.Commands.Persistence;
 using Nd.Commands.Results;
 using Nd.Core.Extensions;
+using Nd.Identities.Extensions;
 
 namespace Nd.Commands
 {
     public class CommandBus : ICommandBus
     {
+        private static readonly Action<ILogger, Exception?> s_commandReceived =
+            LoggerMessage.Define(LogLevel.Trace, new EventId(
+                                CommandBusLoggingEventsConstants.CommandReceived,
+                                nameof(CommandBusLoggingEventsConstants.CommandReceived)),
+                                "Command received");
+
+        private static readonly Action<ILogger, Exception?> s_commandExecuted =
+            LoggerMessage.Define(LogLevel.Trace, new EventId(
+                                CommandBusLoggingEventsConstants.CommandExecuted,
+                                nameof(CommandBusLoggingEventsConstants.CommandExecuted)),
+                                "Command executed");
+
+        private static readonly Action<ILogger, Exception?> s_commandStored =
+            LoggerMessage.Define(LogLevel.Trace, new EventId(
+                                CommandBusLoggingEventsConstants.CommandStored,
+                                nameof(CommandBusLoggingEventsConstants.CommandStored)),
+                                "Command stored");
+
         private readonly ILookup<Type, ICommandHandler> _commandHandlerRegistery;
 
         private readonly ICommandWriter _commandWriter;
+        private readonly ILogger? _logger;
+        private readonly ActivitySource _activitySource;
 
-        public CommandBus(ICommandWriter commandWriter, params ICommandHandler[] commandHandlers)
+        public CommandBus(
+            ICommandHandler[] commandHandlers,
+            ICommandWriter commandWriter,
+            ILoggerFactory? loggerFactory,
+            ActivitySource? activitySource)
         {
             _commandWriter = commandWriter ?? throw new ArgumentNullException(nameof(commandWriter));
+            _logger = loggerFactory?.CreateLogger(GetType());
+            _activitySource = activitySource ?? new ActivitySource(GetType().Name);
 
             if (commandHandlers is null)
             {
@@ -69,11 +99,9 @@ namespace Nd.Commands
                 .ToLookup(r => r.CommandType!, r => r.Handler);
         }
 
-        public async Task<TResult> ExecuteAsync<TIdentity, TValue, TResult>(
-            ICommand<TIdentity, TResult> command,
-            CancellationToken cancellationToken = default)
-            where TIdentity : notnull, IAggregateIdentity<TValue>
-            where TValue : notnull
+        public async Task<TResult> ExecuteAsync<TResult>(
+            ICommand<TResult> command,
+            CancellationToken cancellation = default)
             where TResult : notnull, IExecutionResult
         {
             // Validating command reference.
@@ -82,12 +110,21 @@ namespace Nd.Commands
                 throw new ArgumentNullException(nameof(command));
             }
 
-            // Fetching and validating command aggregate identity.
-            var identity = command.AggregateIdentity;
+            using var activity = _activitySource.StartActivity(nameof(ExecuteAsync));
 
-            if (identity is null)
+            _ = activity?
+                .AddCorrelationsTag(new[] { command.CorrelationIdentity.Value })
+                .AddCommandIdTag(command.IdempotencyIdentity.Value);
+
+            using var scope = _logger
+                    .BeginScope()
+                    .WithCorrelationId(command.CorrelationIdentity)
+                    .WithCommandId(command.IdempotencyIdentity.Value)
+                    .Build();
+
+            if (_logger is not null)
             {
-                throw new CommandInvalidAggregateIdentityException(command);
+                s_commandReceived(_logger, default);
             }
 
             // Fetching and validating command handler.
@@ -113,7 +150,7 @@ namespace Nd.Commands
                 await command.AcknowledgeAsync().ConfigureAwait(false);
 
                 // Execute the command and keep the result.
-                result = await handler.ExecuteAsync<TResult>(command, cancellationToken)
+                result = await handler.ExecuteAsync<TResult>(command, cancellation)
                     .ConfigureAwait(false);
 
                 if (result is null)
@@ -129,14 +166,31 @@ namespace Nd.Commands
                 throw new CommandExecutionException(command, ex);
             }
 
+            if (_logger is not null)
+            {
+                using var _ = _logger
+                    .BeginScope()
+                    .WithCommandResult(result.IsSuccess)
+                    .Build();
+
+                s_commandExecuted(_logger, default);
+            }
+
+            _ = activity?.AddTag(ActivityConstants.CommandResultSuccessTag, result.IsSuccess);
+
             try
             {
                 // Store the command and its result.
-                await _commandWriter.WriteAsync(result, cancellationToken).ConfigureAwait(false);
+                await _commandWriter.WriteAsync(result, cancellation).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 throw new CommandPersistenceException(command, result, ex);
+            }
+
+            if (_logger is not null)
+            {
+                s_commandStored(_logger, default);
             }
 
             // Finally return the result.

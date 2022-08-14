@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,17 +21,37 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
+using System;
+using System.Runtime.Serialization;
 
-namespace Nd.Commands
+namespace Nd.Queries.Exceptions
 {
-    public interface ICommandBus
+    [Serializable]
+    public class QueryExecutionException : Exception
     {
-        Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
-            CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        public IQuery? Query { get; }
+        public Guid Id { get; }
+
+        public QueryExecutionException() : this("Query execution has unexpectedly failed")
+        {
+        }
+
+        public QueryExecutionException(string? message) : base(message)
+        {
+        }
+
+        public QueryExecutionException(IQuery query, Guid id, Exception ex) : this($"Query {id}: {query} execution has unexpectedly failed", ex)
+        {
+            Query = query;
+            Id = id;
+        }
+
+        public QueryExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected QueryExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

@@ -33,8 +33,11 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
+using Nd.Core.Extensions;
+using Nd.Extensions.Stores.Mongo.Common;
 using Nd.Extensions.Stores.Mongo.Exceptions;
 using Nd.Identities;
+using Nd.Identities.Extensions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
@@ -82,7 +85,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            using var activity = _activitySource.StartActivity();
+            using var activity = _activitySource.StartActivity(nameof(ReadAsync));
 
             _ = activity?.AddDomainAggregatesTag(new[] { aggregateId });
 
@@ -103,8 +106,11 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             var documemt = await cursor.SingleOrDefaultAsync(cancellation).ConfigureAwait(false);
 
-            using var correlationIdScope = logger.WithCorrelationId(correlationId);
-            using var aggregateIdScope = logger.WithAggregateId(aggregateId);
+            using var scope = logger
+                .BeginScope()
+                .WithCorrelationId(correlationId)
+                .WithAggregateId(aggregateId)
+                .Build();
 
             if (documemt is not null)
             {

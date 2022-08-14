@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,17 +21,36 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
+using System;
+using System.Runtime.Serialization;
 
-namespace Nd.Commands
+namespace Nd.Queries.Exceptions
 {
-    public interface ICommandBus
+    [Serializable]
+    public class QueryNotRegisteredException : Exception
     {
-        Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
-            CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        public QueryNotRegisteredException(IQuery query, Exception? exception = default)
+            : base($"Query \"{query?.TypeName ?? throw new ArgumentNullException(nameof(query))}\" is not found in the query registery, cannot find a handler for an unknown query", exception)
+        {
+            QueryTypeName = query.TypeName;
+        }
+
+        public string? QueryTypeName { get; }
+
+        public QueryNotRegisteredException() : this($"Query is not found in the query registery, cannot find a handler for an unknown query")
+        {
+        }
+
+        public QueryNotRegisteredException(string? message) : base(message)
+        {
+        }
+
+        public QueryNotRegisteredException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected QueryNotRegisteredException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

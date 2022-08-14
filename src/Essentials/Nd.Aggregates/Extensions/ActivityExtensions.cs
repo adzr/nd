@@ -23,16 +23,13 @@
 
 using System;
 using System.Diagnostics;
-using Nd.Aggregates.Common;
+using AggregatesCommon = Nd.Aggregates.Common;
 
 namespace Nd.Aggregates.Extensions
 {
     public static class ActivityExtensions
     {
-        public static Activity AddCorrelationsTag(this Activity activity, Guid[]? correlationIds) =>
-            activity?.AddTag(ActivityConstants.CorrelationsTag, correlationIds) ?? throw new ArgumentNullException(nameof(activity));
-
         public static Activity AddDomainAggregatesTag<T>(this Activity activity, T[]? aggregatesIds) =>
-            activity?.AddTag(ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
+            activity?.AddTag(AggregatesCommon.ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
     }
 }

@@ -85,12 +85,9 @@ namespace Nd.Commands.Results
 
         public override string ToString()
         {
-            if (_message is null)
-            {
-                _message = Exception is null ?
+            _message ??= Exception is null ?
                     $"Successful execution: {Command}" :
                     $"Failed execution: {Command}: {ResolveExceptionString(Exception)}";
-            }
 
             return _message;
         }

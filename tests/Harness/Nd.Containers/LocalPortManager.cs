@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,17 +21,47 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
-using Nd.Commands.Results;
+using Nd.Core.Threading;
 
-namespace Nd.Commands
+namespace Nd.Containers
 {
-    public interface ICommandBus
+    public class LocalPortManager
     {
-        Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
-            CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+        private static readonly object s_lock = new();
+
+        private static LocalPortManager? s_instance;
+
+        private readonly IAsyncLocker _asyncLocker = ExclusiveAsyncLocker.Create();
+
+        private LocalPortManager()
+        {
+            _asyncLocker = ExclusiveAsyncLocker.Create();
+        }
+
+        public static LocalPortManager Create()
+        {
+            lock (s_lock)
+            {
+                s_instance ??= new();
+            }
+
+            return s_instance;
+        }
+
+        ~LocalPortManager() => _asyncLocker.Dispose();
+
+        public async Task RunOnRandomPortAsync(Func<int, CancellationToken, Task> asyncFunc, CancellationToken cancellation = default)
+        {
+            using var @lock = await _asyncLocker.WaitAsync(cancellation).ConfigureAwait(false);
+
+            var port = Helpers.GetRandomOpenPort();
+
+            if (asyncFunc is null)
+            {
+                return;
+            }
+
+            await asyncFunc(port, cancellation).ConfigureAwait(false);
+        }
     }
 }

@@ -25,15 +25,11 @@ namespace Nd.Aggregates.Common
 {
     public static class ActivityConstants
     {
-        public const string CorrelationsTag = "Correlations";
         public const string DomainAggregatesTag = "DomainAggregates";
-        public const string CommandResultSuccessTag = "CommandResultSuccess";
     }
 
     public static class LoggingScopeConstants
     {
-        public const string CorrelationKey = "CorrelationId";
         public const string DomainAggregateKey = "DomainAggregateId";
-        public const string CommandResultSuccessKey = "CommandResultSuccess";
     }
 }

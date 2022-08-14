@@ -3,9 +3,6 @@
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
  * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -35,7 +32,8 @@ namespace Nd.Queries
 {
     public interface IQueryProcessor
     {
-        Task<TResult> ProcessAsync<TResult>(IQuery<TResult> query, CancellationToken cancellation = default)
-            where TResult : class;
+        Task<TResult> ProcessAsync<TQuery, TResult>(TQuery query, CancellationToken cancellation = default)
+            where TQuery : notnull, IQuery<TResult>
+            where TResult : notnull;
     }
 }

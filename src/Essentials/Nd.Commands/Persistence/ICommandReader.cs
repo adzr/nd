@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Commands.Results;
+using Nd.Identities;
 
 namespace Nd.Commands.Persistence
 {
@@ -32,6 +33,7 @@ namespace Nd.Commands.Persistence
     {
         Task<TResult?> ReadAsync<TResult>(
             Guid commandId,
+            ICorrelationIdentity correlationIdentity,
             CancellationToken cancellation = default)
             where TResult : IExecutionResult;
     }

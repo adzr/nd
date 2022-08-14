@@ -23,6 +23,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using Nd.Aggregates.Identities;
@@ -92,24 +93,28 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         private const string DatabaseName = "test_db";
         private const string CollectionName = "commands";
 
-        private readonly MongoContainer _mongoContainer;
+        private MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
         private readonly MongoDBCommandWriter _mongoWriter;
         private readonly MongoDBCommandReader _mongoReader;
 
         public MongoDBCommandStoreTests()
         {
-            _mongoContainer = new MongoContainer(port: Helpers.GetOpenPort(), password: Helpers.GetRandomSecureHex(16));
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 
-            _mongoContainer.StartAsync().GetAwaiter().GetResult();
+            LocalPortManager.Create().RunOnRandomPortAsync(async (port, cancellation) =>
+            {
+                _mongoContainer = new MongoContainer(port: $"{port}", password: Helpers.GetRandomSecureHex(16));
+                await _mongoContainer.StartAsync(cancellation).ConfigureAwait(false);
+            }, tokenSource.Token).GetAwaiter().GetResult();
 
-            var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer.ConnectionString);
+            var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer!.ConnectionString);
 
             _mongoClient = new MongoClient(mongoSettings);
 
             _mongoWriter = new MongoDBCommandWriter(_mongoClient, DatabaseName, CollectionName, default, default);
 
-            _mongoReader = new MongoDBCommandReader(_mongoClient, DatabaseName, CollectionName);
+            _mongoReader = new MongoDBCommandReader(_mongoClient, DatabaseName, CollectionName, default, default);
         }
 
         [Fact]
@@ -150,6 +155,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 Assert.Equal(expected[i], await _mongoReader
                     .ReadAsync<IExecutionResult>(
                     expected[i]?.Command?.IdempotencyIdentity.Value ?? Guid.Empty,
+                    correlationId,
                     default).ConfigureAwait(false));
             }
         }

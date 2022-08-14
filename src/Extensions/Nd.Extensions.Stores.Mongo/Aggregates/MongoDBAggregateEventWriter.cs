@@ -34,7 +34,10 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
+using Nd.Core.Extensions;
+using Nd.Extensions.Stores.Mongo.Common;
 using Nd.Extensions.Stores.Mongo.Exceptions;
+using Nd.Identities.Extensions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
@@ -95,7 +98,15 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 return;
             }
 
-            using var activity = _activitySource.StartActivity();
+            using var activity = _activitySource.StartActivity(nameof(WriteAsync));
+
+            var first = eventList.First(e => e.Metadata.CorrelationIdentity is not null);
+
+            using var scope = _logger
+                .BeginScope()
+                .WithCorrelationId(first.Metadata.CorrelationIdentity)
+                .WithAggregateId(first.Metadata.AggregateIdentity)
+                .Build();
 
             using var session = await Client
                 .StartSessionAsync(cancellationToken: cancellation)
@@ -119,11 +130,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             {
                 if (_logger is not null)
                 {
-                    var first = eventList.First(e => e.Metadata.CorrelationIdentity is not null);
-
-                    using var correlationIdScope = _logger.WithCorrelationId(first.Metadata.CorrelationIdentity);
-                    using var aggregateIdScope = _logger.WithAggregateId(first.Metadata.AggregateIdentity);
-
                     s_mongoNotSupportingTransactions(_logger, e);
                 }
             }
@@ -167,9 +173,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         {
             if (_logger is not null)
             {
-                using var correlationIdScope = _logger.WithCorrelationId(metadata.CorrelationIdentity);
-                using var aggregateIdScope = _logger.WithAggregateId(metadata.AggregateIdentity);
-
                 if (mongoResult is not null)
                 {
                     s_mongoResultReceived(_logger, mongoResult.ToJson(), default);
@@ -209,7 +212,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             {
                 await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
                 AddActivityTags(activity, eventList);
-                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultSuccessTagValue);
+                _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, true);
             }
         }
 
@@ -220,7 +223,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             {
                 await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
                 AddActivityTags(activity, eventList);
-                _ = activity?.AddTag(MongoActivityConstants.MongoResultTag, MongoActivityConstants.MongoResultFailureTagValue);
+                _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, false);
             }
         }
 

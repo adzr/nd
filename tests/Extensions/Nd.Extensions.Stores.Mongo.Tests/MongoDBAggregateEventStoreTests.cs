@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -128,18 +129,22 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         private const string DatabaseName = "test_db";
         private const string CollectionName = "events";
 
-        private readonly MongoContainer _mongoContainer;
+        private MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
         private readonly TestWriter _mongoWriter;
         private readonly TestReader _mongoReader;
 
         public MongoDBAggregateEventStoreTests()
         {
-            _mongoContainer = new MongoContainer(port: Helpers.GetOpenPort(), password: Helpers.GetRandomSecureHex(16));
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 
-            _mongoContainer.StartAsync().GetAwaiter().GetResult();
+            LocalPortManager.Create().RunOnRandomPortAsync(async (port, cancellation) =>
+            {
+                _mongoContainer = new MongoContainer(port: $"{port}", password: Helpers.GetRandomSecureHex(16));
+                await _mongoContainer.StartAsync(cancellation).ConfigureAwait(false);
+            }, tokenSource.Token).GetAwaiter().GetResult();
 
-            var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer.ConnectionString);
+            var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer!.ConnectionString);
 
             _mongoClient = new MongoClient(mongoSettings);
 

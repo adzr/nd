@@ -22,18 +22,14 @@
  */
 
 using System;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using Nd.Aggregates.Common;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
-using Nd.Identities;
 
 namespace Nd.Aggregates.Extensions
 {
-    public static class AggregateIdentityExtensions
+    public static class AggregateExtensions
     {
         public static (TAggregate Aggregate, IAggregateState<TState> State) CreateAggregateAndState<TIdentity, TState, TAggregate>(
             this TIdentity aggregateId,
@@ -79,35 +75,5 @@ namespace Nd.Aggregates.Extensions
 
             return (aggregate, state);
         }
-    }
-
-    public static class LoggerExtensions
-    {
-        internal sealed class EmptyDisposable : IDisposable
-        {
-            public void Dispose()
-            {
-
-            }
-        }
-
-        public static IDisposable With(this ILogger? logger, string key, object value) =>
-            logger is null
-                ? new EmptyDisposable()
-                : logger.BeginScope(new Dictionary<string, object>
-                {
-                    [key] = value
-                });
-
-        public static IDisposable WithCorrelationId<TIdentity>(this ILogger? logger, TIdentity value)
-            where TIdentity : notnull, ICorrelationIdentity =>
-            WithCorrelationId(logger, value.Value);
-
-        public static IDisposable WithCorrelationId(this ILogger? logger, Guid value) =>
-            With(logger, LoggingScopeConstants.CorrelationKey, value);
-
-        public static IDisposable WithAggregateId<TIdentity>(this ILogger? logger, TIdentity value)
-            where TIdentity : notnull, IAggregateIdentity =>
-            With(logger, LoggingScopeConstants.DomainAggregateKey, value);
     }
 }
