@@ -157,7 +157,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                         cancellation)
                     .ConfigureAwait(false);
 
-                    LogMongoResult(metadata, mongoResult);
+                    LogMongoResult(mongoResult);
                 }
             }
             catch
@@ -169,7 +169,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             await CommitTranaction(session, activity, eventList, cancellation).ConfigureAwait(false);
         }
 
-        private void LogMongoResult(IAggregateEventMetadata<TIdentity> metadata, UpdateResult? mongoResult)
+        private void LogMongoResult(UpdateResult? mongoResult)
         {
             if (_logger is not null)
             {

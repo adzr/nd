@@ -154,7 +154,7 @@ namespace Nd.Queries
                 s_queryReceived(_logger, default);
             }
 
-            var cacheKey = CreateCacheKey<TQuery, TResult>(query, queryId);
+            var cacheKey = CreateCacheKey<TQuery, TResult>(query);
 
             if (_cache is not null && !string.IsNullOrWhiteSpace(cacheKey))
             {
@@ -231,7 +231,7 @@ namespace Nd.Queries
             DeterministicGuidFactory.Instance(query.CorrelationIdentity.Value, Guid.NewGuid().ToByteArray()).Create();
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Exception is being logged in all cases.")]
-        private string? CreateCacheKey<TQuery, TResult>(TQuery query, Guid queryId)
+        private string? CreateCacheKey<TQuery, TResult>(TQuery query)
             where TQuery : notnull, IQuery<TResult>
             where TResult : notnull
         {
