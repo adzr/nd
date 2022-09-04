@@ -21,11 +21,10 @@
  * SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Identities;
@@ -42,12 +41,28 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
             _events = events;
         }
 
-        public Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : ICommittedEvent<TIdentity> =>
-            Task.FromResult(_events.TryGetValue(aggregateId, out var events) ?
-                events
-                .Where(e => e.Metadata.AggregateVersion >= versionStart && (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))
-                .Select(e => (TEvent)e) :
-                Array.Empty<TEvent>());
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+            TIdentity aggregateId,
+            ICorrelationIdentity correlationId,
+            uint versionStart,
+            uint versionEnd,
+            [EnumeratorCancellation] CancellationToken cancellation = default)
+        {
+            if (_events.TryGetValue(aggregateId, out var events))
+            {
+                foreach (var @event in events
+                .Where(e =>
+                    e.Metadata.AggregateVersion >= versionStart &&
+                    (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))
+                .OrderBy(e => e.Metadata.AggregateVersion))
+                {
+                    yield return @event;
+                }
+            }
+
+            yield break;
+        }
     }
 }

@@ -208,25 +208,37 @@ namespace Nd.Aggregates.Tests
 
         private static void ExpectEvents(TestIdentity expectedIdentity, string expectedAggregateName, IEnumerable<AggregateEvent<TestAggregateState>> events, IAggregateEventReader<TestIdentity> eventReader)
         {
-            _ = A.CallTo(() => eventReader.ReadAsync<ICommittedEvent<TestIdentity>>(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
-                .ReturnsLazily(() => events.Select(e =>
-                {
-                    var eventType = TypeDefinitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?
-                        type : throw new InvalidOperationException($"Definition of type name and version: ({e.TypeName}, {e.TypeVersion}) has no Type defined");
+            _ = A.CallTo(() => eventReader.ReadAsync(A<TestIdentity>._, A<ICorrelationIdentity>._, A<uint>._, A<CancellationToken>._))
+                .ReturnsLazily((fakeObjCall) => YieldEvents(expectedIdentity, expectedAggregateName, events));
+        }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        private static async IAsyncEnumerable<TestAggregateCommittedEvent> YieldEvents(TestIdentity expectedIdentity, string expectedAggregateName, IEnumerable<AggregateEvent<TestAggregateState>> events)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            foreach (var @event in events
+                    .Select(e =>
+                    {
+                        var eventType = TypeDefinitions.NamesAndVersionsTypes.TryGetValue((e.TypeName, e.TypeVersion), out var type) ?
+                            type : throw new InvalidOperationException($"Definition of type name and version: ({e.TypeName}, {e.TypeVersion}) has no Type defined");
 
-                    return new TestAggregateCommittedEvent(e,
-                        new AggregateEventMetadata<TestIdentity>(
-                            new IdempotencyIdentity(RandomGuidFactory.Instance.Create()),
-                            new CorrelationIdentity(RandomGuidFactory.Instance.Create()),
-                            new AggregateEventIdentity(RandomGuidFactory.Instance.Create()),
-                            e.TypeName,
-                            e.TypeVersion,
-                            expectedIdentity,
-                            expectedAggregateName,
-                            1u,
-                            DateTimeOffset.UtcNow));
-                }).ToList());
+                        return new TestAggregateCommittedEvent(e,
+                            new AggregateEventMetadata<TestIdentity>(
+                                new IdempotencyIdentity(RandomGuidFactory.Instance.Create()),
+                                new CorrelationIdentity(RandomGuidFactory.Instance.Create()),
+                                new AggregateEventIdentity(RandomGuidFactory.Instance.Create()),
+                                e.TypeName,
+                                e.TypeVersion,
+                                expectedIdentity,
+                                expectedAggregateName,
+                                1u,
+                                DateTimeOffset.UtcNow));
+                    })
+                    .OrderBy(e => e.Metadata.AggregateVersion)
+                    .ToList())
+            {
+                yield return @event;
+            }
         }
 
         private static void AssertEvent(AggregateEvent<TestAggregateState>? expected, IAggregateEvent<TestAggregateState>? actual)

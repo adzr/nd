@@ -86,9 +86,9 @@ namespace Nd.Queries
         private readonly ILogger<QueryProcessor>? _logger;
         private readonly ILookup<Type, IQueryHandler> _queryHandlerRegistery;
 
-        public QueryProcessor(IQueryHandler[] queryHandlers, ILoggerFactory? loggerFactory, IDistributedCache? cache = default, DistributedCacheEntryOptions? defaultOptions = default)
+        public QueryProcessor(IQueryHandler[] queryHandlers, ILogger<QueryProcessor>? logger, IDistributedCache? cache = default, DistributedCacheEntryOptions? defaultOptions = default)
         {
-            _logger = loggerFactory?.CreateLogger<QueryProcessor>();
+            _logger = logger;
             _cache = cache;
             _options = defaultOptions;
 

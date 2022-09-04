@@ -42,7 +42,8 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
             _events = events;
         }
 
-        public Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default) where TEvent : IUncommittedEvent<TIdentity>
+        public Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
+            where TEvent : IUncommittedEvent<TIdentity>
         {
             if (events is null)
             {

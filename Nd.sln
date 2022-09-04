@@ -39,12 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Commands.Tests", "tests\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{014491D0-3E2E-4FAE-834B-A3D0CF28D8E6}"
 	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		.gitattributes = .gitattributes
-		.gitignore = .gitignore
 		build.cake = build.cake
 		.github\dependabot.yml = .github\dependabot.yml
-		NuGet.Config = NuGet.Config
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{E74D4CBC-6F0F-482D-BFE3-BB5B898B8995}"
@@ -63,7 +59,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Memory
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo", "src\Extensions\Nd.Extensions.Stores.Mongo\Nd.Extensions.Stores.Mongo.csproj", "{217CE1BE-8D96-49E5-B508-11E0EE6AA921}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{47C62899-4D07-453E-AD66-DC7044EEB77E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{47C62899-4D07-453E-AD66-DC7044EEB77E}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
 		README.md = README.md
@@ -73,7 +69,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Extensions.Stores.Mongo.Tests", "tests\Extensions\Nd.Extensions.Stores.Mongo.Tests\Nd.Extensions.Stores.Mongo.Tests.csproj", "{A073A0CE-015B-43EF-8F76-D0C72515D54B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nd.Containers", "tests\Harness\Nd.Containers\Nd.Containers.csproj", "{C30F80EB-380A-4DE8-A7EA-F775629701EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Containers", "tests\Harness\Nd.Containers\Nd.Containers.csproj", "{C30F80EB-380A-4DE8-A7EA-F775629701EB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configurations", "Configurations", "{EC8C7D34-9325-49AF-A256-9CA1AE85CFD6}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		.config\dotnet-tools.json = .config\dotnet-tools.json
+		NuGet.Config = NuGet.Config
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04-Subscriptions", "04-Subscriptions", "{3397EFE7-735C-43AC-9946-748309102AF0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nd.Subscriptions", "src\Essentials\Nd.Subscriptions\Nd.Subscriptions.csproj", "{936FE597-D724-40AE-A296-0FA3AAB42B6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -153,6 +163,10 @@ Global
 		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C30F80EB-380A-4DE8-A7EA-F775629701EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{936FE597-D724-40AE-A296-0FA3AAB42B6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{936FE597-D724-40AE-A296-0FA3AAB42B6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{936FE597-D724-40AE-A296-0FA3AAB42B6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{936FE597-D724-40AE-A296-0FA3AAB42B6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -177,6 +191,7 @@ Global
 		{9C33B8D8-1C93-4C5A-A614-D379BC846AED} = {014491D0-3E2E-4FAE-834B-A3D0CF28D8E6}
 		{A073A0CE-015B-43EF-8F76-D0C72515D54B} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
 		{C30F80EB-380A-4DE8-A7EA-F775629701EB} = {8B663D7D-331F-4F7A-8E1D-DFED294B4AFF}
+		{936FE597-D724-40AE-A296-0FA3AAB42B6C} = {3397EFE7-735C-43AC-9946-748309102AF0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E90C591-5B90-440A-83A7-A6B425A1325D}

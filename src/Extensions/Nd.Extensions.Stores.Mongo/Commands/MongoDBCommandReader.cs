@@ -34,8 +34,6 @@ using Nd.Core.Extensions;
 using Nd.Extensions.Stores.Mongo.Common;
 using Nd.Identities;
 using Nd.Identities.Extensions;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
-using ILoggerFactory = Microsoft.Extensions.Logging.ILoggerFactory;
 
 namespace Nd.Extensions.Stores.Mongo.Commands
 {
@@ -58,11 +56,11 @@ namespace Nd.Extensions.Stores.Mongo.Commands
         public MongoDBCommandReader(MongoClient client,
             string databaseName,
             string collectionName,
-            ILoggerFactory? loggerFactory,
+            ILogger<MongoDBCommandReader>? logger,
             ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = loggerFactory?.CreateLogger(GetType());
+            _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 

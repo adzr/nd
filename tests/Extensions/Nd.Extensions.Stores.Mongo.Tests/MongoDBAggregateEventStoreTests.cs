@@ -89,13 +89,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 MongoClient client,
                 string databaseName,
                 string collectionName,
-                ILoggerFactory? loggerFactory,
+                ILogger<TestReader>? logger,
                 ActivitySource? activitySource) :
                 base(
                     client,
                     databaseName,
                     collectionName,
-                    loggerFactory,
+                    logger,
                     activitySource)
             { }
 
@@ -108,13 +108,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 MongoClient client,
                 string databaseName,
                 string collectionName,
-                ILoggerFactory? loggerFactory,
+                ILogger<TestWriter>? logger,
                 ActivitySource? activitySource) :
                 base(
                     client,
                     databaseName,
                     collectionName,
-                    loggerFactory,
+                    logger,
                     activitySource)
             { }
         }
@@ -158,7 +158,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         {
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
             var _ = new TestAggregateState();
-            var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
+            var identity = new TestIdentity(CombGuidFactory.Instance.Create());
             var aggregateName = "TestAggregateRoot";
 
             var v1NameAndVersion = TypeDefinitions.GetNameAndVersion(typeof(TestEventCountV1));
@@ -195,9 +195,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             await _mongoWriter.WriteAsync(expectedEvents, default)
                 .ConfigureAwait(false);
 
-            var events = await _mongoReader
-                .ReadAsync<ICommittedEvent<TestIdentity>>(identity, correlationId, uint.MinValue, uint.MaxValue, default)
-                .ConfigureAwait(false);
+            var events = new List<ICommittedEvent<TestIdentity>>();
+
+            await foreach (var @event in _mongoReader
+                .ReadAsync(identity, correlationId, uint.MinValue, uint.MaxValue, default))
+            {
+                events.Add(@event);
+            }
 
             Assert.Equal(
                 expectedEvents

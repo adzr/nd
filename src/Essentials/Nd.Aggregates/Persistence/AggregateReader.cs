@@ -22,12 +22,10 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Exceptions;
-using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Core.Extensions;
 using Nd.Identities;
@@ -60,16 +58,27 @@ namespace Nd.Aggregates.Persistence
                 throw new ArgumentNullException(nameof(aggregateId));
             }
 
-            var events = await _eventReader.ReadAsync<ICommittedEvent<TIdentity>>(aggregateId, correlationId, version, cancellation)
-                .ConfigureAwait(false);
+            IAggregateState<TState> state;
 
-            (var aggregate, var state) = aggregateId
-                .CreateAggregateAndState(_aggregateFactory, _stateFactory, events.Max(e => e.Metadata.AggregateVersion));
+            try
+            {
+                state = _stateFactory() ?? throw new AggregateStateCreationException(typeof(TState));
+            }
+            catch (Exception exception)
+            {
+                throw new AggregateStateCreationException(typeof(TState), exception);
+            }
 
-            foreach (var @event in events)
+            var lastEventVersion = 0u;
+
+            await foreach (var @event in _eventReader
+                .ReadAsync(aggregateId, correlationId, version, cancellation)
+                .ConfigureAwait(false))
             {
                 try
                 {
+                    lastEventVersion = @event.Metadata.AggregateVersion;
+
                     if (await @event.AggregateEvent.UpgradeRecursiveAsync(cancellation).ConfigureAwait(false) is IAggregateEvent e)
                     {
                         state.Apply(e);
@@ -85,7 +94,15 @@ namespace Nd.Aggregates.Persistence
                 }
             }
 
-            return (TAggregate)aggregate;
+            try
+            {
+                return (TAggregate)_aggregateFactory(aggregateId, () => state, lastEventVersion) ??
+                    throw new AggregateCreationException(typeof(TAggregate).GetName());
+            }
+            catch (Exception exception)
+            {
+                throw new AggregateCreationException(typeof(TAggregate).GetName(), exception);
+            }
         }
     }
 }

@@ -55,18 +55,18 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             BsonDefaultsInitializer.Initialize();
         }
 
-        private readonly ILogger? _logger;
+        private readonly ILogger<MongoDBCommandWriter>? _logger;
         private readonly ActivitySource _activitySource;
 
         public MongoDBCommandWriter(
             MongoClient client,
             string databaseName,
             string collectionName,
-            ILoggerFactory? loggerFactory,
+            ILogger<MongoDBCommandWriter>? logger,
             ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = loggerFactory?.CreateLogger(GetType());
+            _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 

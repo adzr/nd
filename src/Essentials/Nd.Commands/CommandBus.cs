@@ -60,17 +60,17 @@ namespace Nd.Commands
         private readonly ILookup<Type, ICommandHandler> _commandHandlerRegistery;
 
         private readonly ICommandWriter _commandWriter;
-        private readonly ILogger? _logger;
+        private readonly ILogger<CommandBus>? _logger;
         private readonly ActivitySource _activitySource;
 
         public CommandBus(
             ICommandHandler[] commandHandlers,
             ICommandWriter commandWriter,
-            ILoggerFactory? loggerFactory,
+            ILogger<CommandBus>? logger,
             ActivitySource? activitySource)
         {
             _commandWriter = commandWriter ?? throw new ArgumentNullException(nameof(commandWriter));
-            _logger = loggerFactory?.CreateLogger(GetType());
+            _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
 
             if (commandHandlers is null)

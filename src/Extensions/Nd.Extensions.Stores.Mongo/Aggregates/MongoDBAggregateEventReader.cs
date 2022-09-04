@@ -24,8 +24,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -45,7 +45,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         where TIdentity : notnull, IAggregateIdentity
         where TValue : notnull
     {
-        private readonly ILogger? _logger;
+        private readonly ILogger<MongoDBAggregateEventReader<TIdentity, TValue>>? _logger;
         private readonly ActivitySource _activitySource;
 
         private static readonly Action<ILogger, string, Exception?> s_mongoResultReceived =
@@ -69,16 +69,20 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             MongoClient client,
             string databaseName,
             string collectionName,
-            ILoggerFactory? loggerFactory,
+            ILogger<MongoDBAggregateEventReader<TIdentity, TValue>>? logger,
             ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = loggerFactory?.CreateLogger(GetType());
+            _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
-        public async Task<IEnumerable<TEvent>> ReadAsync<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint versionStart, uint versionEnd, CancellationToken cancellation = default)
-            where TEvent : ICommittedEvent<TIdentity>
+        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+            TIdentity aggregateId,
+            ICorrelationIdentity correlationId,
+            uint versionStart,
+            uint versionEnd,
+            [EnumeratorCancellation] CancellationToken cancellation = default)
         {
             if (aggregateId is null)
             {
@@ -91,14 +95,26 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             cancellation.ThrowIfCancellationRequested();
 
-            return await FindEvents<TEvent>(aggregateId, correlationId, CreateIdentity, GetCollection<MongoAggregateDocument<TValue>>(), _logger, cancellation).ConfigureAwait(false);
+            await foreach (var @event in FindEvents(
+                aggregateId,
+                correlationId,
+                CreateIdentity,
+                GetCollection<MongoAggregateDocument<TValue>>(),
+                _logger,
+                cancellation))
+            {
+                yield return @event;
+            }
         }
 
-        private static async Task<IEnumerable<TEvent>> FindEvents<TEvent>(TIdentity aggregateId, ICorrelationIdentity correlationId, Func<object, TIdentity> createIdentity, IMongoCollection<MongoAggregateDocument<TValue>> collection, ILogger? logger, CancellationToken cancellation)
-            where TEvent : ICommittedEvent<TIdentity>
+        private static async IAsyncEnumerable<ICommittedEvent<TIdentity>> FindEvents(
+            TIdentity aggregateId,
+            ICorrelationIdentity correlationId,
+            Func<object, TIdentity> createIdentity,
+            IMongoCollection<MongoAggregateDocument<TValue>> collection,
+            ILogger? logger,
+            [EnumeratorCancellation] CancellationToken cancellation)
         {
-            var events = new List<CommittedEvent<TIdentity>>();
-
             using var cursor = await collection
                 .FindAsync<MongoAggregateDocument<TValue>>(
                 Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value),
@@ -112,32 +128,29 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 .WithAggregateId(aggregateId)
                 .Build();
 
-            if (documemt is not null)
+            if (documemt?.Events is null)
             {
                 if (logger is not null)
                 {
-                    s_mongoResultReceived(logger, documemt.ToJson(), default);
+                    s_mongoResultMissing(logger, default);
                 }
 
-                if (documemt.Events is not null)
-                {
-                    foreach (var e in documemt.Events)
-                    {
-                        if (e.Content is null)
-                        {
-                            throw new MongoReaderEventDefinitionException("Null event content found, cannot resolve type and version");
-                        }
-
-                        events.Add(MapEvent(e, documemt, createIdentity));
-                    }
-                }
+                yield break;
             }
-            else if (logger is not null)
+
+            if (logger is not null)
             {
-                s_mongoResultMissing(logger, default);
+                s_mongoResultReceived(logger, documemt.ToJson(), default);
             }
 
-            return (IEnumerable<TEvent>)events;
+            foreach (var e in documemt.Events)
+            {
+                cancellation.ThrowIfCancellationRequested();
+
+                yield return e.Content is null
+                    ? throw new MongoReaderEventDefinitionException("Null event content found, cannot resolve type and version")
+                    : MapEvent(e, documemt, createIdentity);
+            }
         }
 
         private static CommittedEvent<TIdentity> MapEvent(

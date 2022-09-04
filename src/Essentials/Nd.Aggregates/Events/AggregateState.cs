@@ -48,7 +48,7 @@ namespace Nd.Aggregates.Events
             TypeDefinitions
             .GetAllImplementations<IAggregateState>()
             .Select(t => (Type: t,
-                // Get all the interfaces of type IAggregateEventHandler that IAggregateState implements.
+                // Get all the interfaces of type ICanHandleAggregateEvent that IAggregateState implements.
                 Lookup: t.GetInterfacesOfType<ICanHandleAggregateEvent>()
                 // Filter only on interfaces that has a first generic argument of a type that implements IAggregateEvent,
                 // and have a method with the name "On" that takes a single parameter of a type assignable to

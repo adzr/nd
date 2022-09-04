@@ -64,7 +64,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 "Mongo transactions are not supported");
 
 
-        private readonly ILogger? _logger;
+        private readonly ILogger<MongoDBAggregateEventWriter<TIdentity, TValue>>? _logger;
         private readonly ActivitySource _activitySource;
 
         static MongoDBAggregateEventWriter()
@@ -76,11 +76,11 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             MongoClient client,
             string databaseName,
             string collectionName,
-            ILoggerFactory? loggerFactory,
+            ILogger<MongoDBAggregateEventWriter<TIdentity, TValue>>? logger,
             ActivitySource? activitySource) :
             base(client, databaseName, collectionName)
         {
-            _logger = loggerFactory?.CreateLogger(GetType());
+            _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
