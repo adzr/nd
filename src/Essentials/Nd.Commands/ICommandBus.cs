@@ -33,9 +33,10 @@ namespace Nd.Commands
 {
     public interface ICommandBus
     {
-        Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
+        Task<TResult> ExecuteAsync<TCommand, TResult>(
+            TCommand command,
             CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+            where TResult : notnull, IExecutionResult<TCommand>
+            where TCommand : ICommand<TResult>;
     }
 }

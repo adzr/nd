@@ -29,6 +29,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
@@ -44,12 +45,12 @@ namespace Nd.Aggregates.Events
         /// Contains a cached lookup of aggregate events and a lambda method to help
         /// applying the received events based on types to the correct event handler interface.
         /// </summary>
-        private static readonly ILookup<Type, ILookup<Type, Action<IAggregateState, IAggregateEvent>>> s_eventApplicationMethods =
+        private static readonly ILookup<Type, IDictionary<Type, Action<IAggregateState, IAggregateEvent>>> s_eventApplicationMethods =
             TypeDefinitions
             .GetAllImplementations<IAggregateState>()
             .Select(t => (Type: t,
                 // Get all the interfaces of type ICanHandleAggregateEvent that IAggregateState implements.
-                Lookup: t.GetInterfacesOfType<ICanHandleAggregateEvent>()
+                Dictionary: (IDictionary<Type, Action<IAggregateState, IAggregateEvent>>)t.GetInterfacesOfType<ICanHandleAggregateEvent>()
                 // Filter only on interfaces that has a first generic argument of a type that implements IAggregateEvent,
                 // and have a method with the name "On" that takes a single parameter of a type assignable to
                 // the found generic type.
@@ -72,11 +73,11 @@ namespace Nd.Aggregates.Events
                     );
                 })
                 // Return a lookup of the [IAggregateEvent] => Method.
-                .ToLookup(r => r.Type, r => r.Method)))
+                .ToDictionary(r => r.Type, r => r.Method)))
             // Return a lookup of the [IAggregateState] => ILookup.
-            .ToLookup(r => r.Type, r => r.Lookup);
+            .ToLookup(r => r.Type, r => r.Dictionary);
 
-        private readonly ILookup<Type, Action<IAggregateState, IAggregateEvent>> _eventApplicationMethods;
+        private readonly IDictionary<Type, Action<IAggregateState, IAggregateEvent>> _eventApplicationMethods;
 
         public abstract TState State { get; }
 
@@ -89,11 +90,9 @@ namespace Nd.Aggregates.Events
 
         void IAggregateState.Apply(IAggregateEvent @event)
         {
-            var actions = _eventApplicationMethods[@event.GetType()];
-
-            if (actions is not null && actions.Any())
+            if (_eventApplicationMethods.TryGetValue(@event.GetType(), out var action) && action is not null)
             {
-                actions.Single()(this, @event);
+                action(this, @event);
             }
         }
 

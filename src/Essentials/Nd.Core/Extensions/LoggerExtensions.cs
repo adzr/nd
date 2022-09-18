@@ -22,7 +22,9 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 
 namespace Nd.Core.Extensions
@@ -47,7 +49,7 @@ namespace Nd.Core.Extensions
             }
 
             private readonly ILogger? _logger;
-            private readonly IDictionary<string, object> _properties = new Dictionary<string, object>();
+            private readonly IDictionary<string, object?> _properties = new ConcurrentDictionary<string, object?>();
 
             public ScopeBuilder(ILogger? logger)
             {
@@ -64,7 +66,7 @@ namespace Nd.Core.Extensions
                 return this;
             }
 
-            public IDisposable Build() => _logger?.BeginScope(_properties) ?? new EmptyDisposable();
+            public IDisposable Build() => _logger?.BeginScope(_properties.AsEnumerable()) ?? new EmptyDisposable();
         }
 
         public static IScopeBuilder BeginScope(this ILogger? logger) => new ScopeBuilder(logger);

@@ -25,36 +25,44 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Nd.Core.Extensions;
 
 namespace Nd.Commands.Exceptions
 {
     [Serializable]
     public class CommandHandlerConflictException : Exception
     {
-        public CommandHandlerConflictException(string commandTypeName, string[] commandHandlerTypeNames, Exception? exception = default)
-            : base($"Multiple command handlers {string.Join(", ", commandHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same command \"{commandTypeName}\"", exception)
-        {
-            CommandTypeName = commandTypeName;
-            CommandHandlerTypeNames = commandHandlerTypeNames;
-        }
+        public Type? CommandType { get; }
+        public IEnumerable<Type>? HandlerTypes { get; }
 
-        public string? CommandTypeName { get; }
-
-        public IReadOnlyList<string>? CommandHandlerTypeNames { get; }
-
-        public CommandHandlerConflictException() : this("Multiple command handlers found for the same command")
+        public CommandHandlerConflictException() :
+            this("CommandType is being handled by more than one handler")
         {
         }
 
-        public CommandHandlerConflictException(string message) : base(message)
+        public CommandHandlerConflictException(Type commandType, Exception? innerException = default) :
+            this($"CommandType {commandType?.ResolveName()} is being handled by more than one handler", innerException)
+        {
+            CommandType = commandType;
+        }
+
+        public CommandHandlerConflictException(Type commandType, Type[] handlerTypes, Exception? innerException = default) :
+            this($"CommandType {commandType?.ResolveName()} is being handled by more than one handler: {string.Join(", ", handlerTypes.Select(t => t.ResolveName()))}",
+                innerException)
+        {
+            CommandType = commandType;
+            HandlerTypes = handlerTypes;
+        }
+
+        public CommandHandlerConflictException(string? message) : base(message)
         {
         }
 
-        public CommandHandlerConflictException(string message, Exception innerException) : base(message, innerException)
+        public CommandHandlerConflictException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected CommandHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        protected CommandHandlerConflictException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

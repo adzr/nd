@@ -97,11 +97,11 @@ namespace Nd.Aggregates.Persistence
             try
             {
                 return (TAggregate)_aggregateFactory(aggregateId, () => state, lastEventVersion) ??
-                    throw new AggregateCreationException(typeof(TAggregate).GetName());
+                    throw new AggregateCreationException(typeof(TAggregate).ResolveName());
             }
             catch (Exception exception)
             {
-                throw new AggregateCreationException(typeof(TAggregate).GetName(), exception);
+                throw new AggregateCreationException(typeof(TAggregate).ResolveName(), exception);
             }
         }
     }

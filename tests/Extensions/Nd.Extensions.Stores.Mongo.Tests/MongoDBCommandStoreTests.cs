@@ -102,11 +102,11 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 
-            LocalPortManager.Create().RunOnRandomPortAsync(async (port, cancellation) =>
+            LocalPortManager.AcquireRandomPortAsync(async (port, cancellation) =>
             {
                 _mongoContainer = new MongoContainer(port: $"{port}", password: Helpers.GetRandomSecureHex(16));
                 await _mongoContainer.StartAsync(cancellation).ConfigureAwait(false);
-            }, tokenSource.Token).GetAwaiter().GetResult();
+            }, cancellation: tokenSource.Token).GetAwaiter().GetResult();
 
             var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer!.ConnectionString);
 
@@ -121,7 +121,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         public async Task CanStoreCommandsToMongoAsync()
         {
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
-            var identity = new TestIdentity(RandomGuidFactory.Instance.Create());
+            var identity = new TestIdentity(Guid.NewGuid());
             var timestamp = DateTime.UtcNow;
 
             var expected = new IExecutionResult[]

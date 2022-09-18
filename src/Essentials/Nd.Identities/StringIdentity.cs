@@ -36,7 +36,7 @@ namespace Nd.Identities
 
         protected StringIdentity(string value)
         {
-            TypeName = TypeDefinitions.GetNameAndVersion(GetType()).Name;
+            TypeName = TypeDefinitions.ResolveNameAndVersion(GetType()).Name;
             Value = value;
             _stringValue = $"{TypeName.ToSnakeCase().TrimEnd(StringComparison.OrdinalIgnoreCase, "_id", "_identity")}-{value}";
         }

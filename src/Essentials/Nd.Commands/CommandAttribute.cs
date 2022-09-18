@@ -29,6 +29,6 @@ namespace Nd.Commands
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class CommandAttribute : VersionedTypeAttribute
     {
-        public CommandAttribute(string typeName, uint typeVersion) : base($"{typeName}Command", typeVersion) { }
+        public CommandAttribute(string typeName, uint typeVersion) : base($"{typeName}CommandType", typeVersion) { }
     }
 }

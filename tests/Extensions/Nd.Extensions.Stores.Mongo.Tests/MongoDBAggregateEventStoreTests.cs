@@ -138,11 +138,11 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 
-            LocalPortManager.Create().RunOnRandomPortAsync(async (port, cancellation) =>
+            LocalPortManager.AcquireRandomPortAsync(async (port, cancellation) =>
             {
                 _mongoContainer = new MongoContainer(port: $"{port}", password: Helpers.GetRandomSecureHex(16));
                 await _mongoContainer.StartAsync(cancellation).ConfigureAwait(false);
-            }, tokenSource.Token).GetAwaiter().GetResult();
+            }, cancellation: tokenSource.Token).GetAwaiter().GetResult();
 
             var mongoSettings = MongoClientSettings.FromConnectionString(_mongoContainer!.ConnectionString);
 
@@ -161,8 +161,8 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             var identity = new TestIdentity(CombGuidFactory.Instance.Create());
             var aggregateName = "TestAggregateRoot";
 
-            var v1NameAndVersion = TypeDefinitions.GetNameAndVersion(typeof(TestEventCountV1));
-            var v2NameAndVersion = TypeDefinitions.GetNameAndVersion(typeof(TestEventCountV2));
+            var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV2));
             var timestamp = DateTime.UtcNow;
 
             var expectedEvents = new[] {

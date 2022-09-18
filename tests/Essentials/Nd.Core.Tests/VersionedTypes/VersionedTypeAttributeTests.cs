@@ -52,7 +52,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest(nameof(UpgradableVersion), 1)]
     public record class UpgradableVersion1(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion1).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion1).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -64,7 +64,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest(nameof(UpgradableVersion), 2)]
     public record class UpgradableVersion2(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion2).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion2).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -76,7 +76,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest(nameof(UpgradableVersion), 3)]
     public record class UpgradableVersion3(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion3).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion3).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -86,7 +86,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest(nameof(UpgradableVersion), 4)]
     public record class UpgradableVersion4(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion4).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion4).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -98,7 +98,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest(nameof(UpgradableVersion), 4)]
     public record class UpgradableVersion5(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion5).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion5).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -110,7 +110,7 @@ namespace Nd.Core.Tests.VersionedTypes
     [VersionedTest("NonUpgradableVersion", 2)]
     public record class NonUpgradableVersion(int Value) : UpgradableVersion(Value)
     {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(NonUpgradableVersion).GetNameAndVersion();
+        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(NonUpgradableVersion).ResolveNameAndVersion();
 
         public override uint TypeVersion => s_nameAndVersion.Version;
 
@@ -128,7 +128,7 @@ namespace Nd.Core.Tests.VersionedTypes
         [Fact]
         public void CanHaveAttributedNameAndVersion()
         {
-            var (name, version) = typeof(VersionedTypeAttributeTests).GetNameAndVersion();
+            var (name, version) = typeof(VersionedTypeAttributeTests).ResolveNameAndVersion();
 
             Assert.Equal(nameof(VersionedTypeAttributeTests), name);
             Assert.Equal(7u, version);

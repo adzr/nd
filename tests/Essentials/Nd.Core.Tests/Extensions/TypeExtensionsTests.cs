@@ -106,11 +106,11 @@ namespace Nd.Core.Tests.Extensions
 
         [Fact]
         public void CanGetNamedTypeName() =>
-            Assert.Equal("Test", typeof(TypeTest).GetName());
+            Assert.Equal("Test", typeof(TypeTest).ResolveName());
 
         [Fact]
         public void CanGetVersionedTypeVersion() =>
-            Assert.Equal(("Test", 1u), typeof(TypeTest).GetNameAndVersion());
+            Assert.Equal(("Test", 1u), typeof(TypeTest).ResolveNameAndVersion());
 
         [Fact]
         public void CanCompileMethodInvocation() =>

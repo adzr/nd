@@ -34,7 +34,7 @@ namespace Nd.Commands.Exceptions
 
         public IExecutionResult? Result { get; }
 
-        public CommandPersistenceException() : this("Command and result persistence has unexpectedly failed")
+        public CommandPersistenceException() : this("CommandType and result persistence has unexpectedly failed")
         {
         }
 
@@ -42,7 +42,7 @@ namespace Nd.Commands.Exceptions
         {
         }
 
-        public CommandPersistenceException(ICommand command, IExecutionResult result, Exception ex) : this($"Command {command} with result {result} persistence has unexpectedly failed", ex)
+        public CommandPersistenceException(ICommand command, IExecutionResult result, Exception ex) : this($"CommandType {command} with result {result} persistence has unexpectedly failed", ex)
         {
             Command = command;
             Result = result;

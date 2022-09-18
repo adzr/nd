@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -33,31 +34,46 @@ using Nd.Commands.Extensions;
 using Nd.Commands.Persistence;
 using Nd.Commands.Results;
 using Nd.Core.Extensions;
+using Nd.Core.Types;
 using Nd.Identities.Extensions;
 
 namespace Nd.Commands
 {
     public class CommandBus : ICommandBus
     {
+        private static readonly ILookup<Type, Type> s_catalog = TypeDefinitions
+            .GetAllImplementations<ICommandHandler>()
+            .SelectMany(t => t.GetInterfacesOfType<ICommandHandler>().Select(i => (Interface: i, Implementation: t)))
+            .Where(item =>
+            {
+                var commandType = item.Interface.GetGenericTypeArgumentsOfType<ICommand>().FirstOrDefault();
+
+                return
+                    commandType is not null &&
+                    item.Implementation.HasMethodWithParametersOfTypes("ExecuteAsync", commandType, typeof(CancellationToken));
+            })
+            .Select(item => (CommandType: item.Interface.GetGenericTypeArgumentsOfType<ICommand>().First(), item.Implementation))
+            .ToLookup(item => item.Implementation, item => item.CommandType);
+
         private static readonly Action<ILogger, Exception?> s_commandReceived =
             LoggerMessage.Define(LogLevel.Trace, new EventId(
                                 CommandBusLoggingEventsConstants.CommandReceived,
                                 nameof(CommandBusLoggingEventsConstants.CommandReceived)),
-                                "Command received");
+                                "CommandType received");
 
         private static readonly Action<ILogger, Exception?> s_commandExecuted =
             LoggerMessage.Define(LogLevel.Trace, new EventId(
                                 CommandBusLoggingEventsConstants.CommandExecuted,
                                 nameof(CommandBusLoggingEventsConstants.CommandExecuted)),
-                                "Command executed");
+                                "CommandType executed");
 
         private static readonly Action<ILogger, Exception?> s_commandStored =
             LoggerMessage.Define(LogLevel.Trace, new EventId(
                                 CommandBusLoggingEventsConstants.CommandStored,
                                 nameof(CommandBusLoggingEventsConstants.CommandStored)),
-                                "Command stored");
+                                "CommandType stored");
 
-        private readonly ILookup<Type, ICommandHandler> _commandHandlerRegistery;
+        private readonly IDictionary<Type, ICommandHandler> _commandHandlerRegistery;
 
         private readonly ICommandWriter _commandWriter;
         private readonly ILogger<CommandBus>? _logger;
@@ -79,30 +95,27 @@ namespace Nd.Commands
             }
 
             _commandHandlerRegistery = commandHandlers
-                .Where(handler => handler is not null)
-                // Mapping all key types to there command handlers instances.
-                .SelectMany(handler => handler!
-                        // So foreach handler type.
-                        .GetType()
-                        // We get all of the interfaces that it implements that are of type ICommandHandler.
-                        .GetInterfacesOfType<ICommandHandler>()
-                        // If any of these ICommandHandler interfaces has a generic type of ICommand then get it along with the handler instance.
-                        .Select(i => (Handler: handler, CommandType: i.GetGenericTypeArgumentsOfType<ICommand>().FirstOrDefault()))
-                )
-                // After flattening our selection, now filter on those interfaces that actually have a generic type of ICommand.
-                .Where(r => r.CommandType is not null)
-                // Then group by command type which cannot be null at this point.
-                .GroupBy(r => r.CommandType!)
-                // Validate that there are no multiple handlers for any single command.
-                .Select(g => g.Count() == 1 ? g.Single() : throw new CommandHandlerConflictException(g.Key.GetName(), g.Select(r => r.Handler!.GetType().ToPrettyString()).ToArray()))
-                // Finally convert it to a lookup of a command type as a key and a handler instance as a one record value.
-                .ToLookup(r => r.CommandType!, r => r.Handler);
+                .Where(h => h is not null)
+                .SelectMany(h => s_catalog[h.GetType()].Select(commandType => (CommandType: commandType, Handler: h)))
+                .GroupBy(g => g.CommandType)
+                .ToDictionary(g => g.Key, g =>
+                {
+                    try
+                    {
+                        return g.Single().Handler;
+                    }
+                    catch (Exception e)
+                    {
+                        throw new CommandHandlerConflictException(g.Key, g.Select(h => h.GetType()).ToArray(), e);
+                    }
+                });
         }
 
-        public async Task<TResult> ExecuteAsync<TResult>(
-            ICommand<TResult> command,
+        public async Task<TResult> ExecuteAsync<TCommand, TResult>(
+            TCommand command,
             CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult
+            where TResult : notnull, IExecutionResult<TCommand>
+            where TCommand : ICommand<TResult>
         {
             // Validating command reference.
             if (command is null)
@@ -127,20 +140,11 @@ namespace Nd.Commands
                 s_commandReceived(_logger, default);
             }
 
-            // Fetching and validating command handler.
-            var handlers = _commandHandlerRegistery[command.GetType()];
-
-            if (handlers is null || !handlers.Any())
+            // Fetching and validating command handler call.
+            if (!_commandHandlerRegistery.TryGetValue(command.GetType(), out var handler))
             {
                 throw new CommandNotRegisteredException(command.TypeName);
             }
-
-            if (handlers.Count() > 1)
-            {
-                throw new CommandHandlerConflictException(command.TypeName, handlers.Select(h => h.GetType().ToPrettyString()).ToArray());
-            }
-
-            var handler = handlers.Single();
 
             TResult result;
 
@@ -150,12 +154,12 @@ namespace Nd.Commands
                 await command.AcknowledgeAsync().ConfigureAwait(false);
 
                 // Execute the command and keep the result.
-                result = await handler.ExecuteAsync<TResult>(command, cancellation)
+                result = await ((ICommandHandler<TCommand, TResult>)handler).ExecuteAsync(command, cancellation)
                     .ConfigureAwait(false);
 
                 if (result is null)
                 {
-                    throw new CommandExecutionException($"Command handler {handler.GetType().FullName} cannot return a null result");
+                    throw new CommandExecutionException($"CommandType handler {handler.GetType().ResolveName()} cannot return a null result");
                 }
 
                 // Notify that the result is received.

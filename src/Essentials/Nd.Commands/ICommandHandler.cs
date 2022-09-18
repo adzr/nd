@@ -25,21 +25,22 @@
  * SOFTWARE.
  */
 
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Commands.Results;
 
 namespace Nd.Commands
 {
+    [SuppressMessage("Design", "CA1040:Avoid empty interfaces", Justification = "Cache loading implementations.")]
     public interface ICommandHandler
     {
-        Task<TResult> ExecuteAsync<TResult>(ICommand command, CancellationToken cancellation = default)
-            where TResult : notnull, IExecutionResult;
+
     }
 
-    public interface ICommandHandler<TCommand, TResult>
+    public interface ICommandHandler<in TCommand, TResult> : ICommandHandler
         where TCommand : notnull, ICommand<TResult>
-        where TResult : notnull, IExecutionResult
+        where TResult : notnull, IExecutionResult<TCommand>
     {
         Task<TResult> ExecuteAsync(TCommand command, CancellationToken cancellation = default);
     }

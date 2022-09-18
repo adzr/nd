@@ -157,7 +157,7 @@ namespace Nd.Aggregates.Tests
         {
             var expectedCorrelationId = new CorrelationIdentity(Guid.NewGuid());
             var expectedIdentity = new TestIdentity(RandomGuidFactory.Instance.Create());
-            var expectedAggregateName = typeof(TestAggregateRoot).GetName();
+            var expectedAggregateName = typeof(TestAggregateRoot).ResolveName();
 
             var expectedEventA = new TestEventA(RandomGuidFactory.Instance.Create().ToString());
             var expectedEventB = new TestEventB();
@@ -184,7 +184,7 @@ namespace Nd.Aggregates.Tests
         {
             var expectedCorrelationId = new CorrelationIdentity(Guid.NewGuid());
             var expectedIdentity = new TestIdentity(RandomGuidFactory.Instance.Create());
-            var expectedAggregateName = typeof(TestAggregateRoot).GetName();
+            var expectedAggregateName = typeof(TestAggregateRoot).ResolveName();
 
             var expectedEventA = new TestEventC1(RandomGuidFactory.Instance.Create().ToString());
             var expectedEventB = new TestEventC2(RandomGuidFactory.Instance.Create().ToString());

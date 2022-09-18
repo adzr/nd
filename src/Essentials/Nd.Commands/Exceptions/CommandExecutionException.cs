@@ -31,7 +31,7 @@ namespace Nd.Commands.Exceptions
     {
         public ICommand? Command { get; }
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public CommandExecutionException() : this("CommandType execution has unexpectedly failed")
         {
         }
 
@@ -39,7 +39,7 @@ namespace Nd.Commands.Exceptions
         {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
+        public CommandExecutionException(ICommand command, Exception ex) : this($"CommandType {command} execution has unexpectedly failed", ex)
         {
             Command = command;
         }

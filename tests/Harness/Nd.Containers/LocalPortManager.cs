@@ -21,47 +21,59 @@
  * SOFTWARE.
  */
 
-using Nd.Core.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Nd.Containers
 {
-    public class LocalPortManager
+    public static class LocalPortManager
     {
-        private static readonly object s_lock = new();
+        private static readonly Action<ILogger, Exception?> s_failedToAcquireLock =
+            LoggerMessage.Define(LogLevel.Trace, new EventId(999, "FailedAcquiringFileLock"), "Failed to acquire file lock");
 
-        private static LocalPortManager? s_instance;
-
-        private readonly IAsyncLocker _asyncLocker = ExclusiveAsyncLocker.Create();
-
-        private LocalPortManager()
+        public static async Task AcquireRandomPortAsync(Func<int, CancellationToken, Task> acquirePort, string portLockPath = "nd/port.lock", ILogger? logger = default, CancellationToken cancellation = default)
         {
-            _asyncLocker = ExclusiveAsyncLocker.Create();
-        }
-
-        public static LocalPortManager Create()
-        {
-            lock (s_lock)
-            {
-                s_instance ??= new();
-            }
-
-            return s_instance;
-        }
-
-        ~LocalPortManager() => _asyncLocker.Dispose();
-
-        public async Task RunOnRandomPortAsync(Func<int, CancellationToken, Task> asyncFunc, CancellationToken cancellation = default)
-        {
-            using var @lock = await _asyncLocker.WaitAsync(cancellation).ConfigureAwait(false);
+            using var @lock = await TryToAcquireFileLockAsync(portLockPath, logger, cancellation).ConfigureAwait(false);
 
             var port = Helpers.GetRandomOpenPort();
 
-            if (asyncFunc is null)
+            if (acquirePort is null)
             {
                 return;
             }
 
-            await asyncFunc(port, cancellation).ConfigureAwait(false);
+            await acquirePort(port, cancellation).ConfigureAwait(false);
+        }
+
+        private static async Task<FileStream> TryToAcquireFileLockAsync(string lockPath, ILogger? logger = default, CancellationToken cancellation = default)
+        {
+            var path = Path.Combine(
+                Path.GetTempPath(),
+                Directory.CreateDirectory(
+                    Path.GetDirectoryName(
+                        lockPath ??
+                        throw new ArgumentNullException(nameof(lockPath))) ??
+                        throw new ArgumentException($"Failed to create path {lockPath}")).Name);
+
+            while (!cancellation.IsCancellationRequested)
+            {
+                try
+                {
+                    return File.Open(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
+                {
+                    if (logger is not null)
+                    {
+                        s_failedToAcquireLock(logger, e);
+                    }
+
+                    await Task.Delay(100, cancellation).ConfigureAwait(false);
+                }
+            }
+
+            throw new IOException($"Failed to acquire file lock on {lockPath}");
         }
     }
 }

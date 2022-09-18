@@ -43,7 +43,7 @@ namespace Nd.Aggregates.Persistence
 
         protected CachingAggregateManager(IAggregateReader<TIdentity> reader, IAggregateEventWriter<TIdentity> writer, IDistributedCache? cache = default, string cacheKeyPrefix = "", Action<DistributedCacheEntryOptions>? configureCacheOptions = default)
         {
-            TypeName = GetType().GetName();
+            TypeName = GetType().ResolveName();
             _reader = reader;
             _writer = writer;
             _cache = cache;

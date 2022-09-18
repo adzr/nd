@@ -43,7 +43,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             LoggerMessage.Define(LogLevel.Trace, new EventId(
                                 MongoLoggingEventsConstants.CommandQueryReceived,
                                 nameof(MongoLoggingEventsConstants.CommandQueryReceived)),
-                                "Command query received");
+                                "CommandType query received");
 
         static MongoDBCommandReader()
         {

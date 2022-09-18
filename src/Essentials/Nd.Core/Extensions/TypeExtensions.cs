@@ -104,14 +104,14 @@ namespace Nd.Core.Extensions
         public static bool HasMethod(this Type type, string name) =>
             type.GetTypeInfo().GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) is not null;
 
-        public static string GetName(this Type type) =>
+        public static string ResolveName(this Type type) =>
             type?
             .GetTypeInfo()
             .GetCustomAttributes<NamedTypeAttribute>(true)
             .FirstOrDefault()?.TypeName ??
             type?.AssemblyQualifiedName ?? string.Empty;
 
-        public static (string Name, uint Version) GetNameAndVersion(this Type type)
+        public static (string Name, uint Version) ResolveNameAndVersion(this Type type)
         {
             var record = type?
             .GetTypeInfo()
@@ -119,7 +119,7 @@ namespace Nd.Core.Extensions
             .FirstOrDefault();
 
             return record is null ?
-                (type?.GetName() ?? string.Empty, 0u) :
+                (type?.ResolveName() ?? string.Empty, 0u) :
                 (record.TypeName, record.TypeVersion);
         }
 

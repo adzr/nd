@@ -101,7 +101,7 @@ namespace Nd.Extensions.Stores.Mongo
                     $"Cannot use {nameof(NamedTypeDiscriminatorConvention)} for type {nominalType}");
             }
 
-            var nameAndVersion = TypeDefinitions.GetNameAndVersion(actualType);
+            var nameAndVersion = TypeDefinitions.ResolveNameAndVersion(actualType);
 
             return BsonValue.Create($"{nameAndVersion.Name}#{nameAndVersion.Version}");
         }

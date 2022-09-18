@@ -47,7 +47,7 @@ namespace Nd.Core.Types
         public static readonly IDictionary<(string name, uint Version), Type> NamesAndVersionsTypes = Catalog
             .ToDictionary(r => (r.Name, r.Version), r => r.Type);
 
-        public static (string Name, uint Version) GetNameAndVersion(Type type) =>
+        public static (string Name, uint Version) ResolveNameAndVersion(Type type) =>
             TypesNamesAndVersions.TryGetValue(type, out (string TypeName, uint TypeVersion) entry) ?
             entry : throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {type.ToPrettyString()}");
 
@@ -60,7 +60,7 @@ namespace Nd.Core.Types
 
         private static (string Name, uint Version, Type Type) ResolveTypesNamesAndVersions(Type type)
         {
-            var (name, version) = type.GetNameAndVersion();
+            var (name, version) = type.ResolveNameAndVersion();
             return (name, version, type);
         }
 

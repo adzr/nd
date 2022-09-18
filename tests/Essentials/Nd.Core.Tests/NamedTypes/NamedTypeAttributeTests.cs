@@ -41,6 +41,6 @@ namespace Nd.Core.Tests.NamedTypes
     {
         [Fact]
         public void CanHaveAttributedName() =>
-            Assert.Equal(nameof(NamedTypeAttributeTests), typeof(NamedTypeAttributeTests).GetName());
+            Assert.Equal(nameof(NamedTypeAttributeTests), typeof(NamedTypeAttributeTests).ResolveName());
     }
 }
