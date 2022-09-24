@@ -143,7 +143,7 @@ namespace Nd.Commands
             // Fetching and validating command handler call.
             if (!_commandHandlerRegistery.TryGetValue(command.GetType(), out var handler))
             {
-                throw new CommandNotRegisteredException(command.TypeName);
+                throw new CommandNotRegisteredException(command);
             }
 
             TResult result;
@@ -159,7 +159,7 @@ namespace Nd.Commands
 
                 if (result is null)
                 {
-                    throw new CommandExecutionException($"CommandType handler {handler.GetType().ResolveName()} cannot return a null result");
+                    throw new CommandExecutionException(command, new CommandExecutionException($"Command handler cannot return a null result"));
                 }
 
                 // Notify that the result is received.

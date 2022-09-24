@@ -28,6 +28,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FakeItEasy;
+using Nd.Commands.Exceptions;
 using Nd.Commands.Persistence;
 using Nd.Commands.Results;
 using Nd.Fakes;
@@ -62,6 +63,15 @@ namespace Nd.Commands.Tests
             GenericExecutionResult<CommandB>(Command, Exception, Acknowledged);
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked.")]
+        [ExecutionResult("CommandC", 1)]
+        public record class CommandCResult(
+            CommandC Command,
+            Exception? Exception = default,
+            DateTimeOffset? Acknowledged = default,
+            string? Comment = default) :
+            GenericExecutionResult<CommandC>(Command, Exception, Acknowledged);
+
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked.")]
         [Command("CommandA", 1)]
         public record class CommandA(
                 IIdempotencyIdentity IdempotencyIdentity,
@@ -77,6 +87,14 @@ namespace Nd.Commands.Tests
             DateTimeOffset? Acknowledged = default) : Command<CommandBResult>(
                 IdempotencyIdentity, CorrelationIdentity, Acknowledged);
 
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked.")]
+        [Command("CommandC", 1)]
+        public record class CommandC(
+                IIdempotencyIdentity IdempotencyIdentity,
+                ICorrelationIdentity CorrelationIdentity,
+                DateTimeOffset? Acknowledged = default) : Command<CommandCResult>(
+                    IdempotencyIdentity, CorrelationIdentity, Acknowledged);
+
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be read by type definitions.")]
         public class TestCommandHandler :
             ICommandHandler<CommandA, CommandAResult>,
@@ -87,6 +105,22 @@ namespace Nd.Commands.Tests
 
             public Task<CommandBResult> ExecuteAsync(CommandB command, CancellationToken cancellation = default) =>
                 Task.FromResult(new CommandBResult(command));
+        }
+
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be read by type definitions.")]
+        public class NullCommandHandler :
+            ICommandHandler<CommandC, CommandCResult>
+        {
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+            public Task<CommandCResult> ExecuteAsync(CommandC command, CancellationToken cancellation = default) => Task.FromResult(default(CommandCResult));
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+        }
+
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be read by type definitions.")]
+        public class ExceptionCommandHandler :
+            ICommandHandler<CommandC, CommandCResult>
+        {
+            public Task<CommandCResult> ExecuteAsync(CommandC command, CancellationToken cancellation = default) => throw new NotImplementedException();
         }
 
         #endregion
@@ -131,8 +165,10 @@ namespace Nd.Commands.Tests
 
             Assert.NotNull(result);
             Assert.Equal(command, result.Command);
+            Assert.NotNull(command.Acknowledged);
             _ = commandWriteCall.MustHaveHappenedOnceExactly();
             Assert.Equal(result, Assert.Single(storedCommands));
+            Assert.NotNull(result.Acknowledged);
         }
 
         [Fact]
@@ -164,6 +200,70 @@ namespace Nd.Commands.Tests
             Assert.True(traces.All(t =>
                 t.State.ContainsState(LoggingScopeConstants.CorrelationKey, command.CorrelationIdentity.Value) &&
                 t.State.ContainsState(Common.LoggingScopeConstants.CommandId, command.IdempotencyIdentity.Value)));
+        }
+
+        [Fact]
+        public void CanThrowOnUnsupportedCommandExecution()
+        {
+            var handler = new TestCommandHandler();
+
+            var bus = new CommandBus(new ICommandHandler[] { handler }, A.Fake<ICommandWriter>(), default, default);
+
+            var command = new CommandC(new IdempotencyIdentity(Guid.NewGuid()), new CorrelationIdentity(Guid.NewGuid()));
+
+            var exception = Assert.Throws<CommandNotRegisteredException>(() => bus.ExecuteAsync<CommandC, CommandCResult>(command, default).GetAwaiter().GetResult());
+
+            Assert.Equal(command, exception.Command);
+        }
+
+        [Fact]
+        public void CanThrowOnNullResult()
+        {
+            var handler = new NullCommandHandler();
+
+            var bus = new CommandBus(new ICommandHandler[] { handler }, A.Fake<ICommandWriter>(), default, default);
+
+            var command = new CommandC(new IdempotencyIdentity(Guid.NewGuid()), new CorrelationIdentity(Guid.NewGuid()));
+
+            var exception = Assert.Throws<CommandExecutionException>(() => bus.ExecuteAsync<CommandC, CommandCResult>(command, default).GetAwaiter().GetResult());
+
+            Assert.Equal(command, exception.Command);
+            Assert.NotNull(command.Acknowledged);
+        }
+
+        [Fact]
+        public void CanThrowOnExceptionResult()
+        {
+            var handler = new ExceptionCommandHandler();
+
+            var bus = new CommandBus(new ICommandHandler[] { handler }, A.Fake<ICommandWriter>(), default, default);
+
+            var command = new CommandC(new IdempotencyIdentity(Guid.NewGuid()), new CorrelationIdentity(Guid.NewGuid()));
+
+            var exception = Assert.Throws<CommandExecutionException>(() => bus.ExecuteAsync<CommandC, CommandCResult>(command, default).GetAwaiter().GetResult());
+
+            Assert.Equal(command, exception.Command);
+            Assert.NotNull(command.Acknowledged);
+        }
+
+        [Fact]
+        public void CanThrowOnFailedStorage()
+        {
+            var handler = new TestCommandHandler();
+
+            var writer = A.Fake<ICommandWriter>();
+
+            _ = A.CallTo(() => writer.WriteAsync(A<CommandAResult>._, A<CancellationToken>._)).Throws<NotImplementedException>();
+
+            var bus = new CommandBus(new ICommandHandler[] { handler }, writer, default, default);
+
+            var command = new CommandA(new IdempotencyIdentity(Guid.NewGuid()), new CorrelationIdentity(Guid.NewGuid()));
+
+            var exception = Assert.Throws<CommandPersistenceException>(() => bus.ExecuteAsync<CommandA, CommandAResult>(command, default).GetAwaiter().GetResult());
+
+            Assert.Equal(command, exception.Command);
+            Assert.NotNull(exception.Result);
+            Assert.NotNull(command.Acknowledged);
         }
     }
 }

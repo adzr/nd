@@ -29,20 +29,20 @@ namespace Nd.Commands.Exceptions
     [Serializable]
     public class CommandNotRegisteredException : Exception
     {
-        public CommandNotRegisteredException(ICommand command, Exception? exception = default)
-            : base($"CommandType \"{command?.TypeName ?? throw new ArgumentNullException(nameof(command))}\" is not found in the command registery, cannot find a handler for an unknown command", exception)
-        {
-            CommandTypeName = command.TypeName;
-        }
+        public ICommand? Command { get; }
 
-        public string? CommandTypeName { get; }
-
-        public CommandNotRegisteredException() : this($"CommandType is not found in the command registery, cannot find a handler for an unknown command")
+        public CommandNotRegisteredException() : this($"Command is not handled in the command registery, cannot find a handler for an unknown command")
         {
         }
 
         public CommandNotRegisteredException(string message) : base(message)
         {
+        }
+
+        public CommandNotRegisteredException(ICommand command, Exception? exception = default)
+            : base($"Command {command} is not handled in the command registery, cannot find a handler for an unknown command", exception)
+        {
+            Command = command;
         }
 
         public CommandNotRegisteredException(string message, Exception innerException) : base(message, innerException)
