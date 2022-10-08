@@ -23,30 +23,35 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
+using Nd.Subscriptions.Identities;
 
-namespace Nd.Aggregates.Exceptions
+namespace Nd.Subscriptions.Exceptions
 {
     [Serializable]
-    public class StateUpgradeException : Exception
+    public class NoOpSubscriptionException : NdCoreException
     {
-        public StateUpgradeException(string stateTypeName, Exception? exception = default)
-            : base($"Failed to upgrade state of Name \"{stateTypeName}\"", exception)
-        {
-            StateTypeName = stateTypeName;
-        }
-
-        public string? StateTypeName { get; }
-
-        public StateUpgradeException() : this("Failed to upgrade state")
+        public NoOpSubscriptionException()
         {
         }
 
-        public StateUpgradeException(string message) : base(message)
+        public NoOpSubscriptionException(string? message) : base(message)
         {
         }
 
-        protected StateUpgradeException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        public NoOpSubscriptionException(ISubscriptionIdentity identity) : base($"Subscription {identity} does not contain any valid calls")
+        {
+            Identity = identity;
+        }
+
+        public NoOpSubscriptionException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
+
+        protected NoOpSubscriptionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public ISubscriptionIdentity? Identity { get; }
     }
 }

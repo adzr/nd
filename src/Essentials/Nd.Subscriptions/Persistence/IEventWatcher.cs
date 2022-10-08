@@ -31,6 +31,11 @@ namespace Nd.Subscriptions.Persistence
 {
     public interface IEventWatcher
     {
-        Task Watch(Func<IEnumerable<ICommittedEvent>, CancellationToken, Task> onChange, ISubscriptionState state, CancellationToken cancellation = default);
+        Task Watch(Func<IEnumerable<ICommittedEvent>, CancellationToken, Task> onChange, ISubscriptionState state, EventWatcherOptions? options = default, CancellationToken cancellation = default);
+    }
+
+    public class EventWatcherOptions
+    {
+        public IEnumerable<Type>? EventTypes { get; set; }
     }
 }

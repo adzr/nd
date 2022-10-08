@@ -54,12 +54,16 @@ namespace Nd.Aggregates.Tests
             public void Handle(TestEventC _) => _events.Enqueue(new TestEventC());
         }
 
+        [Event("AggregateStateTestEventA", 1)]
         internal sealed record class TestEventA : AggregateEvent<TestAggregateState>;
 
+        [Event("AggregateStateTestEventB", 1)]
         internal sealed record class TestEventB : AggregateEvent<TestAggregateState>;
 
+        [Event("AggregateStateTestEventC", 1)]
         internal sealed record class TestEventC : AggregateEvent<TestAggregateState>;
 
+        [Event("AggregateStateTestEventD", 1)]
         internal sealed record class TestEventD : AggregateEvent<TestAggregateState>;
 
         #endregion

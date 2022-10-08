@@ -27,7 +27,7 @@ using Nd.Core.Types.Versions;
 namespace Nd.Core.Exceptions
 {
     [Serializable]
-    public class TypeUpgradeConflictException : Exception
+    public class TypeUpgradeConflictException : NdCoreException
     {
         public IVersionedType? From { get; }
         public IVersionedType? To { get; }

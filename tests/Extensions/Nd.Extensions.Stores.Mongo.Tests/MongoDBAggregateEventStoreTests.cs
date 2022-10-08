@@ -24,13 +24,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using Nd.Aggregates;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
@@ -49,13 +48,15 @@ namespace Nd.Extensions.Stores.Mongo.Tests
     {
         #region Test types definitions
 
-        [Identity("AggregatesTestIdentity")]
-        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
+        [Identity("MongoDbAggregateEventTest")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         public sealed record class TestIdentity : GuidAggregateIdentity
         {
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
+
+            public override IAggregateRootFactory CreateAggregateFactory() => new TestAggregateRootFactory().ConfigureIdentity(this);
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
@@ -70,6 +71,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             public uint Counter { get; private set; }
 
             public override TestAggregateState State => this;
+
             public void Handle(TestEventCountV1 aggregateEvent) => Counter++;
 
             public void Handle(TestEventCountV2 aggregateEvent) => Counter += aggregateEvent?.Amount ?? 0;
@@ -83,60 +85,35 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
         public sealed record class TestEventCountV2(uint Amount) : AggregateEvent<TestAggregateState>;
 
-        internal class TestReader : MongoDBAggregateEventReader<TestIdentity, Guid>
-        {
-            public TestReader(
-                MongoClient client,
-                string databaseName,
-                string collectionName,
-                ILogger<TestReader>? logger,
-                ActivitySource? activitySource) :
-                base(
-                    client,
-                    databaseName,
-                    collectionName,
-                    logger,
-                    activitySource)
-            { }
-
-            protected override TestIdentity CreateIdentity(object value) => new(Guid.Parse($"{value}"));
-        }
-
-        internal class TestWriter : MongoDBAggregateEventWriter<TestIdentity, Guid>
-        {
-            public TestWriter(
-                MongoClient client,
-                string databaseName,
-                string collectionName,
-                ILogger<TestWriter>? logger,
-                ActivitySource? activitySource) :
-                base(
-                    client,
-                    databaseName,
-                    collectionName,
-                    logger,
-                    activitySource)
-            { }
-        }
-
-        internal sealed record class UncommittedEvent(
+        internal sealed record class PendingEvent(
             IAggregateEvent AggregateEvent,
             IAggregateEventMetadata<TestIdentity> Metadata
-        ) : IUncommittedEvent<TestIdentity>;
+        ) : IPendingEvent<TestIdentity>;
+
+        internal class TestAggregateRootFactory : AggregateRootFactory<TestIdentity, TestAggregateState>
+        {
+            public override IAggregateRoot<TestIdentity, TestAggregateState> Build(ISession session) => new TestAggregateRoot(Identity!, State, session);
+
+            protected override IAggregateState<TestAggregateState> CreateState() => new TestAggregateState();
+        }
+
+        internal class TestAggregateRoot : AggregateRoot<TestIdentity, TestAggregateState>
+        {
+            public TestAggregateRoot(TestIdentity identity, IAggregateState<TestAggregateState> state, ISession session) : base(identity, state, session) { }
+        }
 
         #endregion
 
         private const string DatabaseName = "test_db";
-        private const string CollectionName = "events";
 
         private MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
-        private readonly TestWriter _mongoWriter;
-        private readonly TestReader _mongoReader;
+        private readonly MongoDBAggregateEventWriter _mongoWriter;
+        private readonly MongoDBAggregateEventReader _mongoReader;
 
         public MongoDBAggregateEventStoreTests()
         {
-            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
             LocalPortManager.AcquireRandomPortAsync(async (port, cancellation) =>
             {
@@ -148,9 +125,9 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
             _mongoClient = new MongoClient(mongoSettings);
 
-            _mongoWriter = new TestWriter(_mongoClient, DatabaseName, CollectionName, default, default);
+            _mongoWriter = new MongoDBAggregateEventWriter(_mongoClient, DatabaseName, default, default);
 
-            _mongoReader = new TestReader(_mongoClient, DatabaseName, CollectionName, default, default);
+            _mongoReader = new MongoDBAggregateEventReader(_mongoClient, DatabaseName, default, default);
         }
 
         [Fact]
@@ -159,14 +136,13 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
             var _ = new TestAggregateState();
             var identity = new TestIdentity(CombGuidFactory.Instance.Create());
-            var aggregateName = "TestAggregateRoot";
 
             var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
             var v2NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV2));
             var timestamp = DateTime.UtcNow;
 
             var expectedEvents = new[] {
-                new UncommittedEvent(
+                new PendingEvent(
                     Metadata: new AggregateEventMetadata<TestIdentity>(
                         IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
                         CorrelationIdentity: new CorrelationIdentity(Guid.NewGuid()),
@@ -174,11 +150,10 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                         TypeName: v1NameAndVersion.Name,
                         TypeVersion: v1NameAndVersion.Version,
                         AggregateIdentity: identity,
-                        AggregateName: aggregateName,
                         AggregateVersion: 1,
                         Timestamp: timestamp),
                     AggregateEvent: new TestEventCountV1()),
-                new UncommittedEvent(
+                new PendingEvent(
                     Metadata: new AggregateEventMetadata<TestIdentity>(
                         IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
                         CorrelationIdentity: new CorrelationIdentity(Guid.NewGuid()),
@@ -186,7 +161,6 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                         TypeName: v2NameAndVersion.Name,
                         TypeVersion: v2NameAndVersion.Version,
                         AggregateIdentity: identity,
-                        AggregateName: aggregateName,
                         AggregateVersion: 2,
                         Timestamp: timestamp),
                     AggregateEvent: new TestEventCountV2(100)),

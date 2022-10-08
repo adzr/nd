@@ -21,17 +21,47 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
+using System;
+using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
-using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateReader<TIdentity>
+    public abstract class AggregateRootFactory<TIdentity, TState> : IAggregateRootFactory<TIdentity, TState>
         where TIdentity : notnull, IAggregateIdentity
+        where TState : notnull
     {
-        Task<TAggregate> ReadAsync<TAggregate>(TIdentity aggregateId, ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default)
-            where TAggregate : notnull, IAggregateRoot<TIdentity>;
+        protected TIdentity? Identity { get; private set; }
+        protected IAggregateState<TState> State { get; }
+        protected uint Version { get; private set; }
+
+        protected AggregateRootFactory()
+        {
+#pragma warning disable CA2214 // Do not call overridable methods in constructors
+            State = CreateState();
+#pragma warning restore CA2214 // Do not call overridable methods in constructors
+        }
+
+        protected abstract IAggregateState<TState> CreateState();
+
+        public abstract IAggregateRoot<TIdentity, TState> Build(ISession session);
+
+        public IAggregateRootFactory<TIdentity, TState> ConfigureIdentity(TIdentity identity)
+        {
+            Identity = identity;
+            return this;
+        }
+
+        public IAggregateRootFactory<TIdentity, TState> ConfigureState(Action<IAggregateState<TState>> configure)
+        {
+            configure?.Invoke(State);
+            return this;
+        }
+
+        public IAggregateRootFactory<TIdentity, TState> ConfigureVersion(uint version)
+        {
+            Version = version;
+            return this;
+        }
     }
 }

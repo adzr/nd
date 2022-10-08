@@ -25,8 +25,9 @@ using System.Runtime.Serialization;
 
 namespace Nd.Core.Exceptions
 {
+
     [Serializable]
-    public class MissingDeclaringTypeException : Exception
+    public class MissingDeclaringTypeException : NdCoreException
     {
         public MissingDeclaringTypeException() : this($"Method info missing declaring type")
         {

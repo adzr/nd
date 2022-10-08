@@ -49,7 +49,7 @@ namespace Nd.Core.Types
 
         public static (string Name, uint Version) ResolveNameAndVersion(Type type) =>
             TypesNamesAndVersions.TryGetValue(type, out (string TypeName, uint TypeVersion) entry) ?
-            entry : throw new TypeDefinitionNotFoundException($"Definition of type has no Name or Version defined: {type.ToPrettyString()}");
+            entry : throw new TypeDefinitionNotFouNdCoreException($"Definition of type has no Name or Version defined: {type.ToPrettyString()}");
 
         public static Type[] GetAllImplementations<T>() => AppDomain
             .CurrentDomain

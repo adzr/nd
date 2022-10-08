@@ -23,37 +23,30 @@
 
 using System;
 using System.Runtime.Serialization;
-using Nd.Identities;
+using Nd.Core.Exceptions;
 
 namespace Nd.Aggregates.Exceptions
 {
     [Serializable]
-    public class AggregatePersistenceException : Exception
+    public class SessionPersistenceException : NdCoreException
     {
-        public AggregatePersistenceException(string aggregateTypeName, IIdentity identity, Exception innerException) :
-            base($"Aggregate \"{aggregateTypeName}\" ({identity}) failed to store", innerException)
-        {
-            AggregateTypeName = aggregateTypeName;
-            Identity = identity;
-        }
-
-        public string? AggregateTypeName { get; }
-
-        public IIdentity? Identity { get; }
-
-        public AggregatePersistenceException() : this("Aggregate failed to store")
+        public SessionPersistenceException() : this("Session failed to be committed")
         {
         }
 
-        public AggregatePersistenceException(string message) : base(message)
+        public SessionPersistenceException(Exception ex) : this("Session failed to be committed", ex)
         {
         }
 
-        public AggregatePersistenceException(string message, Exception innerException) : base(message, innerException)
+        public SessionPersistenceException(string message) : base(message)
         {
         }
 
-        protected AggregatePersistenceException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        public SessionPersistenceException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected SessionPersistenceException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         {
         }
     }

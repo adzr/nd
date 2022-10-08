@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Persistence;
 using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
@@ -28,5 +29,7 @@ namespace Nd.Aggregates.Identities
     public abstract record class StringAggregateIdentity : StringIdentity, IAggregateIdentity<string>
     {
         protected StringAggregateIdentity(string value) : base(value) { }
+
+        public abstract IAggregateRootFactory CreateAggregateFactory();
     }
 }

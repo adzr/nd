@@ -41,11 +41,9 @@ using Nd.Identities.Extensions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    public abstract class MongoDBAggregateEventReader<TIdentity, TValue> : MongoAccessor, IAggregateEventReader<TIdentity>
-        where TIdentity : notnull, IAggregateIdentity
-        where TValue : notnull
+    public class MongoDBAggregateEventReader : MongoAccessor, IAggregateEventReader
     {
-        private readonly ILogger<MongoDBAggregateEventReader<TIdentity, TValue>>? _logger;
+        private readonly ILogger<MongoDBAggregateEventReader>? _logger;
         private readonly ActivitySource _activitySource;
 
         private static readonly Action<ILogger, string, Exception?> s_mongoResultReceived =
@@ -65,24 +63,24 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             BsonDefaultsInitializer.Initialize();
         }
 
-        protected MongoDBAggregateEventReader(
+        public MongoDBAggregateEventReader(
             MongoClient client,
             string databaseName,
-            string collectionName,
-            ILogger<MongoDBAggregateEventReader<TIdentity, TValue>>? logger,
+            ILogger<MongoDBAggregateEventReader>? logger,
             ActivitySource? activitySource) :
-            base(client, databaseName, collectionName)
+            base(client, databaseName)
         {
             _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
-        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync<TIdentity>(
             TIdentity aggregateId,
             ICorrelationIdentity correlationId,
             uint versionStart,
             uint versionEnd,
             [EnumeratorCancellation] CancellationToken cancellation = default)
+            where TIdentity : notnull, IAggregateIdentity
         {
             if (aggregateId is null)
             {
@@ -95,11 +93,12 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             cancellation.ThrowIfCancellationRequested();
 
-            await foreach (var @event in FindEvents(
+            await foreach (var @event in FindEvents<TIdentity>(
                 aggregateId,
                 correlationId,
-                CreateIdentity,
-                GetCollection<MongoAggregateDocument<TValue>>(),
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                GetCollection<MongoAggregateDocument<TIdentity>>($"{aggregateId.TypeName}-aggregates".ToSnakeCase().ToLowerInvariant()),
+#pragma warning restore CA1308 // Normalize strings to uppercase
                 _logger,
                 cancellation))
             {
@@ -107,17 +106,17 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             }
         }
 
-        private static async IAsyncEnumerable<ICommittedEvent<TIdentity>> FindEvents(
-            TIdentity aggregateId,
+        private static async IAsyncEnumerable<ICommittedEvent<TIdentity>> FindEvents<TIdentity>(
+            IAggregateIdentity aggregateId,
             ICorrelationIdentity correlationId,
-            Func<object, TIdentity> createIdentity,
-            IMongoCollection<MongoAggregateDocument<TValue>> collection,
+            IMongoCollection<MongoAggregateDocument<TIdentity>> collection,
             ILogger? logger,
             [EnumeratorCancellation] CancellationToken cancellation)
+            where TIdentity : notnull, IAggregateIdentity
         {
             using var cursor = await collection
-                .FindAsync<MongoAggregateDocument<TValue>>(
-                Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value),
+                .FindAsync<MongoAggregateDocument<TIdentity>>(
+                Builders<MongoAggregateDocument<TIdentity>>.Filter.Eq(d => d.Id, aggregateId),
                 cancellationToken: cancellation).ConfigureAwait(false);
 
             var documemt = await cursor.SingleOrDefaultAsync(cancellation).ConfigureAwait(false);
@@ -149,40 +148,28 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
                 yield return e.Content is null
                     ? throw new MongoReaderEventDefinitionException("Null event content found, cannot resolve type and version")
-                    : MapEvent(e, documemt, createIdentity);
+                    : MapEvent(e, documemt);
             }
         }
 
-        private static CommittedEvent<TIdentity> MapEvent(
+        private static CommittedEvent<TIdentity> MapEvent<TIdentity>(
             MongoAggregateEventDocument e,
-            MongoAggregateDocument<TValue> documemt,
-            Func<object, TIdentity> createIdentity) =>
+            MongoAggregateDocument<TIdentity> documemt)
+            where TIdentity : notnull, IAggregateIdentity =>
             new(e.Content!, new AggregateEventMetadata<TIdentity>(
                         new IdempotencyIdentity(e.IdempotencyIdentity),
                         new CorrelationIdentity(e.CorrelationIdentity),
+                        documemt.Id!,
                         new AggregateEventIdentity(e.Id),
                         e.Content!.TypeName,
                         e.Content.TypeVersion,
-                        createIdentity(documemt.Id!),
-                        documemt.Name,
                         e.AggregateVersion,
                         e.Timestamp));
-
-        protected abstract TIdentity CreateIdentity(object value);
     }
 
-
-    internal class CommittedEvent<TIdentity> : ICommittedEvent<TIdentity>
-        where TIdentity : IAggregateIdentity
-    {
-        public CommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
-        {
-            AggregateEvent = aggregateEvent;
-            Metadata = metadata;
-        }
-
-        public IAggregateEvent AggregateEvent { get; }
-
-        public IAggregateEventMetadata<TIdentity> Metadata { get; }
-    }
+    internal sealed record class CommittedEvent<TIdentity>(
+        IAggregateEvent AggregateEvent,
+        IAggregateEventMetadata<TIdentity> Metadata
+        ) : ICommittedEvent<TIdentity>
+        where TIdentity : notnull, IAggregateIdentity;
 }

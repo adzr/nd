@@ -21,12 +21,14 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Persistence;
 using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
 {
     public interface IAggregateIdentity : IIdentity
     {
+        IAggregateRootFactory CreateAggregateFactory();
     }
 
     public interface IAggregateIdentity<out T> : IIdentity<T>, IAggregateIdentity

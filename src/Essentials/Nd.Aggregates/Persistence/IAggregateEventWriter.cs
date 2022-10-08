@@ -25,14 +25,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Events;
-using Nd.Aggregates.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateEventWriter<TIdentity>
-        where TIdentity : notnull, IAggregateIdentity
+    public interface IAggregateEventWriter
     {
         Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
-            where TEvent : notnull, IUncommittedEvent<TIdentity>;
+            where TEvent : notnull, IPendingEvent;
     }
 }

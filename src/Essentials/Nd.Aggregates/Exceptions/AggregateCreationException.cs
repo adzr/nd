@@ -23,12 +23,13 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Aggregates.Exceptions
 {
 
     [Serializable]
-    public class AggregateCreationException : Exception
+    public class AggregateCreationException : NdCoreException
     {
         public AggregateCreationException(string aggregateTypeName, Exception? exception = default)
             : base($"Failed to create aggregate root of Name \"{aggregateTypeName}\"", exception)

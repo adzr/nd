@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
-    public class DiscriminationException : Exception
+    public class DiscriminationException : NdCoreException
     {
         public DiscriminationException()
         {

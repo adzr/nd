@@ -22,36 +22,37 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
-using Nd.Core.Extensions;
+using Nd.Core.Exceptions;
+using Nd.Identities;
 
 namespace Nd.Aggregates.Exceptions
 {
     [Serializable]
-    public class AggregateStateCreationException : Exception
+    public class RedundantAggregateEventException : NdCoreException
     {
-        public AggregateStateCreationException(Type aggregateStateType, Exception? exception = default)
-            : base($"Failed to create aggregate state of Type: {aggregateStateType.ToPrettyString()}", exception)
-        {
-            AggregateStateType = aggregateStateType;
-        }
+        public IEnumerable<IIdempotencyIdentity>? Conflicts { get; }
 
-        public Type? AggregateStateType { get; }
-
-        public AggregateStateCreationException() : this("Failed to create aggregate state")
+        public RedundantAggregateEventException() : this("Aggregate event has already been emitted")
         {
         }
 
-        public AggregateStateCreationException(string message) : base(message)
+        public RedundantAggregateEventException(string message) : base(message)
         {
         }
 
-        public AggregateStateCreationException(string message, Exception innerException) : base(message, innerException)
+        public RedundantAggregateEventException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
-        protected AggregateStateCreationException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        protected RedundantAggregateEventException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         {
+        }
+
+        public RedundantAggregateEventException(IEnumerable<IIdempotencyIdentity> conflicts) : this($"Aggregate event has already been emitted: {string.Join(", ", conflicts)}")
+        {
+            Conflicts = conflicts;
         }
     }
 }

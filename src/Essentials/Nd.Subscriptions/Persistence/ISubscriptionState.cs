@@ -23,14 +23,13 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Nd.Entities;
 using Nd.Subscriptions.Identities;
 
 namespace Nd.Subscriptions.Persistence
 {
-    public interface ISubscriptionState
+    public interface ISubscriptionState : IEntity<ISubscriptionIdentity>
     {
-        ISubscriptionIdentity SubscriptionIdentity { get; }
-
         Task PersistAsync(CancellationToken cancellation = default);
 
         Task LoadAsync(CancellationToken cancellation = default);

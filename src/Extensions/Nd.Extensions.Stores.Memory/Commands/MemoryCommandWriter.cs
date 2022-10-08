@@ -1,8 +1,4 @@
 ﻿/*
- * Copyright © 2015 - 2021 Rasmus Mikkelsen
- * Copyright © 2015 - 2021 eBay Software Foundation
- * Modified from original source https://github.com/eventflow/EventFlow
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -25,22 +21,34 @@
  * SOFTWARE.
  */
 
-using Nd.Aggregates.Identities;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using Nd.Commands.Persistence;
+using Nd.Commands.Results;
 
-namespace Nd.Aggregates.Events
+namespace Nd.Extensions.Stores.Memory.Commands
 {
-    public interface IUncommittedEvent
+    public sealed class MemoryCommandWriter : ICommandWriter
     {
-        public IAggregateEvent AggregateEvent { get; }
-        public IAggregateEventMetadata Metadata { get; }
-    }
+        private readonly ConcurrentDictionary<Guid, IExecutionResult> _commands;
 
-    public interface IUncommittedEvent<TIdentity> : IUncommittedEvent
-        where TIdentity : notnull, IAggregateIdentity
-    {
-        public new IAggregateEvent AggregateEvent { get; }
-        public new IAggregateEventMetadata<TIdentity> Metadata { get; }
-        IAggregateEvent IUncommittedEvent.AggregateEvent => AggregateEvent;
-        IAggregateEventMetadata IUncommittedEvent.Metadata => Metadata;
+        public MemoryCommandWriter(ConcurrentDictionary<Guid, IExecutionResult> commands)
+        {
+            _commands = commands;
+        }
+
+        public Task WriteAsync<TResult>(TResult result, CancellationToken cancellation = default) where TResult : notnull, IExecutionResult
+        {
+            if (result is null)
+            {
+                throw new ArgumentNullException(nameof(result));
+            }
+
+            _ = _commands.GetOrAdd(result.Command.IdempotencyIdentity.Value, id => result);
+
+            return Task.CompletedTask;
+        }
     }
 }

@@ -25,12 +25,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 using Nd.Core.Extensions;
 
 namespace Nd.Commands.Exceptions
 {
     [Serializable]
-    public class CommandHandlerConflictException : Exception
+    public class CommandHandlerConflictException : NdCoreException
     {
         public Type? CommandType { get; }
         public IEnumerable<Type>? HandlerTypes { get; }

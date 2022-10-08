@@ -85,7 +85,7 @@ namespace Nd.Aggregates.Events
         {
             // On construction, get the correct lookup for this IAggregateState.
             _eventApplicationMethods = s_eventApplicationMethods[GetType()]?.FirstOrDefault() ??
-                throw new TypeDefinitionNotFoundException($"Definition of type has no {nameof(IAggregateEvent)} lookup defined: {GetType().ToPrettyString()}");
+                throw new TypeDefinitionNotFouNdCoreException($"Definition of type has no {nameof(IAggregateEvent)} lookup defined: {GetType().ToPrettyString()}");
         }
 
         void IAggregateState.Apply(IAggregateEvent @event)

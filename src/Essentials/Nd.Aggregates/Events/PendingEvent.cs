@@ -25,9 +25,9 @@ using Nd.Aggregates.Identities;
 
 namespace Nd.Aggregates.Events
 {
-    internal sealed record class UncommittedEvent<TIdentity>(
+    internal sealed record class PendingEvent<TIdentity>(
         IAggregateEvent AggregateEvent,
         IAggregateEventMetadata<TIdentity> Metadata
-    ) : IUncommittedEvent<TIdentity>
+    ) : IPendingEvent<TIdentity>
         where TIdentity : notnull, IAggregateIdentity;
 }

@@ -1,4 +1,8 @@
 ﻿/*
+ * Copyright © 2015 - 2021 Rasmus Mikkelsen
+ * Copyright © 2015 - 2021 eBay Software Foundation
+ * Modified from original source https://github.com/eventflow/EventFlow
+ * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -21,14 +25,22 @@
  * SOFTWARE.
  */
 
-using System;
-using Nd.Core.Types.Names;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Aggregates
+namespace Nd.Aggregates.Events
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class AggregateAttribute : NamedTypeAttribute
+    public interface IPendingEvent
     {
-        public AggregateAttribute(string typeName) : base($"{typeName}Aggregate") { }
+        public IAggregateEvent AggregateEvent { get; }
+        public IAggregateEventMetadata Metadata { get; }
+    }
+
+    public interface IPendingEvent<TIdentity> : IPendingEvent
+        where TIdentity : notnull, IAggregateIdentity
+    {
+        public new IAggregateEvent AggregateEvent { get; }
+        public new IAggregateEventMetadata<TIdentity> Metadata { get; }
+        IAggregateEvent IPendingEvent.AggregateEvent => AggregateEvent;
+        IAggregateEventMetadata IPendingEvent.Metadata => Metadata;
     }
 }

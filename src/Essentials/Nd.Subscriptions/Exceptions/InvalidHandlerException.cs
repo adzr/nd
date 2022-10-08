@@ -21,18 +21,38 @@
  * SOFTWARE.
  */
 
-using System.Diagnostics.CodeAnalysis;
-using Nd.Aggregates.Events;
-using Nd.Aggregates.Identities;
+using System;
+using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
+using Nd.Core.Extensions;
 
-namespace Nd.Aggregates
+namespace Nd.Subscriptions.Exceptions
 {
-    public delegate IAggregateState<TState> AggregateStateFactoryFunc<TState>() where TState : notnull;
+    [Serializable]
+    public class InvalidHandlerException : NdCoreException
+    {
+        public InvalidHandlerException()
+        {
+        }
 
-    [SuppressMessage("Design", "CA1005:Avoid excessive parameters on generic types", Justification = "All the generic types declared are required.")]
-    public delegate TAggregate AggregateFactoryFunc<TIdentity, TState, TAggregate>(
-        TIdentity identity, AggregateStateFactoryFunc<TState> initializeState, uint version = default)
-        where TAggregate : IAggregateRoot<TIdentity, TState>
-        where TIdentity : notnull, IAggregateIdentity
-        where TState : notnull;
+        public InvalidHandlerException(ISubscriptionHandler handler) :
+            base($"Handler {handler?.GetType().ResolveName()} does not contain a valid {nameof(ISubscriptionHandler.HandleAsync)} method")
+        {
+            Handler = handler;
+        }
+
+        public InvalidHandlerException(string? message) : base(message)
+        {
+        }
+
+        public InvalidHandlerException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected InvalidHandlerException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public ISubscriptionHandler? Handler { get; }
+    }
 }

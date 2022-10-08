@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Commands.Exceptions
 {
     [Serializable]
-    public class CommandNotRegisteredException : Exception
+    public class CommandNotRegisteredException : NdCoreException
     {
         public ICommand? Command { get; }
 

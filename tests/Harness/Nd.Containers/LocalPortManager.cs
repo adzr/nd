@@ -30,7 +30,7 @@ namespace Nd.Containers
         private static readonly Action<ILogger, Exception?> s_failedToAcquireLock =
             LoggerMessage.Define(LogLevel.Trace, new EventId(999, "FailedAcquiringFileLock"), "Failed to acquire file lock");
 
-        public static async Task AcquireRandomPortAsync(Func<int, CancellationToken, Task> acquirePort, string portLockPath = "nd/port.lock", ILogger? logger = default, CancellationToken cancellation = default)
+        public static async Task AcquireRandomPortAsync(Func<int, CancellationToken, Task> acquirePort, string portLockPath = "nd/test/port.lock", ILogger? logger = default, CancellationToken cancellation = default)
         {
             using var @lock = await TryToAcquireFileLockAsync(portLockPath, logger, cancellation).ConfigureAwait(false);
 
@@ -38,7 +38,7 @@ namespace Nd.Containers
 
             if (acquirePort is null)
             {
-                return;
+                throw new IOException($"Failed to acquire unused port");
             }
 
             await acquirePort(port, cancellation).ConfigureAwait(false);
@@ -46,19 +46,32 @@ namespace Nd.Containers
 
         private static async Task<FileStream> TryToAcquireFileLockAsync(string lockPath, ILogger? logger = default, CancellationToken cancellation = default)
         {
-            var path = Path.Combine(
-                Path.GetTempPath(),
-                Directory.CreateDirectory(
-                    Path.GetDirectoryName(
+            var relativeDirectoryPath = Path.GetDirectoryName(
                         lockPath ??
                         throw new ArgumentNullException(nameof(lockPath))) ??
-                        throw new ArgumentException($"Failed to create path {lockPath}")).Name);
+                        throw new ArgumentException($"Failed to create path {lockPath}");
+
+            if (Path.IsPathRooted(relativeDirectoryPath))
+            {
+                throw new IOException($"Path must be relative, found {lockPath}");
+            }
+
+            var fileName = Path.GetFileName(lockPath);
+
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                throw new IOException($"Path must contain the file name, found {lockPath}");
+            }
+
+            var absoluteDirectoryPath = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), relativeDirectoryPath)).FullName;
+
+            var filePath = Path.Combine(absoluteDirectoryPath, fileName);
 
             while (!cancellation.IsCancellationRequested)
             {
                 try
                 {
-                    return File.Open(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+                    return File.Open(filePath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
                 }
 #pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception e)

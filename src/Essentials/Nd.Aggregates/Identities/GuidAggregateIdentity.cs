@@ -22,6 +22,7 @@
  */
 
 using System;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Factories;
 using Nd.Identities;
 
@@ -32,5 +33,7 @@ namespace Nd.Aggregates.Identities
         protected GuidAggregateIdentity(Guid value) : base(value) { }
 
         protected GuidAggregateIdentity(IGuidFactory factory) : base(factory) { }
+
+        public abstract IAggregateRootFactory CreateAggregateFactory();
     }
 }

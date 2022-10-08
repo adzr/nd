@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+using Nd.Aggregates.Persistence;
 using Nd.Identities;
 
 namespace Nd.Aggregates.Identities
@@ -28,5 +29,7 @@ namespace Nd.Aggregates.Identities
     public abstract record class UnsignedLongAggregateIdentity : UnsignedLongIdentity, IAggregateIdentity<ulong>
     {
         protected UnsignedLongAggregateIdentity(ulong value) : base(value) { }
+
+        public abstract IAggregateRootFactory CreateAggregateFactory();
     }
 }

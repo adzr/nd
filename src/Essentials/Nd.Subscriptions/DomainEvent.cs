@@ -21,36 +21,36 @@
  * SOFTWARE.
  */
 
-using System;
-using System.Runtime.Serialization;
-using Nd.Core.Exceptions;
+using Nd.Aggregates.Events;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Subscriptions
 {
-    [Serializable]
-    public class CommandExecutionException : NdCoreException
+    internal class DomainEvent : IDomainEvent
     {
-        public ICommand? Command { get; }
-
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public DomainEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata metadata)
         {
+            AggregateEvent = aggregateEvent;
+            Metadata = metadata;
         }
 
-        public CommandExecutionException(string? message) : base(message)
+        public IAggregateEvent AggregateEvent { get; }
+
+        public IAggregateEventMetadata Metadata { get; }
+    }
+
+    internal class DomainEvent<TEvent, TIdentity> : IDomainEvent<TEvent, TIdentity>
+        where TEvent : IAggregateEvent
+        where TIdentity : notnull, IAggregateIdentity
+    {
+        public DomainEvent(TEvent aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
         {
+            AggregateEvent = aggregateEvent;
+            Metadata = metadata;
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
-        {
-            Command = command;
-        }
+        public TEvent AggregateEvent { get; }
 
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+        public IAggregateEventMetadata<TIdentity> Metadata { get; }
     }
 }

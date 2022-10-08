@@ -32,18 +32,17 @@ using Nd.Aggregates.Persistence;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
-    public abstract class MemoryAggregateEventWriter<TIdentity> : IAggregateEventWriter<TIdentity>
-        where TIdentity : IAggregateIdentity
+    public abstract class MemoryAggregateEventWriter : IAggregateEventWriter
     {
-        private readonly ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity>>> _events;
+        private readonly ConcurrentDictionary<IAggregateIdentity, ConcurrentQueue<ICommittedEvent>> _events;
 
-        protected MemoryAggregateEventWriter(ConcurrentDictionary<TIdentity, ConcurrentQueue<ICommittedEvent<TIdentity>>> events)
+        protected MemoryAggregateEventWriter(ConcurrentDictionary<IAggregateIdentity, ConcurrentQueue<ICommittedEvent>> events)
         {
             _events = events;
         }
 
         public Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
-            where TEvent : IUncommittedEvent<TIdentity>
+            where TEvent : notnull, IPendingEvent
         {
             if (events is null)
             {
@@ -52,18 +51,17 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
 
             foreach (var e in events)
             {
-                _events.GetOrAdd(e.Metadata.AggregateIdentity, (id) => new ConcurrentQueue<ICommittedEvent<TIdentity>>())
-                    .Enqueue(new CommittedEvent<TIdentity>(e.AggregateEvent, e.Metadata));
+                _events.GetOrAdd(e.Metadata.AggregateIdentity, (id) => new ConcurrentQueue<ICommittedEvent>())
+                    .Enqueue(new CommittedEvent(e.AggregateEvent, e.Metadata));
             }
 
             return Task.CompletedTask;
         }
     }
 
-    internal class CommittedEvent<TIdentity> : ICommittedEvent<TIdentity>
-        where TIdentity : IAggregateIdentity
+    internal class CommittedEvent : ICommittedEvent
     {
-        public CommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata<TIdentity> metadata)
+        public CommittedEvent(IAggregateEvent aggregateEvent, IAggregateEventMetadata metadata)
         {
             AggregateEvent = aggregateEvent;
             Metadata = metadata;
@@ -71,6 +69,6 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
 
         public IAggregateEvent AggregateEvent { get; }
 
-        public IAggregateEventMetadata<TIdentity> Metadata { get; }
+        public IAggregateEventMetadata Metadata { get; }
     }
 }

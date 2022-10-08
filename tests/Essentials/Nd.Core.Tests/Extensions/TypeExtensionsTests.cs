@@ -117,6 +117,12 @@ namespace Nd.Core.Tests.Extensions
             Assert.Equal("Something", typeof(TypeTest)
                 .GetMethod(nameof(TypeTest.ReturnArg))?
                 .CompileMethodInvocation<Func<TypeTest, string, string>>()(new TypeTest(), "Something") ?? "");
+
+        [Fact]
+        public void CanCompileConstructor() =>
+            Assert.Equal("Something", typeof(SimpleClassWithOverloadConstructor)
+                .GetConstructor(new[] { typeof(string) })?
+                .CompileConstructor<SimpleClassWithOverloadConstructor>()("Something")?.Value ?? "");
     }
 
     internal interface IA { }
@@ -146,5 +152,15 @@ namespace Nd.Core.Tests.Extensions
     internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
     {
         public VersionedTypeTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
+    }
+
+    public sealed class SimpleClassWithOverloadConstructor
+    {
+        public SimpleClassWithOverloadConstructor(string value)
+        {
+            Value = value;
+        }
+
+        public string Value { get; }
     }
 }

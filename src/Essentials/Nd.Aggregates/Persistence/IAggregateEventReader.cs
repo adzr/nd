@@ -28,8 +28,8 @@ using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateEventReader<TIdentity>
-        where TIdentity : notnull, IAggregateIdentity
+    public interface IAggregateEventReader
+
     {
         /// <summary>
         /// Reads all of the events of the aggregate which its identity is specified.
@@ -40,10 +40,11 @@ namespace Nd.Aggregates.Persistence
         /// <param name="correlationId">The correlation identity, must never be null.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IAsyncEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync<TIdentity>(
             TIdentity aggregateId,
             ICorrelationIdentity correlationId,
-            CancellationToken cancellation = default) =>
+            CancellationToken cancellation = default)
+            where TIdentity : notnull, IAggregateIdentity =>
             ReadAsync(aggregateId, correlationId, 0u, cancellation);
 
         /// <summary>
@@ -56,11 +57,12 @@ namespace Nd.Aggregates.Persistence
         /// <param name="version">The aggregate version, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IAsyncEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync<TIdentity>(
             TIdentity aggregateId,
             ICorrelationIdentity correlationId,
             uint version,
-            CancellationToken cancellation = default) =>
+            CancellationToken cancellation = default)
+            where TIdentity : notnull, IAggregateIdentity =>
             ReadAsync(aggregateId, correlationId, 0u, 0u, cancellation);
 
         /// <summary>
@@ -74,11 +76,12 @@ namespace Nd.Aggregates.Persistence
         /// <param name="versionEnd">The aggregate version upper range bound, should be ignored if zero.</param>
         /// <param name="cancellation">A cancellation token.</param>
         /// <returns><see cref="IAsyncEnumerable"/> of <see cref="ICommittedEvent"/> containing the event and its meta data.</returns>
-        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+        IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync<TIdentity>(
             TIdentity aggregateId,
             ICorrelationIdentity correlationId,
             uint versionStart,
             uint versionEnd,
-            CancellationToken cancellation = default);
+            CancellationToken cancellation = default)
+            where TIdentity : notnull, IAggregateIdentity;
     }
 }

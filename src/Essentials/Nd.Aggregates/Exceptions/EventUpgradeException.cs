@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Aggregates.Exceptions
 {
     [Serializable]
-    public class EventUpgradeException : Exception
+    public class EventUpgradeException : NdCoreException
     {
         public EventUpgradeException(string eventTypeName, Exception? exception = default)
             : base($"Failed to upgrade event of Name \"{eventTypeName}\"", exception)

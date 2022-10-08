@@ -27,7 +27,7 @@ using System.Runtime.Serialization;
 namespace Nd.Core.Exceptions
 {
     [Serializable]
-    public class TypeDefinitionConflictException : Exception
+    public class TypeDefinitionConflictException : NdCoreException
     {
         public TypeDefinitionConflictException() : this($"Multiple definitions of type name with similar version numbers")
         {

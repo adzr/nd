@@ -55,10 +55,9 @@ namespace Nd.Extensions.Stores.Mongo.Commands
 
         public MongoDBCommandReader(MongoClient client,
             string databaseName,
-            string collectionName,
             ILogger<MongoDBCommandReader>? logger,
             ActivitySource? activitySource) :
-            base(client, databaseName, collectionName)
+            base(client, databaseName)
         {
             _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
@@ -83,7 +82,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
                 s_commandQueryReceived(_logger, default);
             }
 
-            var cursor = await GetCollection<MongoCommandDocument>()
+            var cursor = await GetCollection<MongoCommandDocument>("commands")
                 .FindAsync<MongoCommandDocument>(
                 Builders<MongoCommandDocument>.Filter.Eq(d => d.Id, commandId),
                 cancellationToken: cancellation)

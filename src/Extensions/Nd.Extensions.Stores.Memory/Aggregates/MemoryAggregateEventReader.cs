@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -31,25 +33,30 @@ using Nd.Identities;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
-    public abstract class MemoryAggregateEventReader<TIdentity> : IAggregateEventReader<TIdentity>
-        where TIdentity : IAggregateIdentity
+    public abstract class MemoryAggregateEventReader : IAggregateEventReader
     {
-        private readonly IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity>>> _events;
+        private readonly IDictionary<IAggregateIdentity, IReadOnlyCollection<ICommittedEvent>> _events;
 
-        protected MemoryAggregateEventReader(IDictionary<TIdentity, IReadOnlyCollection<ICommittedEvent<TIdentity>>> events)
+        protected MemoryAggregateEventReader(ConcurrentDictionary<IAggregateIdentity, IReadOnlyCollection<ICommittedEvent>> events)
         {
             _events = events;
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync(
+        public async IAsyncEnumerable<ICommittedEvent<TIdentity>> ReadAsync<TIdentity>(
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
             TIdentity aggregateId,
             ICorrelationIdentity correlationId,
             uint versionStart,
             uint versionEnd,
             [EnumeratorCancellation] CancellationToken cancellation = default)
+            where TIdentity : notnull, IAggregateIdentity
         {
+            if (aggregateId is null)
+            {
+                throw new ArgumentNullException(nameof(aggregateId));
+            }
+
             if (_events.TryGetValue(aggregateId, out var events))
             {
                 foreach (var @event in events
@@ -58,7 +65,7 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
                     (versionEnd == 0u || e.Metadata.AggregateVersion <= versionEnd))
                 .OrderBy(e => e.Metadata.AggregateVersion))
                 {
-                    yield return @event;
+                    yield return (ICommittedEvent<TIdentity>)@event;
                 }
             }
 

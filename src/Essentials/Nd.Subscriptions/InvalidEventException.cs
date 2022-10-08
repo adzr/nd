@@ -23,33 +23,37 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Exceptions;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Subscriptions
 {
     [Serializable]
-    public class CommandExecutionException : NdCoreException
+    public class InvalidEventException : NdCoreException
     {
-        public ICommand? Command { get; }
+        public ICommittedEvent? CommittedEvent { get; }
+        public ISubscriptionHandler? Handler { get; }
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public InvalidEventException()
         {
         }
 
-        public CommandExecutionException(string? message) : base(message)
+        public InvalidEventException(string? message) : base(message)
         {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
+        public InvalidEventException(ICommittedEvent committedEvent, ISubscriptionHandler handler) :
+            base($"{nameof(ISubscriptionHandler)} of type {handler?.GetType()} cannot handle event of type {committedEvent?.AggregateEvent.GetType()}")
         {
-            Command = command;
+            CommittedEvent = committedEvent;
+            Handler = handler;
         }
 
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        public InvalidEventException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected InvalidEventException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

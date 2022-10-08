@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Queries.Exceptions
 {
     [Serializable]
-    public class QueryExecutionException : Exception
+    public class QueryExecutionException : NdCoreException
     {
         public IQuery? Query { get; }
         public Guid Id { get; }

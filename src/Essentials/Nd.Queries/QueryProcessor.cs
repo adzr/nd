@@ -108,7 +108,7 @@ namespace Nd.Queries
                 // Then group by query type which cannot be null at this point.
                 .GroupBy(r => r.QueryType!)
                 // Validate that there are no multiple handlers for any single query.
-                .Select(g => g.Count() == 1 ? g.Single() : throw new QueryHandlerConflictException(g.Key.GetName(), g.Select(r => r.Handler!.GetType().ToPrettyString()).ToArray()))
+                .Select(g => g.Count() == 1 ? g.Single() : throw new QueryHandlerConflictException(g.Key.ResolveName(), g.Select(r => r.Handler!.GetType().ToPrettyString()).ToArray()))
                 // Finally convert it to a lookup of a query type as a key and a handler instance as a one record value.
                 .ToLookup(r => r.QueryType!, r => r.Handler);
         }

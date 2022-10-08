@@ -25,11 +25,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Queries.Exceptions
 {
     [Serializable]
-    public class QueryHandlerConflictException : Exception
+    public class QueryHandlerConflictException : NdCoreException
     {
         public QueryHandlerConflictException(string queryTypeName, string[] queryHandlerTypeNames, Exception? exception = default)
             : base($"Multiple query handlers {string.Join(", ", queryHandlerTypeNames.Select(n => $"\"{n}\""))} found for the same query \"{queryTypeName}\"", exception)

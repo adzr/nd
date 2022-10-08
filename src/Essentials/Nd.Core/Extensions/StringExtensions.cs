@@ -38,7 +38,7 @@ namespace Nd.Core.Extensions
         /// </summary>
         /// <param name="value">The value of the given <see cref="string"/>.</param>
         /// <param name="separator">An optional separator to use for overridinng the default '_'.</param>
-        /// <returns>A lower case <see cref="string"/> where words are separated using the specified separator, defaults to '_'.</returns>
+        /// <returns>An upper case <see cref="string"/> where words are separated using the specified separator, defaults to '_'.</returns>
         public static string ToSnakeCase(this string value, string separator = "_") =>
             string.Join(separator, s_camelCasePattern.Matches(value).Select(g => g.Value.ToUpperInvariant()));
 

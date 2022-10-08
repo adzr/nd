@@ -61,10 +61,9 @@ namespace Nd.Extensions.Stores.Mongo.Commands
         public MongoDBCommandWriter(
             MongoClient client,
             string databaseName,
-            string collectionName,
             ILogger<MongoDBCommandWriter>? logger,
             ActivitySource? activitySource) :
-            base(client, databaseName, collectionName)
+            base(client, databaseName)
         {
             _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
@@ -122,7 +121,7 @@ namespace Nd.Extensions.Stores.Mongo.Commands
             {
                 cancellation.ThrowIfCancellationRequested();
 
-                await GetCollection<MongoCommandDocument>()
+                await GetCollection<MongoCommandDocument>("commands")
                     .InsertOneAsync(new MongoCommandDocument
                     {
                         Id = command.IdempotencyIdentity.Value,

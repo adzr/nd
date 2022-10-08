@@ -36,14 +36,14 @@ namespace Nd.Aggregates.Events
         IIdempotencyIdentity IdempotencyIdentity { get; }
         ICorrelationIdentity CorrelationIdentity { get; }
         uint AggregateVersion => 0u;
+        IAggregateIdentity AggregateIdentity => throw new NotSupportedException($"{nameof(AggregateIdentity)} is not supported");
+        IAggregateEventIdentity EventIdentity => throw new NotSupportedException($"{nameof(EventIdentity)} is not supported");
+        DateTimeOffset Timestamp => throw new NotSupportedException($"{nameof(Timestamp)} is not supported");
     }
 
     public interface IAggregateEventMetadata<out TIdentity> : IAggregateEventMetadata
         where TIdentity : notnull, IAggregateIdentity
     {
-        TIdentity AggregateIdentity { get; }
-        string AggregateName { get; }
-        IAggregateEventIdentity EventIdentity { get; }
-        DateTimeOffset Timestamp { get; }
+        new TIdentity AggregateIdentity { get; }
     }
 }

@@ -25,31 +25,24 @@ using System;
 using System.Runtime.Serialization;
 using Nd.Core.Exceptions;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
-    public class CommandExecutionException : NdCoreException
+    public class InvalidEventSequenceException : NdCoreException
     {
-        public ICommand? Command { get; }
-
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public InvalidEventSequenceException()
         {
         }
 
-        public CommandExecutionException(string? message) : base(message)
+        public InvalidEventSequenceException(string? message) : base(message)
         {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
-        {
-            Command = command;
-        }
-
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        public InvalidEventSequenceException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected InvalidEventSequenceException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

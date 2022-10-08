@@ -22,35 +22,27 @@
  */
 
 using System;
-using System.Runtime.Serialization;
-using Nd.Core.Exceptions;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Nd.Commands.Persistence;
+using Nd.Commands.Results;
+using Nd.Identities;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Extensions.Stores.Memory.Commands
 {
-    [Serializable]
-    public class CommandExecutionException : NdCoreException
+    public sealed class MemoryCommandReader : ICommandReader
     {
-        public ICommand? Command { get; }
+        private readonly IDictionary<Guid, IExecutionResult> _commands;
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public MemoryCommandReader(ConcurrentDictionary<Guid, IExecutionResult> commands)
         {
+            _commands = commands;
         }
 
-        public CommandExecutionException(string? message) : base(message)
-        {
-        }
-
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
-        {
-            Command = command;
-        }
-
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+        public Task<TResult?> ReadAsync<TResult>(Guid commandId, ICorrelationIdentity correlationIdentity, CancellationToken cancellation = default)
+            where TResult : IExecutionResult =>
+            _commands.TryGetValue(commandId, out var result) ? Task.FromResult((TResult?)result) : Task.FromResult((TResult?)default);
     }
 }

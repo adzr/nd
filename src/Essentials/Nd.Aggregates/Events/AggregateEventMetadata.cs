@@ -38,13 +38,15 @@ namespace Nd.Aggregates.Events
         (
             IIdempotencyIdentity IdempotencyIdentity,
             ICorrelationIdentity CorrelationIdentity,
+            TIdentity AggregateIdentity,
             IAggregateEventIdentity EventIdentity,
             string TypeName,
             uint TypeVersion,
-            TIdentity AggregateIdentity,
-            string AggregateName,
             uint AggregateVersion,
             DateTimeOffset Timestamp
         ) : AggregateEventMetadata(IdempotencyIdentity, CorrelationIdentity), IAggregateEventMetadata<TIdentity>
-        where TIdentity : IAggregateIdentity;
+        where TIdentity : notnull, IAggregateIdentity
+    {
+        IAggregateIdentity IAggregateEventMetadata.AggregateIdentity => AggregateIdentity;
+    }
 }

@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -41,9 +42,7 @@ using Nd.Identities.Extensions;
 
 namespace Nd.Extensions.Stores.Mongo.Aggregates
 {
-    public abstract class MongoDBAggregateEventWriter<TIdentity, TValue> : MongoAccessor, IAggregateEventWriter<TIdentity>
-        where TIdentity : notnull, IAggregateIdentity
-        where TValue : notnull
+    public class MongoDBAggregateEventWriter : MongoAccessor, IAggregateEventWriter
     {
         private static readonly Action<ILogger, string, Exception?> s_mongoResultReceived =
             LoggerMessage.Define<string>(LogLevel.Trace, new EventId(
@@ -64,7 +63,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                                 "Mongo transactions are not supported");
 
 
-        private readonly ILogger<MongoDBAggregateEventWriter<TIdentity, TValue>>? _logger;
+        private readonly ILogger<MongoDBAggregateEventWriter>? _logger;
         private readonly ActivitySource _activitySource;
 
         static MongoDBAggregateEventWriter()
@@ -72,19 +71,19 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             BsonDefaultsInitializer.Initialize();
         }
 
-        protected MongoDBAggregateEventWriter(
+        public MongoDBAggregateEventWriter(
             MongoClient client,
             string databaseName,
-            string collectionName,
-            ILogger<MongoDBAggregateEventWriter<TIdentity, TValue>>? logger,
+            ILogger<MongoDBAggregateEventWriter>? logger,
             ActivitySource? activitySource) :
-            base(client, databaseName, collectionName)
+            base(client, databaseName)
         {
             _logger = logger;
             _activitySource = activitySource ?? new ActivitySource(GetType().Name);
         }
 
-        public async Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default) where TEvent : IUncommittedEvent<TIdentity>
+        public async Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
+            where TEvent : notnull, IPendingEvent
         {
             if (events is null)
             {
@@ -120,8 +119,21 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             await WriteInternalAsync(session, activity, eventList, cancellation).ConfigureAwait(false);
         }
 
-        private async Task WriteInternalAsync<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation) where TEvent : IUncommittedEvent<TIdentity>
+        private async Task WriteInternalAsync<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
+            where TEvent : notnull, IPendingEvent
         {
+            var aggregates = eventList
+                .GroupBy(e => e.Metadata.AggregateIdentity)
+                .Select(g => (Identity: g.Key, Events: g.OrderBy(e => e.Metadata.AggregateVersion).ToImmutableArray()))
+                .ToImmutableArray();
+
+            foreach (var (identity, events) in aggregates)
+            {
+                cancellation.ThrowIfCancellationRequested();
+
+                ValidatePendingEventSequence(identity, events);
+            }
+
             try
             {
                 StartTransaction(session, activity, eventList);
@@ -136,20 +148,20 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
 
             try
             {
-                var aggregates = eventList.GroupBy(e => e.Metadata.AggregateIdentity);
-
-                foreach (var aggregate in aggregates)
+                foreach (var (identity, events) in aggregates)
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    var aggregateLatestVersion = aggregate.Max(e => e.Metadata.AggregateVersion);
-                    var metadata = aggregate.First().Metadata;
-                    var aggregateId = metadata.AggregateIdentity;
-                    var aggregateName = metadata.AggregateName;
+                    var (startVersion, endVersion) =
+                        (events.First().Metadata.AggregateVersion,
+                        events.Last().Metadata.AggregateVersion);
 
-                    var mongoResult = await GetCollection<MongoAggregateDocument<TValue>>().UpdateOneAsync(session,
-                        MongoDBAggregateEventWriter<TIdentity, TValue>.CreateAggregateFilteringCriteria(aggregateId),
-                        CreateAggregateUpdateSettings(aggregateId, aggregateName, aggregateLatestVersion, aggregate),
+                    var aggregateId = identity;
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                    var mongoResult = await GetCollection<MongoAggregateDocument<IAggregateIdentity>>($"{identity.TypeName}-aggregates".ToSnakeCase().ToLowerInvariant())
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                        .UpdateOneAsync(session, CreateAggregateFilteringCriteria(aggregateId, startVersion),
+                        CreateAggregateUpdateSettings(aggregateId, endVersion, events),
                         new UpdateOptions
                         {
                             IsUpsert = true
@@ -169,6 +181,35 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             await CommitTranaction(session, activity, eventList, cancellation).ConfigureAwait(false);
         }
 
+        private static void ValidatePendingEventSequence<TEvent>(IAggregateIdentity identity, ImmutableArray<TEvent> events) where TEvent : notnull, IPendingEvent
+        {
+            var versions = events
+                .Select(e => e.Metadata.AggregateVersion)
+                .ToImmutableArray();
+
+            if (!versions.Any())
+            {
+                throw new InvalidEventSequenceException($"Aggregate {identity} has no pending event sequence");
+            }
+
+            var expectedVersion = versions.First();
+
+            foreach (var version in versions)
+            {
+                if (expectedVersion < 1)
+                {
+                    throw new InvalidEventSequenceException($"Aggregate {identity} cannot have event version less than 0, found {version}");
+                }
+
+                if (expectedVersion != version)
+                {
+                    throw new InvalidEventSequenceException($"Aggregate {identity} has unexpected pending event version sequence, expected {expectedVersion} found {version}");
+                }
+
+                expectedVersion++;
+            }
+        }
+
         private void LogMongoResult(UpdateResult? mongoResult)
         {
             if (_logger is not null)
@@ -184,12 +225,14 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             }
         }
 
-        private static UpdateDefinition<MongoAggregateDocument<TValue>> CreateAggregateUpdateSettings<TEvent>(TIdentity aggregateId, string aggregateName, uint aggregateLatestVersion, IEnumerable<TEvent> events)
-            where TEvent : IUncommittedEvent<TIdentity> =>
-            Builders<MongoAggregateDocument<TValue>>.Update
-            .SetOnInsert(d => d.Id, aggregateId.Value)
-            .SetOnInsert(d => d.Name, aggregateName)
-            .Set(d => d.Version, aggregateLatestVersion)
+        private static UpdateDefinition<MongoAggregateDocument<IAggregateIdentity>> CreateAggregateUpdateSettings<TEvent>(
+            IAggregateIdentity aggregateId,
+            uint endVersion,
+            IEnumerable<TEvent> events)
+            where TEvent : IPendingEvent =>
+            Builders<MongoAggregateDocument<IAggregateIdentity>>.Update
+            .SetOnInsert(d => d.Id, aggregateId)
+            .Set(d => d.Version, endVersion)
             .AddToSetEach(d => d.Events, events
                 .OrderBy(e => e.Metadata.AggregateVersion)
                 .Select(e => new MongoAggregateEventDocument
@@ -202,11 +245,13 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                     Content = e.AggregateEvent
                 }));
 
-        private static FilterDefinition<MongoAggregateDocument<TValue>> CreateAggregateFilteringCriteria(TIdentity aggregateId) =>
-            Builders<MongoAggregateDocument<TValue>>.Filter.Eq(d => d.Id, aggregateId.Value);
+        private static FilterDefinition<MongoAggregateDocument<IAggregateIdentity>> CreateAggregateFilteringCriteria(IAggregateIdentity aggregateId, uint startVersion) =>
+            Builders<MongoAggregateDocument<IAggregateIdentity>>.Filter.And(
+                Builders<MongoAggregateDocument<IAggregateIdentity>>.Filter.Eq(d => d.Id, aggregateId),
+                Builders<MongoAggregateDocument<IAggregateIdentity>>.Filter.Eq(d => d.Version, startVersion - 1));
 
         private static async Task CommitTranaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
-            where TEvent : IUncommittedEvent<TIdentity>
+            where TEvent : notnull, IPendingEvent
         {
             if (session.IsInTransaction)
             {
@@ -217,7 +262,7 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         }
 
         private static async Task AbortTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
-            where TEvent : IUncommittedEvent<TIdentity>
+            where TEvent : notnull, IPendingEvent
         {
             if (session.IsInTransaction)
             {
@@ -227,13 +272,15 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
             }
         }
 
-        private static void StartTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity>
+        private static void StartTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList)
+            where TEvent : notnull, IPendingEvent
         {
             session.StartTransaction();
             AddActivityTags(activity, eventList);
         }
 
-        private static void AddActivityTags<TEvent>(Activity? activity, IList<TEvent> eventList) where TEvent : IUncommittedEvent<TIdentity> =>
+        private static void AddActivityTags<TEvent>(Activity? activity, IList<TEvent> eventList)
+            where TEvent : notnull, IPendingEvent =>
             _ = activity?
                 .AddCorrelationsTag(eventList
                     .GroupBy(e => e.Metadata.CorrelationIdentity)

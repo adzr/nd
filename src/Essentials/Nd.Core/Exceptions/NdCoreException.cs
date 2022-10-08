@@ -1,6 +1,5 @@
 ﻿/*
  * Copyright © 2022 Ahmed Zaher
- * https://github.com/adzr/Nd
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy 
  * of this software and associated documentation files (the "Software"), to deal 
@@ -23,37 +22,25 @@
 
 using System;
 using System.Runtime.Serialization;
-using Nd.Aggregates.Events;
 
-namespace Nd.Aggregates.Exceptions
+namespace Nd.Core.Exceptions
 {
     [Serializable]
-    public class DuplicateAggregateEventException : Exception
+    public class NdCoreException : Exception
     {
-        public IAggregateEvent? Event { get; }
-
-        public IAggregateEventMetadata? Metadata { get; }
-
-        public DuplicateAggregateEventException(IAggregateEvent @event, IAggregateEventMetadata metadata) :
-            base($"Aggregate event has already been emitted with idempotency id {metadata?.IdempotencyIdentity}")
-        {
-            Event = @event;
-            Metadata = metadata;
-        }
-
-        public DuplicateAggregateEventException() : this("Aggregate event has already been emitted")
+        public NdCoreException()
         {
         }
 
-        public DuplicateAggregateEventException(string message) : base(message)
+        public NdCoreException(string? message) : base(message)
         {
         }
 
-        public DuplicateAggregateEventException(string message, Exception innerException) : base(message, innerException)
+        public NdCoreException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected DuplicateAggregateEventException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        protected NdCoreException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

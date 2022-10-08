@@ -23,33 +23,38 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Exceptions;
+using Nd.Core.Extensions;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Aggregates.Exceptions
 {
     [Serializable]
-    public class CommandExecutionException : NdCoreException
+    public class AggregateStateMutationException : NdCoreException
     {
-        public ICommand? Command { get; }
+        public AggregateStateMutationException(Type aggregateStateType, ICommittedEvent @event, Exception? exception = default)
+            : base($"Failed to mutate aggregate state of Type: {aggregateStateType.ToPrettyString()} on event: {@event}", exception)
+        {
+            AggregateStateType = aggregateStateType;
+            Event = @event;
+        }
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public Type? AggregateStateType { get; }
+        public ICommittedEvent? Event { get; }
+
+        public AggregateStateMutationException() : this("Failed to create aggregate state")
         {
         }
 
-        public CommandExecutionException(string? message) : base(message)
+        public AggregateStateMutationException(string message) : base(message)
         {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
-        {
-            Command = command;
-        }
-
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        public AggregateStateMutationException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected AggregateStateMutationException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         {
         }
     }

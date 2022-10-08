@@ -23,33 +23,41 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Aggregates.Persistence;
 using Nd.Core.Exceptions;
+using Nd.Subscriptions.Persistence;
 
-namespace Nd.Commands.Exceptions
+namespace Nd.Subscriptions.Exceptions
 {
     [Serializable]
-    public class CommandExecutionException : NdCoreException
+    public class SubscriptionWatchException : NdCoreException
     {
-        public ICommand? Command { get; }
+        public ISubscriptionState? State { get; }
+        public ICommittedEvent? Event { get; }
+        public Exception? HandlerException { get; }
+        public Exception? FailureCallbackException { get; }
 
-        public CommandExecutionException() : this("Command execution has unexpectedly failed")
+        public SubscriptionWatchException()
         {
         }
 
-        public CommandExecutionException(string? message) : base(message)
+        public SubscriptionWatchException(string? message) : base(message)
         {
         }
 
-        public CommandExecutionException(ICommand command, Exception ex) : this($"Command {command} execution has unexpectedly failed", ex)
-        {
-            Command = command;
-        }
-
-        public CommandExecutionException(string? message, Exception? innerException) : base(message, innerException)
+        public SubscriptionWatchException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected CommandExecutionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        public SubscriptionWatchException(ISubscriptionState state, ICommittedEvent @event, Exception handlerException, Exception failureCallbackException)
+        {
+            State = state;
+            Event = @event;
+            HandlerException = handlerException;
+            FailureCallbackException = failureCallbackException;
+        }
+
+        protected SubscriptionWatchException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

@@ -22,11 +22,12 @@
  */
 
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Containers.Exceptions
 {
     [Serializable]
-    public class UnavailableTCPPortException : Exception
+    public class UnavailableTCPPortException : NdCoreException
     {
         public UnavailableTCPPortException()
         {

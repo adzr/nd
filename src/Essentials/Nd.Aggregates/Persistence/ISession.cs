@@ -23,31 +23,20 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
-using Nd.Core.Types.Names;
 using Nd.Identities;
 
 namespace Nd.Aggregates.Persistence
 {
-    public interface IAggregateManager : INamedType
+    public interface ISession
     {
-        Task<IAggregateRoot> LoadAsync(IAggregateIdentity identity, ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default);
+        Task<TAggregate> LoadAsync<TIdentity, TAggregate>(TIdentity identity, ICorrelationIdentity correlationId, uint version = 0, CancellationToken cancellation = default)
+            where TAggregate : notnull, IAggregateRoot<TIdentity>
+            where TIdentity : notnull, IAggregateIdentity;
 
-        Task SaveAsync(IAggregateRoot aggregate, CancellationToken cancellation = default);
-    }
+        void EnqueuePendingEvents(params IPendingEvent[] pendingEvents);
 
-    public interface IAggregateManager<TAggregate, TIdentity> : IAggregateManager
-        where TAggregate : notnull, IAggregateRoot<TIdentity>
-        where TIdentity : notnull, IAggregateIdentity
-    {
-        async Task<IAggregateRoot> IAggregateManager.LoadAsync(IAggregateIdentity identity, ICorrelationIdentity correlationId, uint version, CancellationToken cancellation) =>
-            await LoadAsync((TIdentity)identity, correlationId, version, cancellation).ConfigureAwait(false);
-
-        Task IAggregateManager.SaveAsync(IAggregateRoot aggregate, CancellationToken cancellation) =>
-            SaveAsync((TAggregate)aggregate, cancellation);
-
-        Task<TAggregate> LoadAsync(TIdentity identity, ICorrelationIdentity correlationId, uint version = 0u, CancellationToken cancellation = default);
-
-        Task SaveAsync(TAggregate aggregate, CancellationToken cancellation = default);
+        Task CommitAsync(CancellationToken cancellation = default);
     }
 }

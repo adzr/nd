@@ -26,7 +26,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using Nd.Aggregates;
+using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
+using Nd.Aggregates.Persistence;
 using Nd.Commands;
 using Nd.Commands.Results;
 using Nd.Containers;
@@ -35,6 +38,7 @@ using Nd.Extensions.Stores.Mongo.Commands;
 using Nd.Identities;
 using Xunit;
 using Xunit.Categories;
+using static Nd.Extensions.Stores.Mongo.Tests.MongoDBAggregateEventStoreTests;
 
 namespace Nd.Extensions.Stores.Mongo.Tests
 {
@@ -43,13 +47,15 @@ namespace Nd.Extensions.Stores.Mongo.Tests
     {
         #region Test types definitions
 
-        [Identity("CommandsTest")]
-        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
+        [Identity("MongoDBCommandTest")]
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be faked by FakeItEasy.")]
         public sealed record class TestIdentity : GuidAggregateIdentity
         {
             public TestIdentity(Guid value) : base(value) { }
 
             public TestIdentity(IGuidFactory factory) : base(factory) { }
+
+            public override IAggregateRootFactory CreateAggregateFactory() => new TestAggregateRootFactory().ConfigureIdentity(this);
         }
 
         [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Needs to be public to be serialized.")]
@@ -88,10 +94,21 @@ namespace Nd.Extensions.Stores.Mongo.Tests
             DateTimeOffset? Acknowledged = default) : AggregateCommand<TestIdentity, CommandBResult>(
                 IdempotencyIdentity, CorrelationIdentity, AggregateIdentity, Acknowledged);
 
+        internal class TestAggregateRootFactory : AggregateRootFactory<TestIdentity, TestAggregateState>
+        {
+            public override IAggregateRoot<TestIdentity, TestAggregateState> Build(ISession session) => new TestAggregateRoot(Identity!, State, session);
+
+            protected override IAggregateState<TestAggregateState> CreateState() => new TestAggregateState();
+        }
+
+        internal class TestAggregateRoot : AggregateRoot<TestIdentity, TestAggregateState>
+        {
+            public TestAggregateRoot(TestIdentity identity, IAggregateState<TestAggregateState> state, ISession session) : base(identity, state, session) { }
+        }
+
         #endregion
 
         private const string DatabaseName = "test_db";
-        private const string CollectionName = "commands";
 
         private MongoContainer _mongoContainer;
         private readonly MongoClient _mongoClient;
@@ -100,7 +117,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
         public MongoDBCommandStoreTests()
         {
-            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
             LocalPortManager.AcquireRandomPortAsync(async (port, cancellation) =>
             {
@@ -112,9 +129,9 @@ namespace Nd.Extensions.Stores.Mongo.Tests
 
             _mongoClient = new MongoClient(mongoSettings);
 
-            _mongoWriter = new MongoDBCommandWriter(_mongoClient, DatabaseName, CollectionName, default, default);
+            _mongoWriter = new MongoDBCommandWriter(_mongoClient, DatabaseName, default, default);
 
-            _mongoReader = new MongoDBCommandReader(_mongoClient, DatabaseName, CollectionName, default, default);
+            _mongoReader = new MongoDBCommandReader(_mongoClient, DatabaseName, default, default);
         }
 
         [Fact]

@@ -31,6 +31,7 @@ using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
 using Nd.Commands;
 using Nd.Commands.Results;
+using Nd.Core.Extensions;
 using Nd.Core.Types;
 using Nd.Identities;
 
@@ -51,20 +52,38 @@ namespace Nd.Extensions.Stores.Mongo
 
                     BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
                     BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer());
-
-                    RegisterDiscriminatorConvention(
-                        new NamedTypeDiscriminatorConvention(),
-                        typeof(IAggregateEvent),
-                        typeof(ICommand),
-                        typeof(IExecutionResult),
-                        typeof(IAggregateIdentity),
-                        typeof(IIdempotencyIdentity),
-                        typeof(ICorrelationIdentity));
+                    RegisterAggregateIdentitySerializers();
+                    RegisterNamedTypesDiscriminatorConvention();
 
 #pragma warning disable CS0618 // Type or member is obsolete
                     BsonDefaults.GuidRepresentationMode = GuidRepresentationMode.V3;
 #pragma warning restore CS0618 // Type or member is obsolete
                 }
+            }
+        }
+
+        private static void RegisterNamedTypesDiscriminatorConvention() =>
+            RegisterDiscriminatorConvention(
+                new NamedTypeDiscriminatorConvention(),
+                typeof(IAggregateEvent),
+                typeof(ICommand),
+                typeof(IExecutionResult),
+                typeof(IAggregateIdentity),
+                typeof(IIdempotencyIdentity),
+                typeof(ICorrelationIdentity));
+
+        private static void RegisterAggregateIdentitySerializers()
+        {
+            BsonSerializer.RegisterSerializer(new AggregateIdentitySerializer());
+
+            foreach (var type in TypeDefinitions.GetAllImplementations<IAggregateIdentity>())
+            {
+                var valueType = type.GetProperty("Value")?.PropertyType ??
+                    throw new TypeAccessException($"Failed to resolve type of 'Value' property of type {type.ResolveName()}");
+
+                BsonSerializer.RegisterSerializer(type, new AggregateIdentitySerializer<IAggregateIdentity>(BsonSerializer.LookupSerializer(valueType),
+                    type.GetConstructor(new[] { valueType })?.CompileConstructor<IAggregateIdentity>() ??
+                    throw new TypeAccessException($"Failed to find a public constructor for identity of type {type.ResolveName()} that accepts an argument of type {valueType.ResolveName()}")));
             }
         }
 
@@ -75,7 +94,7 @@ namespace Nd.Extensions.Stores.Mongo
             types = types
                 .Union(TypeDefinitions
                         .Catalog
-                        .Select((v) => v.Type)
+                        .Select(r => r.Type)
                         .Where(t => filter.Any(f => f.IsAssignableFrom(t))))
                 .ToArray();
 
@@ -83,7 +102,7 @@ namespace Nd.Extensions.Stores.Mongo
 
             pack.AddClassMapConvention("AlwaysApplyDiscriminatorToNamedTypes", m => m.SetDiscriminatorIsRequired(true));
 
-            ConventionRegistry.Register("NamedTypesConventionPack", pack, f => types.Contains(f));
+            ConventionRegistry.Register("NamedTypesConventionPack", pack, t => types.Contains(t));
 
             foreach (var type in types)
             {

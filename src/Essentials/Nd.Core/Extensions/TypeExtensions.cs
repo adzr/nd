@@ -109,7 +109,7 @@ namespace Nd.Core.Extensions
             .GetTypeInfo()
             .GetCustomAttributes<NamedTypeAttribute>(true)
             .FirstOrDefault()?.TypeName ??
-            type?.AssemblyQualifiedName ?? string.Empty;
+            type?.Name ?? string.Empty;
 
         public static (string Name, uint Version) ResolveNameAndVersion(this Type type)
         {
@@ -139,6 +139,41 @@ namespace Nd.Core.Extensions
                 : type.TypeVersion >= upgraded.TypeVersion
                 ? throw new TypeVersionUpgradeConflictException(type, type.TypeVersion, upgraded.TypeVersion)
                 : await UpgradeRecursiveAsync(upgraded, cancellation).ConfigureAwait(false);
+        }
+
+        public delegate T Constructor<T>(params object[] args);
+
+        public static Constructor<T> CompileConstructor<T>(this ConstructorInfo constructorInfo)
+        {
+            /*
+             * Thanks to Roger Johansson, original code snippet:
+             * https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/
+             */
+
+            if (constructorInfo is null)
+            {
+                throw new ArgumentNullException(nameof(constructorInfo));
+            }
+
+            var paramsInfo = constructorInfo.GetParameters();
+
+            var param = Expression.Parameter(typeof(object[]), "args");
+
+            var argsExp = new Expression[paramsInfo.Length];
+
+            for (var i = 0; i < paramsInfo.Length; i++)
+            {
+                var index = Expression.Constant(i);
+                var paramType = paramsInfo[i].ParameterType;
+                var paramAccessorExp = Expression.ArrayIndex(param, index);
+                var paramCastExp = Expression.Convert(paramAccessorExp, paramType);
+                argsExp[i] = paramCastExp;
+            }
+
+            var newExp = Expression.New(constructorInfo, argsExp);
+            var lambda = Expression.Lambda(typeof(Constructor<T>), newExp, param);
+
+            return (Constructor<T>)lambda.Compile();
         }
 
         public static T CompileMethodInvocation<T>(this MethodInfo methodInfo)

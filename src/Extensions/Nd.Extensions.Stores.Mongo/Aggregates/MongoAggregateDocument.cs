@@ -34,9 +34,6 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
         [BsonId(IdGenerator = typeof(NullIdChecker))]
         public T? Id { get; set; }
 
-        [BsonElement("Name")]
-        public string Name { get; set; } = string.Empty;
-
         [BsonElement("Version")]
         public uint Version { get; set; }
 

@@ -24,11 +24,12 @@
 using System;
 using System.Runtime.Serialization;
 using Nd.Commands.Results;
+using Nd.Core.Exceptions;
 
 namespace Nd.Commands.Exceptions
 {
     [Serializable]
-    public class CommandPersistenceException : Exception
+    public class CommandPersistenceException : NdCoreException
     {
         public ICommand? Command { get; }
 

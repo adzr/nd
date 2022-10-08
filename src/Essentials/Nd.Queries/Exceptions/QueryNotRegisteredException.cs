@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Queries.Exceptions
 {
     [Serializable]
-    public class QueryNotRegisteredException : Exception
+    public class QueryNotRegisteredException : NdCoreException
     {
         public QueryNotRegisteredException(IQuery query, Exception? exception = default)
             : base($"Query \"{query?.TypeName ?? throw new ArgumentNullException(nameof(query))}\" is not found in the query registery, cannot find a handler for an unknown query", exception)

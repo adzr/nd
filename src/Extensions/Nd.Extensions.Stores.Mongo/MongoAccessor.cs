@@ -26,21 +26,18 @@ namespace Nd.Extensions.Stores.Mongo
 {
     public abstract class MongoAccessor
     {
-        protected MongoAccessor(MongoClient client, string databaseName, string collectionName)
+        protected MongoAccessor(MongoClient client, string databaseName)
         {
             Client = client;
             DatabaseName = databaseName;
-            CollectionName = collectionName;
         }
 
         protected MongoClient Client { get; }
 
         protected string DatabaseName { get; }
 
-        protected string CollectionName { get; }
-
-        protected IMongoCollection<T> GetCollection<T>() => Client
+        protected IMongoCollection<T> GetCollection<T>(string collectionName) => Client
                 .GetDatabase(DatabaseName)
-                .GetCollection<T>(CollectionName);
+                .GetCollection<T>(collectionName);
     }
 }

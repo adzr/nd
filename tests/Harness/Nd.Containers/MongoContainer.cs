@@ -41,7 +41,7 @@ namespace Nd.Containers
             base(new ConfigurationParameters
             {
                 Image = "mongo",
-                Tag = "5.0.9-focal",
+                Tag = "6.0.2-focal",
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
                     ["27017/tcp"] = new List<PortBinding> {

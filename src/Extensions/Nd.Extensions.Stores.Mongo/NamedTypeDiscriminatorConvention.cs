@@ -67,16 +67,19 @@ namespace Nd.Extensions.Stores.Mongo
                     StringSplitOptions.RemoveEmptyEntries) ??
                     Array.Empty<string>();
 
-                if (typeNameAndVersion.Length != 2)
+                if (typeNameAndVersion.Length > 0)
                 {
-                    throw new DiscriminationException($"Invalid discriminator string: {typeString}");
+                    typeName = typeNameAndVersion[0].Trim();
                 }
 
-                typeName = typeNameAndVersion[0].Trim();
-
-                if (!uint.TryParse(typeNameAndVersion[1].Trim(), out typeVersion))
+                if (typeNameAndVersion.Length > 1 && !uint.TryParse(typeNameAndVersion[1].Trim(), out typeVersion))
                 {
                     throw new DiscriminationException($"Invalid type version in type: {typeString}");
+                }
+
+                if (typeNameAndVersion.Length is <= 0 or > 2)
+                {
+                    throw new DiscriminationException($"Invalid discriminator string: {typeString}");
                 }
             }
             else
@@ -103,7 +106,9 @@ namespace Nd.Extensions.Stores.Mongo
 
             var nameAndVersion = TypeDefinitions.ResolveNameAndVersion(actualType);
 
-            return BsonValue.Create($"{nameAndVersion.Name}#{nameAndVersion.Version}");
+            return nameAndVersion.Version > 0u ?
+                BsonValue.Create($"{nameAndVersion.Name}{TypeNameAndVersionSeparator}{nameAndVersion.Version}") :
+                BsonValue.Create(nameAndVersion.Name);
         }
     }
 }

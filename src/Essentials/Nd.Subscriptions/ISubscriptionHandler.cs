@@ -21,20 +21,17 @@
  * SOFTWARE.
  */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Events;
 using Nd.Aggregates.Identities;
-using Nd.Core.Extensions;
-using Nd.Core.Types.Names;
 
 namespace Nd.Subscriptions
 {
-    public interface ISubscriptionHandler : INamedType
+    public interface ISubscriptionHandler
     {
-        public new string TypeName => TypeName ?? GetType().GetName();
-
-        Task HandleAsync(IDomainEvent domainEvent, CancellationToken cancellation = default);
+        Task HandleAsync(IDomainEvent domainEvent, CancellationToken cancellation = default) => throw new InvalidOperationException();
     }
 
     public interface ISubscriptionHandler<TEvent, TIdentity> : ISubscriptionHandler
@@ -42,8 +39,5 @@ namespace Nd.Subscriptions
         where TEvent : notnull, IAggregateEvent
     {
         Task HandleAsync(IDomainEvent<TEvent, TIdentity> domainEvent, CancellationToken cancellation = default);
-
-        Task ISubscriptionHandler.HandleAsync(IDomainEvent domainEvent, CancellationToken cancellation) =>
-            HandleAsync((IDomainEvent<TEvent, TIdentity>)domainEvent, cancellation);
     }
 }

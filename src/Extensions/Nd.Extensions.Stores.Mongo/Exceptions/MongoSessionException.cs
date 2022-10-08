@@ -23,11 +23,12 @@
 
 using System;
 using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
 namespace Nd.Extensions.Stores.Mongo.Exceptions
 {
     [Serializable]
-    public class MongoSessionException : Exception
+    public class MongoSessionException : NdCoreException
     {
         public MongoSessionException()
         {

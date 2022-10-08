@@ -3,9 +3,6 @@
  * Copyright © 2015 - 2021 eBay Software Foundation
  * Modified from original source https://github.com/eventflow/EventFlow
  * 
- * Copyright © 2018 - 2021 Lutando Ngqakaza
- * Modified from original source https://github.com/Lutando/Akkatecture
- * 
  * Copyright © 2022 Ahmed Zaher
  * https://github.com/adzr/Nd
  * 
@@ -28,15 +25,11 @@
  * SOFTWARE.
  */
 
-using System.Threading;
-using System.Threading.Tasks;
 using Nd.Aggregates.Identities;
-using Nd.Aggregates.Persistence;
-using Nd.Core.Types.Names;
 
 namespace Nd.Aggregates
 {
-    public interface IAggregateRoot : INamedType
+    public interface IAggregateRoot
     {
         IAggregateIdentity Identity { get; }
         uint Version { get; }
@@ -47,8 +40,6 @@ namespace Nd.Aggregates
         where TIdentity : notnull, IAggregateIdentity
     {
         new TIdentity Identity { get; }
-
-        Task CommitAsync(IAggregateEventWriter<TIdentity> writer, CancellationToken cancellation = default);
     }
 
     public interface IAggregateRoot<TIdentity, out TState> : IAggregateRoot<TIdentity>
