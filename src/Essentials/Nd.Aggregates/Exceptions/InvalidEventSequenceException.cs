@@ -22,43 +22,28 @@
  */
 
 using System;
-using Nd.Identities;
-using Xunit;
-using Xunit.Categories;
+using System.Runtime.Serialization;
+using Nd.Core.Exceptions;
 
-namespace Nd.Entities.Tests
+namespace Nd.Aggregates.Exceptions
 {
-    [UnitTest]
-    public class EntityTests
+    [Serializable]
+    public class InvalidEventSequenceException : NdCoreException
     {
-        #region Test types definitions
-
-        [Identity("sample")]
-        internal record class SampleId : GuidIdentity
+        public InvalidEventSequenceException()
         {
-            public SampleId(Guid value) : base(value) { }
         }
 
-        internal class SampleEntity : Entity<SampleId>
+        public InvalidEventSequenceException(string? message) : base(message)
         {
-            public SampleEntity(SampleId identity, string text) : base(identity)
-            {
-                Text = text;
-            }
-
-            public string Text { get; }
         }
 
-        #endregion
-        private const string DefaultText = "Value";
-        private readonly Guid _guid = Guid.NewGuid();
+        public InvalidEventSequenceException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
 
-        [Fact]
-        public void CanBeEqualBasedOnIdentityOnly() =>
-            Assert.Equal(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(_guid), "AnotherValue"));
-
-        [Fact]
-        public void CanNotBeEqualWithDifferentIdentity() =>
-            Assert.NotEqual(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(Guid.NewGuid()), DefaultText));
+        protected InvalidEventSequenceException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

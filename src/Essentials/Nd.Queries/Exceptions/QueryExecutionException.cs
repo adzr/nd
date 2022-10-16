@@ -24,6 +24,7 @@
 using System;
 using System.Runtime.Serialization;
 using Nd.Core.Exceptions;
+using Nd.Queries.Identities;
 
 namespace Nd.Queries.Exceptions
 {
@@ -31,7 +32,7 @@ namespace Nd.Queries.Exceptions
     public class QueryExecutionException : NdCoreException
     {
         public IQuery? Query { get; }
-        public Guid Id { get; }
+        public IQueryIdentity? QueryId { get; }
 
         public QueryExecutionException() : this("Query execution has unexpectedly failed")
         {
@@ -41,10 +42,10 @@ namespace Nd.Queries.Exceptions
         {
         }
 
-        public QueryExecutionException(IQuery query, Guid id, Exception ex) : this($"Query {id}: {query} execution has unexpectedly failed", ex)
+        public QueryExecutionException(IQuery query, IQueryIdentity queryId, Exception ex) : this($"Query {queryId}: {query} execution has unexpectedly failed", ex)
         {
             Query = query;
-            Id = id;
+            QueryId = queryId;
         }
 
         public QueryExecutionException(string? message, Exception? innerException) : base(message, innerException)

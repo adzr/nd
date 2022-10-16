@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using MongoDB.Driver;
 using Nd.Aggregates;
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
 using Nd.Containers;
@@ -134,7 +135,6 @@ namespace Nd.Extensions.Stores.Mongo.Tests
         public async Task CanStoreEventsToMongoAsync()
         {
             var correlationId = new CorrelationIdentity(Guid.NewGuid());
-            var _ = new TestAggregateState();
             var identity = new TestIdentity(CombGuidFactory.Instance.Create());
 
             var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
@@ -145,7 +145,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 new PendingEvent(
                     Metadata: new AggregateEventMetadata<TestIdentity>(
                         IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
-                        CorrelationIdentity: new CorrelationIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
                         EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
                         TypeName: v1NameAndVersion.Name,
                         TypeVersion: v1NameAndVersion.Version,
@@ -156,7 +156,7 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 new PendingEvent(
                     Metadata: new AggregateEventMetadata<TestIdentity>(
                         IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
-                        CorrelationIdentity: new CorrelationIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
                         EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
                         TypeName: v2NameAndVersion.Name,
                         TypeVersion: v2NameAndVersion.Version,
@@ -184,6 +184,150 @@ namespace Nd.Extensions.Stores.Mongo.Tests
                 events
                 .Select(e => (e.AggregateEvent, e.Metadata))
                 .ToArray());
+        }
+
+        [Fact]
+        public async Task CanFailOnLateEventsToMongoAsync()
+        {
+            var correlationId = new CorrelationIdentity(Guid.NewGuid());
+            var identity = new TestIdentity(CombGuidFactory.Instance.Create());
+
+            var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV2));
+            var timestamp = DateTime.UtcNow;
+
+            var events = new[] {
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v1NameAndVersion.Name,
+                        TypeVersion: v1NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 1,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV1()),
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v2NameAndVersion.Name,
+                        TypeVersion: v2NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 2,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV2(100)),
+            };
+
+            await _mongoWriter.WriteAsync(events, default)
+                .ConfigureAwait(false);
+
+            var exception = Assert.Throws<AggregateOutOfSyncException>(() =>
+                _mongoWriter.WriteAsync(events, default).GetAwaiter().GetResult());
+
+            Assert.Equal(identity, exception.Identity);
+            Assert.Equal(1u, exception.StartVersion);
+            Assert.Equal(2u, exception.EndVersion);
+        }
+
+        [Fact]
+        public async Task CanFailOnEarlyEventsToMongoAsync()
+        {
+            var correlationId = new CorrelationIdentity(Guid.NewGuid());
+            var identity = new TestIdentity(CombGuidFactory.Instance.Create());
+
+            var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV2));
+            var timestamp = DateTime.UtcNow;
+
+            var events = new[] {
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v1NameAndVersion.Name,
+                        TypeVersion: v1NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 1,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV1()),
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v2NameAndVersion.Name,
+                        TypeVersion: v2NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 2,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV2(100)),
+            };
+
+            await _mongoWriter.WriteAsync(events, default)
+                .ConfigureAwait(false);
+
+            var exception = Assert.Throws<AggregateOutOfSyncException>(() =>
+                _mongoWriter.WriteAsync(new[]
+                {
+                    new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v2NameAndVersion.Name,
+                        TypeVersion: v2NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 4,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV2(100))
+                }, default).GetAwaiter().GetResult());
+
+            Assert.Equal(identity, exception.Identity);
+            Assert.Equal(4u, exception.StartVersion);
+            Assert.Equal(4u, exception.EndVersion);
+        }
+
+        [Fact]
+        public void CanFailOnConflictingEventsVersionsAsync()
+        {
+            var correlationId = new CorrelationIdentity(Guid.NewGuid());
+            var identity = new TestIdentity(CombGuidFactory.Instance.Create());
+
+            var v1NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV1));
+            var v2NameAndVersion = TypeDefinitions.ResolveNameAndVersion(typeof(TestEventCountV2));
+            var timestamp = DateTime.UtcNow;
+
+            var events = new[] {
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v1NameAndVersion.Name,
+                        TypeVersion: v1NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 1,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV1()),
+                new PendingEvent(
+                    Metadata: new AggregateEventMetadata<TestIdentity>(
+                        IdempotencyIdentity: new IdempotencyIdentity(Guid.NewGuid()),
+                        CorrelationIdentity: correlationId,
+                        EventIdentity: new AggregateEventIdentity(Guid.NewGuid()),
+                        TypeName: v2NameAndVersion.Name,
+                        TypeVersion: v2NameAndVersion.Version,
+                        AggregateIdentity: identity,
+                        AggregateVersion: 1,
+                        Timestamp: timestamp),
+                    AggregateEvent: new TestEventCountV2(100)),
+            };
+
+            _ = Assert.Throws<InvalidEventSequenceException>(() =>
+                _mongoWriter.WriteAsync(events, default).GetAwaiter().GetResult());
         }
 
         public void Dispose()

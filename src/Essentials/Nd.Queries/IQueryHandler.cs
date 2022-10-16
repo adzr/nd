@@ -25,23 +25,22 @@
  * SOFTWARE.
  */
 
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Nd.Queries
 {
+    [SuppressMessage("Design", "CA1040:Avoid empty interfaces", Justification = "Cache loading implementations.")]
     public interface IQueryHandler
     {
-        Task<object> ExecuteAsync(object query, CancellationToken cancellation = default);
+
     }
 
     public interface IQueryHandler<in TQuery, TResult> : IQueryHandler
         where TQuery : notnull, IQuery<TResult>
         where TResult : notnull
     {
-        async Task<object> IQueryHandler.ExecuteAsync(object query, CancellationToken cancellation) =>
-            await ExecuteAsync((TQuery)query, cancellation).ConfigureAwait(false);
-
         Task<TResult> ExecuteAsync(TQuery query, CancellationToken cancellation = default);
     }
 }

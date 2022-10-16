@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using IdentitiesCommon = Nd.Identities.Common;
 
@@ -29,7 +30,7 @@ namespace Nd.Identities.Extensions
 {
     public static class ActivityExtensions
     {
-        public static Activity AddCorrelationsTag(this Activity activity, Guid[]? correlationIds) =>
+        public static Activity AddCorrelationsTag(this Activity activity, IEnumerable<Guid>? correlationIds) =>
             activity?.AddTag(IdentitiesCommon.ActivityConstants.CorrelationsTag, correlationIds) ?? throw new ArgumentNullException(nameof(activity));
     }
 }

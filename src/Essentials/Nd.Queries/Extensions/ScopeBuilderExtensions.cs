@@ -23,14 +23,15 @@
 
 using System;
 using Nd.Queries.Common;
+using Nd.Queries.Identities;
 using static Nd.Core.Extensions.LoggerExtensions;
 
 namespace Nd.Queries.Extensions
 {
     public static class ScopeBuilderExtensions
     {
-        public static IScopeBuilder WithQueryId(this IScopeBuilder builder, Guid value) =>
-            builder?.WithProperty(LoggingScopeConstants.QueryIdKey, value) ??
+        public static IScopeBuilder WithQueryId(this IScopeBuilder builder, IQueryIdentity queryId) =>
+            builder?.WithProperty(LoggingScopeConstants.QueryIdKey, queryId.Value) ??
                 throw new ArgumentNullException(nameof(builder));
     }
 }

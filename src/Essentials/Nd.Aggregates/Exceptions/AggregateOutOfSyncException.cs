@@ -22,41 +22,45 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using Nd.Core.Exceptions;
-using Nd.Core.Extensions;
+using Nd.Aggregates.Identities;
 
-namespace Nd.Queries.Exceptions
+namespace Nd.Aggregates.Exceptions
 {
     [Serializable]
-    public class QueryHandlerConflictException : NdCoreException
+    public class AggregateOutOfSyncException : Exception
     {
-        public QueryHandlerConflictException(Type type, IEnumerable<Type> queryHandlerTypes, Exception? exception = default)
-            : base($"Multiple query handlers {string.Join(", ", queryHandlerTypes.Select(n => $"\"{n}\""))} found for the same query \"{type?.ResolveName()}\"", exception)
-        {
-            QueryType = type;
-            QueryHandlerTypes = queryHandlerTypes;
-        }
+        public IAggregateIdentity? Identity { get; }
+        public uint StartVersion { get; }
+        public uint EndVersion { get; }
 
-        public Type? QueryType { get; }
-
-        public IEnumerable<Type>? QueryHandlerTypes { get; }
-
-        public QueryHandlerConflictException() : this("Multiple query handlers found for the same query")
+        public AggregateOutOfSyncException()
         {
         }
 
-        public QueryHandlerConflictException(string message) : base(message)
+        public AggregateOutOfSyncException(string? message) : base(message)
         {
         }
 
-        public QueryHandlerConflictException(string message, Exception innerException) : base(message, innerException)
+        public AggregateOutOfSyncException(string? message, Exception? innerException) : base(message, innerException)
         {
         }
 
-        protected QueryHandlerConflictException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        public AggregateOutOfSyncException(IAggregateIdentity identity, uint startVersion, uint endVersion) : base($"Aggregate is out of sync, read is required")
+        {
+            Identity = identity;
+            StartVersion = startVersion;
+            EndVersion = endVersion;
+        }
+
+        public AggregateOutOfSyncException(Exception ex, IAggregateIdentity identity, uint startVersion, uint endVersion) : base($"Aggregate is out of sync, read is required", ex)
+        {
+            Identity = identity;
+            StartVersion = startVersion;
+            EndVersion = endVersion;
+        }
+
+        protected AggregateOutOfSyncException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

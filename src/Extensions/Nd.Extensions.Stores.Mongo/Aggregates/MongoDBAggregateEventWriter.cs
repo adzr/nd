@@ -32,6 +32,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Extensions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
@@ -90,16 +91,16 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 throw new ArgumentNullException(nameof(events));
             }
 
-            var eventList = events.ToList();
+            var immutableEvents = events.ToImmutableArray();
 
-            if (!eventList.Any())
+            if (!immutableEvents.Any())
             {
                 return;
             }
 
             using var activity = _activitySource.StartActivity(nameof(WriteAsync));
 
-            var first = eventList.First(e => e.Metadata.CorrelationIdentity is not null);
+            var first = immutableEvents.First(e => e.Metadata.CorrelationIdentity is not null);
 
             using var scope = _logger
                 .BeginScope()
@@ -116,27 +117,30 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 throw new MongoSessionException("Failed to start mongo session");
             }
 
-            await WriteInternalAsync(session, activity, eventList, cancellation).ConfigureAwait(false);
+            await WriteInternalAsync(session, activity, immutableEvents, cancellation).ConfigureAwait(false);
         }
 
-        private async Task WriteInternalAsync<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
+        private async Task WriteInternalAsync<TEvent>(IClientSessionHandle session, Activity? activity, IEnumerable<TEvent> events, CancellationToken cancellation)
             where TEvent : notnull, IPendingEvent
         {
-            var aggregates = eventList
+            var aggregates = events
                 .GroupBy(e => e.Metadata.AggregateIdentity)
                 .Select(g => (Identity: g.Key, Events: g.OrderBy(e => e.Metadata.AggregateVersion).ToImmutableArray()))
                 .ToImmutableArray();
 
-            foreach (var (identity, events) in aggregates)
+            foreach (var (identity, aggregateEvents) in aggregates)
             {
                 cancellation.ThrowIfCancellationRequested();
 
-                ValidatePendingEventSequence(identity, events);
+                ValidatePendingEventSequence(identity, aggregateEvents);
             }
+
+            var correlationIdentities = events.Select(e => e.Metadata.CorrelationIdentity.Value).Distinct().ToImmutableArray();
+            var aggregateIdentities = events.Select(e => e.Metadata.AggregateIdentity).Distinct().ToImmutableArray();
 
             try
             {
-                StartTransaction(session, activity, eventList);
+                StartTransaction(session, activity, correlationIdentities, aggregateIdentities);
             }
             catch (NotSupportedException e)
             {
@@ -146,39 +150,46 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 }
             }
 
-            try
+            foreach (var (identity, aggregateEvents) in aggregates)
             {
-                foreach (var (identity, events) in aggregates)
+                cancellation.ThrowIfCancellationRequested();
+
+                var (startVersion, endVersion) =
+                    (aggregateEvents.First().Metadata.AggregateVersion,
+                    aggregateEvents.Last().Metadata.AggregateVersion);
+
+                UpdateResult? mongoResult;
+
+                try
                 {
-                    cancellation.ThrowIfCancellationRequested();
-
-                    var (startVersion, endVersion) =
-                        (events.First().Metadata.AggregateVersion,
-                        events.Last().Metadata.AggregateVersion);
-
-                    var aggregateId = identity;
 #pragma warning disable CA1308 // Normalize strings to uppercase
-                    var mongoResult = await GetCollection<MongoAggregateDocument<IAggregateIdentity>>($"{identity.TypeName}-aggregates".ToSnakeCase().ToLowerInvariant())
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                        .UpdateOneAsync(session, CreateAggregateFilteringCriteria(aggregateId, startVersion),
-                        CreateAggregateUpdateSettings(aggregateId, endVersion, events),
+                    mongoResult = await GetCollection<MongoAggregateDocument<IAggregateIdentity>>($"{identity.TypeName}-aggregates".ToSnakeCase().ToLowerInvariant())
+#pragma warning restore CA1308 // Normalize strings to uppercase
+                        .UpdateOneAsync(session, CreateAggregateFilteringCriteria(identity, startVersion),
+                        CreateAggregateUpdateSettings(identity, endVersion, aggregateEvents),
                         new UpdateOptions
                         {
                             IsUpsert = true
                         },
                         cancellation)
                     .ConfigureAwait(false);
-
-                    LogMongoResult(mongoResult);
                 }
-            }
-            catch
-            {
-                await AbortTransaction(session, activity, eventList, cancellation).ConfigureAwait(false);
-                throw;
+                catch (MongoWriteException ex) when (ex.WriteError.Code.Equals(11000))
+                {
+                    await AbortTransaction(session, activity, correlationIdentities, aggregateIdentities, cancellation).ConfigureAwait(false);
+                    throw new AggregateOutOfSyncException(ex, identity, startVersion, endVersion);
+                }
+                catch
+                {
+                    await AbortTransaction(session, activity, correlationIdentities, aggregateIdentities, cancellation).ConfigureAwait(false);
+                    throw;
+                }
+
+                LogMongoResult(mongoResult);
             }
 
-            await CommitTranaction(session, activity, eventList, cancellation).ConfigureAwait(false);
+
+            await CommitTranaction(session, activity, correlationIdentities, aggregateIdentities, cancellation).ConfigureAwait(false);
         }
 
         private static void ValidatePendingEventSequence<TEvent>(IAggregateIdentity identity, ImmutableArray<TEvent> events) where TEvent : notnull, IPendingEvent
@@ -250,45 +261,38 @@ namespace Nd.Extensions.Stores.Mongo.Aggregates
                 Builders<MongoAggregateDocument<IAggregateIdentity>>.Filter.Eq(d => d.Id, aggregateId),
                 Builders<MongoAggregateDocument<IAggregateIdentity>>.Filter.Eq(d => d.Version, startVersion - 1));
 
-        private static async Task CommitTranaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
-            where TEvent : notnull, IPendingEvent
+        private static async Task CommitTranaction(IClientSessionHandle session, Activity? activity,
+            IEnumerable<Guid> correlationIdentities, IEnumerable<IAggregateIdentity> aggregateIdentities, CancellationToken cancellation)
         {
             if (session.IsInTransaction)
             {
                 await session.CommitTransactionAsync(cancellation).ConfigureAwait(false);
-                AddActivityTags(activity, eventList);
+                AddActivityTags(activity, correlationIdentities, aggregateIdentities);
                 _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, true);
             }
         }
 
-        private static async Task AbortTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList, CancellationToken cancellation)
-            where TEvent : notnull, IPendingEvent
+        private static async Task AbortTransaction(IClientSessionHandle session, Activity? activity,
+            IEnumerable<Guid> correlationIdentities, IEnumerable<IAggregateIdentity> aggregateIdentities, CancellationToken cancellation)
         {
             if (session.IsInTransaction)
             {
                 await session.AbortTransactionAsync(cancellation).ConfigureAwait(false);
-                AddActivityTags(activity, eventList);
+                AddActivityTags(activity, correlationIdentities, aggregateIdentities);
                 _ = activity?.AddTag(MongoActivityConstants.MongoSuccessfulResultTag, false);
             }
         }
 
-        private static void StartTransaction<TEvent>(IClientSessionHandle session, Activity? activity, IList<TEvent> eventList)
-            where TEvent : notnull, IPendingEvent
+        private static void StartTransaction(IClientSessionHandle session, Activity? activity,
+            IEnumerable<Guid> correlationIdentities, IEnumerable<IAggregateIdentity> aggregateIdentities)
         {
             session.StartTransaction();
-            AddActivityTags(activity, eventList);
+            AddActivityTags(activity, correlationIdentities, aggregateIdentities);
         }
 
-        private static void AddActivityTags<TEvent>(Activity? activity, IList<TEvent> eventList)
-            where TEvent : notnull, IPendingEvent =>
-            _ = activity?
-                .AddCorrelationsTag(eventList
-                    .GroupBy(e => e.Metadata.CorrelationIdentity)
-                    .Select(e => e.Key.Value)
-                    .ToArray())
-                .AddDomainAggregatesTag(eventList
-                    .GroupBy(e => e.Metadata.AggregateIdentity)
-                    .Select(e => e.Key)
-                    .ToArray());
+        private static void AddActivityTags(Activity? activity, IEnumerable<Guid> correlationIdentities, IEnumerable<IAggregateIdentity> aggregateIdentities)
+            => _ = activity?
+                .AddCorrelationsTag(correlationIdentities)
+                .AddDomainAggregatesTag(aggregateIdentities);
     }
 }

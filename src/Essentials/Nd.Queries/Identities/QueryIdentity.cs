@@ -22,27 +22,19 @@
  */
 
 using System;
-using System.Runtime.Serialization;
-using Nd.Core.Exceptions;
+using Nd.Core.Factories;
+using Nd.Identities;
 
-namespace Nd.Extensions.Stores.Mongo.Exceptions
+namespace Nd.Queries.Identities
 {
-    [Serializable]
-    public class InvalidEventSequenceException : NdCoreException
+    [Query]
+    public record class QueryIdentity : GuidIdentity, IQueryIdentity
     {
-        public InvalidEventSequenceException()
+        public QueryIdentity(Guid value) : base(value)
         {
         }
 
-        public InvalidEventSequenceException(string? message) : base(message)
-        {
-        }
-
-        public InvalidEventSequenceException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-        protected InvalidEventSequenceException(SerializationInfo info, StreamingContext context) : base(info, context)
+        public QueryIdentity(IGuidFactory factory) : base(factory)
         {
         }
     }

@@ -25,7 +25,6 @@
  * SOFTWARE.
  */
 
-using System;
 using Nd.Core.Types.Names;
 using Nd.Identities;
 
@@ -39,6 +38,6 @@ namespace Nd.Queries
     public interface IQuery<TResult> : IQuery
         where TResult : notnull
     {
-        Type ResultType => typeof(TResult);
+
     }
 }

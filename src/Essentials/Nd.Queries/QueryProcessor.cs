@@ -22,7 +22,9 @@
  */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -32,9 +34,11 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Nd.Core.Extensions;
 using Nd.Core.Factories;
+using Nd.Core.Types;
 using Nd.Identities.Extensions;
 using Nd.Queries.Exceptions;
 using Nd.Queries.Extensions;
+using Nd.Queries.Identities;
 
 namespace Nd.Queries
 {
@@ -49,6 +53,20 @@ namespace Nd.Queries
 
     public class QueryProcessor : IQueryProcessor
     {
+        private static readonly ILookup<Type, Type> s_catalog = TypeDefinitions
+            .GetAllImplementations<IQueryHandler>()
+            .SelectMany(t => t.GetInterfacesOfType<IQueryHandler>().Select(i => (Interface: i, Implementation: t)))
+            .Where(item =>
+            {
+                var queryType = item.Interface.GetGenericTypeArgumentsOfType<IQuery>().FirstOrDefault();
+
+                return
+                    queryType is not null &&
+                    item.Implementation.HasMethodWithParametersOfTypes("ExecuteAsync", queryType, typeof(CancellationToken));
+            })
+            .Select(item => (QueryType: item.Interface.GetGenericTypeArgumentsOfType<IQuery>().First(), item.Implementation))
+            .ToLookup(item => item.Implementation, item => item.QueryType);
+
         private static readonly Action<ILogger, Exception?> s_queryReceived =
             LoggerMessage.Define(LogLevel.Trace, new EventId(
                                 LoggingEventsConstants.QueryReceived,
@@ -60,12 +78,6 @@ namespace Nd.Queries
                                 LoggingEventsConstants.ExecutingQuery,
                                 nameof(LoggingEventsConstants.ExecutingQuery)),
                                 "Executing query");
-
-        private static readonly Action<ILogger, Exception?> s_failedCreatingCacheKey =
-            LoggerMessage.Define(LogLevel.Error, new EventId(
-                                LoggingEventsConstants.FailedCreatingCacheKey,
-                                nameof(LoggingEventsConstants.FailedCreatingCacheKey)),
-                                "Failed creating cache key");
 
         private static readonly Action<ILogger, Exception?> s_failedReadingCacheContent =
             LoggerMessage.Define(LogLevel.Error, new EventId(
@@ -84,36 +96,38 @@ namespace Nd.Queries
         private readonly IDistributedCache? _cache;
         private readonly DistributedCacheEntryOptions? _options;
         private readonly ILogger<QueryProcessor>? _logger;
-        private readonly ILookup<Type, IQueryHandler> _queryHandlerRegistery;
+        private readonly IDictionary<Type, IQueryHandler> _queryHandlerRegistery;
+        private readonly ActivitySource _activitySource;
 
-        public QueryProcessor(IQueryHandler[] queryHandlers, ILogger<QueryProcessor>? logger, IDistributedCache? cache = default, DistributedCacheEntryOptions? defaultOptions = default)
+        public QueryProcessor(IQueryHandler[] queryHandlers, ILogger<QueryProcessor>? logger, IDistributedCache? cache = default, DistributedCacheEntryOptions? defaultOptions = default, ActivitySource? activitySource = default)
         {
             _logger = logger;
             _cache = cache;
             _options = defaultOptions;
+            _activitySource = activitySource ?? new ActivitySource(GetType().Name);
+
+            if (queryHandlers is null)
+            {
+                throw new ArgumentNullException(nameof(queryHandlers));
+            }
 
             _queryHandlerRegistery = queryHandlers
-                .Where(handler => handler is not null)
-                // Mapping all key types to there query handlers instances.
-                .SelectMany(handler => handler!
-                        // So foreach handler type.
-                        .GetType()
-                        // We get all of the interfaces that it implements that are of type IQueryHandler.
-                        .GetInterfacesOfType<IQueryHandler>()
-                        // If any of these IQueryHandler interfaces has a generic type of IQuery then get it along with the handler instance.
-                        .Select(i => (Handler: handler, QueryType: i.GetGenericTypeArgumentsOfType<IQuery>().FirstOrDefault()))
-                )
-                // After flattening our selection, now filter on those interfaces that actually have a generic type of IQuery.
-                .Where(r => r.QueryType is not null)
-                // Then group by query type which cannot be null at this point.
-                .GroupBy(r => r.QueryType!)
-                // Validate that there are no multiple handlers for any single query.
-                .Select(g => g.Count() == 1 ? g.Single() : throw new QueryHandlerConflictException(g.Key.ResolveName(), g.Select(r => r.Handler!.GetType().ToPrettyString()).ToArray()))
-                // Finally convert it to a lookup of a query type as a key and a handler instance as a one record value.
-                .ToLookup(r => r.QueryType!, r => r.Handler);
+                .Where(h => h is not null)
+                .SelectMany(h => s_catalog[h.GetType()].Select(queryType => (QueryType: queryType, Handler: h)))
+                .GroupBy(g => g.QueryType)
+                .ToDictionary(g => g.Key, g =>
+                {
+                    try
+                    {
+                        return g.Single().Handler;
+                    }
+                    catch (Exception e)
+                    {
+                        throw new QueryHandlerConflictException(g.Key, g.Select(h => h.GetType()).ToImmutableArray(), e);
+                    }
+                });
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Exception is being logged in all cases.")]
         public async Task<TResult> ProcessAsync<TQuery, TResult>(TQuery query, CancellationToken cancellation = default)
             where TQuery : notnull, IQuery<TResult>
             where TResult : notnull
@@ -124,24 +138,35 @@ namespace Nd.Queries
                 throw new ArgumentNullException(nameof(query));
             }
 
-            // Fetching and validating query handler.
-            var handlers = _queryHandlerRegistery[query.GetType()];
+            IQueryIdentity? queryId;
 
-            if (handlers is null || !handlers.Any())
+            try
+            {
+                queryId = CreateQueryIdentity(query);
+            }
+            catch (Exception ex)
+            {
+                throw new QueryIdCreationException(query, ex);
+            }
+
+            if (queryId is null)
+            {
+                throw new QueryIdCreationException(query, new QueryIdCreationException("Null query identifier"));
+            }
+
+            using var activity = _activitySource.StartActivity(nameof(ProcessAsync));
+
+            _ = activity?
+                .AddCorrelationsTag(new[] { query.CorrelationIdentity.Value })
+                .AddQueryIdTag(queryId);
+
+            // Fetching and validating query handler.
+            if (!_queryHandlerRegistery.TryGetValue(query.GetType(), out var handler))
             {
                 throw new QueryNotRegisteredException(query.TypeName);
             }
 
-            if (handlers.Count() > 1)
-            {
-                throw new QueryHandlerConflictException(query.TypeName, handlers.Select(h => h.GetType().ToPrettyString()).ToArray());
-            }
-
-            var handler = (IQueryHandler<TQuery, TResult>)handlers.Single();
-
             TResult result;
-
-            var queryId = CreateQueryId<TQuery, TResult>(query);
 
             using var scope = _logger?
                     .BeginScope()
@@ -154,11 +179,9 @@ namespace Nd.Queries
                 s_queryReceived(_logger, default);
             }
 
-            var cacheKey = CreateCacheKey<TQuery, TResult>(query);
-
-            if (_cache is not null && !string.IsNullOrWhiteSpace(cacheKey))
+            if (_cache is not null)
             {
-                var foundInCache = await _cache.GetAsync(cacheKey, cancellation).ConfigureAwait(false);
+                var foundInCache = await _cache.GetAsync(queryId.ToString(), cancellation).ConfigureAwait(false);
 
                 if (foundInCache is not null)
                 {
@@ -166,14 +189,16 @@ namespace Nd.Queries
                     {
                         return JsonSerializer.Deserialize<TResult>(Encoding.UTF8.GetString(foundInCache))!;
                     }
+#pragma warning disable CA1031 // Do not catch general exception types
                     catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
                     {
                         if (_logger is not null)
                         {
                             s_failedReadingCacheContent(_logger, e);
                         }
 
-                        await _cache.RemoveAsync(cacheKey, cancellation).ConfigureAwait(false);
+                        await _cache.RemoveAsync(queryId.ToString(), cancellation).ConfigureAwait(false);
                     }
                 }
             }
@@ -186,7 +211,7 @@ namespace Nd.Queries
             try
             {
                 // Execute the query and keep the result.
-                result = await handler.ExecuteAsync(query, cancellation)
+                result = await ((IQueryHandler<TQuery, TResult>)handler).ExecuteAsync(query, cancellation)
                     .ConfigureAwait(false);
 
                 if (result is null)
@@ -199,20 +224,22 @@ namespace Nd.Queries
                 throw new QueryExecutionException(query, queryId, ex);
             }
 
-            if (_cache is not null && !string.IsNullOrWhiteSpace(cacheKey))
+            if (_cache is not null)
             {
                 try
                 {
                     if (_options is null)
                     {
-                        await _cache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(result), cancellation).ConfigureAwait(false);
+                        await _cache.SetAsync(queryId.ToString(), JsonSerializer.SerializeToUtf8Bytes(result), cancellation).ConfigureAwait(false);
                     }
                     else
                     {
-                        await _cache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(result), _options, cancellation).ConfigureAwait(false);
+                        await _cache.SetAsync(queryId.ToString(), JsonSerializer.SerializeToUtf8Bytes(result), _options, cancellation).ConfigureAwait(false);
                     }
                 }
+#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
                 {
                     if (_logger is not null)
                     {
@@ -225,31 +252,7 @@ namespace Nd.Queries
             return result;
         }
 
-        private static Guid CreateQueryId<TQuery, TResult>(TQuery query)
-            where TQuery : notnull, IQuery<TResult>
-            where TResult : notnull =>
-            DeterministicGuidFactory.Instance(query.CorrelationIdentity.Value, Guid.NewGuid().ToByteArray()).Create();
-
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Exception is being logged in all cases.")]
-        private string? CreateCacheKey<TQuery, TResult>(TQuery query)
-            where TQuery : notnull, IQuery<TResult>
-            where TResult : notnull
-        {
-            var cacheKey = string.Empty;
-
-            try
-            {
-                cacheKey = DeterministicGuidFactory.Instance(s_queriesNamespace, JsonSerializer.SerializeToUtf8Bytes(query)).Create().ToString("D");
-            }
-            catch (Exception e)
-            {
-                if (_logger is not null)
-                {
-                    s_failedCreatingCacheKey(_logger, e);
-                }
-            }
-
-            return cacheKey;
-        }
+        private static IQueryIdentity CreateQueryIdentity(IQuery query)
+            => new QueryIdentity(DeterministicGuidFactory.Instance(s_queriesNamespace, JsonSerializer.SerializeToUtf8Bytes(query)));
     }
 }

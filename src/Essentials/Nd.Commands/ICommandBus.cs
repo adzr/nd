@@ -37,6 +37,6 @@ namespace Nd.Commands
             TCommand command,
             CancellationToken cancellation = default)
             where TResult : notnull, IExecutionResult<TCommand>
-            where TCommand : ICommand<TResult>;
+            where TCommand : notnull, ICommand<TResult>;
     }
 }

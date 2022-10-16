@@ -26,14 +26,18 @@ using Xunit.Categories;
 
 namespace Nd.ValueObjects.Tests
 {
-    internal record class SampleValueObject(
+    [UnitTest]
+    public class ValueObjectTests
+    {
+        #region Test types definitions
+
+        internal record class SampleValueObject(
             int Id,
             string Name
         ) : ValueObject;
 
-    [UnitTest]
-    public class ValueObjectTests
-    {
+        #endregion
+
         [Theory]
         [InlineData(1, "left", 2, "right", -1)]
         [InlineData(1, "left", 1, "right", -6)]

@@ -39,6 +39,49 @@ namespace Nd.Core.Tests.Extensions
     [UnitTest]
     public class TypeExtensionsTests
     {
+        #region Test types definitions
+
+        internal interface IA { }
+
+        internal interface IA<T> : IA where T : ID { }
+
+        internal interface IB : IA<IE> { }
+
+        internal interface IC : IA<IF> { }
+
+        internal interface ID { }
+
+        internal interface IE : ID { }
+
+        internal interface IF : ID { }
+
+        [VersionedTypeTest("Test", 1)]
+        internal class TypeTest : IA<ID>, IB, IC, ID
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
+            public void DoNothingWith(string _) { }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
+            public string ReturnArg(string arg) => arg;
+        }
+
+        internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
+        {
+            public VersionedTypeTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
+        }
+
+        internal sealed class SimpleClassWithOverloadConstructor
+        {
+            public SimpleClassWithOverloadConstructor(string value)
+            {
+                Value = value;
+            }
+
+            public string Value { get; }
+        }
+
+        #endregion Test types definitions
+
         [Theory]
         [InlineData(typeof(string), "String")]
         [InlineData(typeof(int), "Int32")]
@@ -120,47 +163,8 @@ namespace Nd.Core.Tests.Extensions
 
         [Fact]
         public void CanCompileConstructor() =>
-            Assert.Equal("Something", typeof(SimpleClassWithOverloadConstructor)
+            Assert.Equal(new SimpleClassWithOverloadConstructor("Something").Value, typeof(SimpleClassWithOverloadConstructor)
                 .GetConstructor(new[] { typeof(string) })?
                 .CompileConstructor<SimpleClassWithOverloadConstructor>()("Something")?.Value ?? "");
-    }
-
-    internal interface IA { }
-
-    internal interface IA<T> : IA where T : ID { }
-
-    internal interface IB : IA<IE> { }
-
-    internal interface IC : IA<IF> { }
-
-    internal interface ID { }
-
-    internal interface IE : ID { }
-
-    internal interface IF : ID { }
-
-    [VersionedTypeTest("Test", 1)]
-    internal class TypeTest : IA<ID>, IB, IC, ID
-    {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
-        public void DoNothingWith(string _) { }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Test case requirement.")]
-        public string ReturnArg(string arg) => arg;
-    }
-
-    internal sealed class VersionedTypeTestAttribute : VersionedTypeAttribute
-    {
-        public VersionedTypeTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
-    }
-
-    public sealed class SimpleClassWithOverloadConstructor
-    {
-        public SimpleClassWithOverloadConstructor(string value)
-        {
-            Value = value;
-        }
-
-        public string Value { get; }
     }
 }

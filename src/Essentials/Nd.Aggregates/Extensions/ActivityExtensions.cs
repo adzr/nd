@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using AggregatesCommon = Nd.Aggregates.Common;
 
@@ -29,7 +30,7 @@ namespace Nd.Aggregates.Extensions
 {
     public static class ActivityExtensions
     {
-        public static Activity AddDomainAggregatesTag<T>(this Activity activity, T[]? aggregatesIds) =>
+        public static Activity AddDomainAggregatesTag<T>(this Activity activity, IEnumerable<T>? aggregatesIds) =>
             activity?.AddTag(AggregatesCommon.ActivityConstants.DomainAggregatesTag, aggregatesIds) ?? throw new ArgumentNullException(nameof(activity));
     }
 }

@@ -32,99 +32,99 @@ using Xunit.Categories;
 
 namespace Nd.Core.Tests.VersionedTypes
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class VersionedTestAttribute : VersionedTypeAttribute
-    {
-        public VersionedTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
-    }
-
-    #region Test types definitions
-
-    public abstract record class UpgradableVersion(
-        int Value
-        ) : IVersionedType
-    {
-        public abstract uint TypeVersion { get; }
-        public abstract string TypeName { get; }
-        public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(default);
-    }
-
-    [VersionedTest(nameof(UpgradableVersion), 1)]
-    public record class UpgradableVersion1(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion1).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
-    }
-
-    [VersionedTest(nameof(UpgradableVersion), 2)]
-    public record class UpgradableVersion2(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion2).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
-    }
-
-    [VersionedTest(nameof(UpgradableVersion), 3)]
-    public record class UpgradableVersion3(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion3).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-    }
-
-    [VersionedTest(nameof(UpgradableVersion), 4)]
-    public record class UpgradableVersion4(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion4).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
-    }
-
-    [VersionedTest(nameof(UpgradableVersion), 4)]
-    public record class UpgradableVersion5(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion5).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
-    }
-
-    [VersionedTest("NonUpgradableVersion", 2)]
-    public record class NonUpgradableVersion(int Value) : UpgradableVersion(Value)
-    {
-        private static readonly (string Name, uint Version) s_nameAndVersion = typeof(NonUpgradableVersion).ResolveNameAndVersion();
-
-        public override uint TypeVersion => s_nameAndVersion.Version;
-
-        public override string TypeName => s_nameAndVersion.Name;
-
-        public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
-    }
-
-    #endregion
-
     [VersionedTest(nameof(VersionedTypeAttributeTests), 7)]
     [UnitTest]
     public class VersionedTypeAttributeTests
     {
+        #region Test types definitions
+
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+        internal sealed class VersionedTestAttribute : VersionedTypeAttribute
+        {
+            public VersionedTestAttribute(string typeName, uint typeVersion) : base(typeName, typeVersion) { }
+        }
+
+        internal abstract record class UpgradableVersion(
+            int Value
+            ) : IVersionedType
+        {
+            public abstract uint TypeVersion { get; }
+            public abstract string TypeName { get; }
+            public virtual Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(default);
+        }
+
+        [VersionedTest(nameof(UpgradableVersion), 1)]
+        internal record class UpgradableVersion1(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion1).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+
+            public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion2(Value * 2));
+        }
+
+        [VersionedTest(nameof(UpgradableVersion), 2)]
+        internal record class UpgradableVersion2(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion2).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+
+            public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        }
+
+        [VersionedTest(nameof(UpgradableVersion), 3)]
+        internal record class UpgradableVersion3(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion3).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+        }
+
+        [VersionedTest(nameof(UpgradableVersion), 4)]
+        internal record class UpgradableVersion4(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion4).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+
+            public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        }
+
+        [VersionedTest(nameof(UpgradableVersion), 4)]
+        internal record class UpgradableVersion5(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(UpgradableVersion5).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+
+            public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion4(Value * 2));
+        }
+
+        [VersionedTest("NonUpgradableVersion", 2)]
+        internal record class NonUpgradableVersion(int Value) : UpgradableVersion(Value)
+        {
+            private static readonly (string Name, uint Version) s_nameAndVersion = typeof(NonUpgradableVersion).ResolveNameAndVersion();
+
+            public override uint TypeVersion => s_nameAndVersion.Version;
+
+            public override string TypeName => s_nameAndVersion.Name;
+
+            public override Task<IVersionedType?> UpgradeAsync(CancellationToken cancellation = default) => Task.FromResult<IVersionedType?>(new UpgradableVersion3(Value * 2));
+        }
+
+        #endregion
+
         [Fact]
         public void CanHaveAttributedNameAndVersion()
         {

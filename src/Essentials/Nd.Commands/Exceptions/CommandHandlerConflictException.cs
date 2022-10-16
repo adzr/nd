@@ -47,7 +47,7 @@ namespace Nd.Commands.Exceptions
             CommandType = commandType;
         }
 
-        public CommandHandlerConflictException(Type commandType, Type[] handlerTypes, Exception? innerException = default) :
+        public CommandHandlerConflictException(Type commandType, IEnumerable<Type> handlerTypes, Exception? innerException = default) :
             this($"CommandType {commandType?.ResolveName()} is being handled by more than one handler: {string.Join(", ", handlerTypes.Select(t => t.ResolveName()))}",
                 innerException)
         {

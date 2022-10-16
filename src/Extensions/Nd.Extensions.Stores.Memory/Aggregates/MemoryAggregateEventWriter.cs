@@ -22,26 +22,31 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Nd.Aggregates.Events;
+using Nd.Aggregates.Exceptions;
 using Nd.Aggregates.Identities;
 using Nd.Aggregates.Persistence;
+using Nd.Core.Threading;
 
 namespace Nd.Extensions.Stores.Memory.Aggregates
 {
     public abstract class MemoryAggregateEventWriter : IAggregateEventWriter
     {
-        private readonly ConcurrentDictionary<IAggregateIdentity, ConcurrentQueue<ICommittedEvent>> _events;
+        private readonly Dictionary<IAggregateIdentity, Queue<ICommittedEvent>> _events;
 
-        protected MemoryAggregateEventWriter(ConcurrentDictionary<IAggregateIdentity, ConcurrentQueue<ICommittedEvent>> events)
+        private readonly IAsyncLocker _asyncLocker = ExclusiveAsyncLocker.Create();
+
+        protected MemoryAggregateEventWriter(Dictionary<IAggregateIdentity, Queue<ICommittedEvent>> events)
         {
             _events = events;
         }
 
-        public Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
+        public async Task WriteAsync<TEvent>(IEnumerable<TEvent> events, CancellationToken cancellation = default)
             where TEvent : notnull, IPendingEvent
         {
             if (events is null)
@@ -49,13 +54,75 @@ namespace Nd.Extensions.Stores.Memory.Aggregates
                 throw new ArgumentNullException(nameof(events));
             }
 
-            foreach (var e in events)
+            var aggregates = events
+                .GroupBy(e => e.Metadata.AggregateIdentity)
+                .Select(g => (Identity: g.Key, Events: g.OrderBy(e => e.Metadata.AggregateVersion).ToImmutableArray()))
+                .ToImmutableArray();
+
+            foreach (var (identity, aggregateEvents) in aggregates)
             {
-                _events.GetOrAdd(e.Metadata.AggregateIdentity, (id) => new ConcurrentQueue<ICommittedEvent>())
-                    .Enqueue(new CommittedEvent(e.AggregateEvent, e.Metadata));
+                cancellation.ThrowIfCancellationRequested();
+
+                ValidatePendingEventSequence(identity, aggregateEvents);
             }
 
-            return Task.CompletedTask;
+            using var @lock = await _asyncLocker.WaitAsync(cancellation).ConfigureAwait(false);
+
+            foreach (var (identity, aggregateEvents) in aggregates)
+            {
+                cancellation.ThrowIfCancellationRequested();
+
+                var (startVersion, endVersion) =
+                    (aggregateEvents.First().Metadata.AggregateVersion,
+                    aggregateEvents.Last().Metadata.AggregateVersion);
+
+                if (!_events.TryGetValue(identity, out var queue))
+                {
+                    queue = new Queue<ICommittedEvent>();
+                    _events.Add(identity, queue);
+                }
+
+                var versions = queue.Select(e => e.Metadata.AggregateVersion).OrderBy(v => v).ToImmutableArray();
+
+                if (!versions.Max().Equals(aggregateEvents.Select(e => e.Metadata.AggregateVersion).Min() + 1))
+                {
+                    throw new AggregateOutOfSyncException(identity, startVersion, endVersion);
+                }
+
+                foreach (var @event in aggregateEvents)
+                {
+                    queue.Enqueue(new CommittedEvent(@event.AggregateEvent, @event.Metadata));
+                }
+            }
+        }
+
+        private static void ValidatePendingEventSequence<TEvent>(IAggregateIdentity identity, ImmutableArray<TEvent> events) where TEvent : notnull, IPendingEvent
+        {
+            var versions = events
+                .Select(e => e.Metadata.AggregateVersion)
+                .ToImmutableArray();
+
+            if (!versions.Any())
+            {
+                throw new InvalidEventSequenceException($"Aggregate {identity} has no pending event sequence");
+            }
+
+            var expectedVersion = versions.First();
+
+            foreach (var version in versions)
+            {
+                if (expectedVersion < 1)
+                {
+                    throw new InvalidEventSequenceException($"Aggregate {identity} cannot have event version less than 0, found {version}");
+                }
+
+                if (expectedVersion != version)
+                {
+                    throw new InvalidEventSequenceException($"Aggregate {identity} has unexpected pending event version sequence, expected {expectedVersion} found {version}");
+                }
+
+                expectedVersion++;
+            }
         }
     }
 

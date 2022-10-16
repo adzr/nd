@@ -23,6 +23,11 @@
 
 namespace Nd.Queries.Common
 {
+    public static class ActivityConstants
+    {
+        public const string QueryIdTag = "QueryId";
+    }
+
     public static class LoggingScopeConstants
     {
         public const string QueryIdKey = "QueryId";

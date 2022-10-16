@@ -22,43 +22,34 @@
  */
 
 using System;
-using Nd.Identities;
-using Xunit;
-using Xunit.Categories;
+using System.Runtime.Serialization;
 
-namespace Nd.Entities.Tests
+namespace Nd.Queries
 {
-    [UnitTest]
-    public class EntityTests
+    [Serializable]
+    public class QueryIdCreationException : Exception
     {
-        #region Test types definitions
+        public IQuery? Query { get; }
 
-        [Identity("sample")]
-        internal record class SampleId : GuidIdentity
+        public QueryIdCreationException()
         {
-            public SampleId(Guid value) : base(value) { }
         }
 
-        internal class SampleEntity : Entity<SampleId>
+        public QueryIdCreationException(IQuery query, Exception? exception = default) : this("Failed to create query identifier", exception)
         {
-            public SampleEntity(SampleId identity, string text) : base(identity)
-            {
-                Text = text;
-            }
-
-            public string Text { get; }
+            Query = query;
         }
 
-        #endregion
-        private const string DefaultText = "Value";
-        private readonly Guid _guid = Guid.NewGuid();
+        public QueryIdCreationException(string? message) : base(message)
+        {
+        }
 
-        [Fact]
-        public void CanBeEqualBasedOnIdentityOnly() =>
-            Assert.Equal(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(_guid), "AnotherValue"));
+        public QueryIdCreationException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
 
-        [Fact]
-        public void CanNotBeEqualWithDifferentIdentity() =>
-            Assert.NotEqual(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(Guid.NewGuid()), DefaultText));
+        protected QueryIdCreationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

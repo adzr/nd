@@ -111,10 +111,7 @@ namespace Nd.Subscriptions
 
                 foreach (var @event in events)
                 {
-                    if (c.IsCancellationRequested)
-                    {
-                        break;
-                    }
+                    c.ThrowIfCancellationRequested();
 
                     try
                     {

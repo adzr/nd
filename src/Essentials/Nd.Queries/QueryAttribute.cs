@@ -22,43 +22,13 @@
  */
 
 using System;
-using Nd.Identities;
-using Xunit;
-using Xunit.Categories;
+using Nd.Core.Types.Names;
 
-namespace Nd.Entities.Tests
+namespace Nd.Queries
 {
-    [UnitTest]
-    public class EntityTests
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public sealed class QueryAttribute : NamedTypeAttribute
     {
-        #region Test types definitions
-
-        [Identity("sample")]
-        internal record class SampleId : GuidIdentity
-        {
-            public SampleId(Guid value) : base(value) { }
-        }
-
-        internal class SampleEntity : Entity<SampleId>
-        {
-            public SampleEntity(SampleId identity, string text) : base(identity)
-            {
-                Text = text;
-            }
-
-            public string Text { get; }
-        }
-
-        #endregion
-        private const string DefaultText = "Value";
-        private readonly Guid _guid = Guid.NewGuid();
-
-        [Fact]
-        public void CanBeEqualBasedOnIdentityOnly() =>
-            Assert.Equal(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(_guid), "AnotherValue"));
-
-        [Fact]
-        public void CanNotBeEqualWithDifferentIdentity() =>
-            Assert.NotEqual(new SampleEntity(new SampleId(_guid), DefaultText), new SampleEntity(new SampleId(Guid.NewGuid()), DefaultText));
+        public QueryAttribute() : base($"Query") { }
     }
 }

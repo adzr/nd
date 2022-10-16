@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace Nd.Aggregates.Persistence
             {
                 // Trying to store all of the existingEvents copied from
                 // the aggregate event-list.
-                await _writer.WriteAsync(_events.ToArray(), cancellation)
+                await _writer.WriteAsync(_events.ToImmutableArray(), cancellation)
                     .ConfigureAwait(false);
 
                 _events.Clear();
@@ -79,9 +80,9 @@ namespace Nd.Aggregates.Persistence
 
             using var @lock = _locker.Wait();
 
-            var idempotencyIdentities = pendingEvents.Select(e => e.Metadata.IdempotencyIdentity).ToArray();
+            var idempotencyIdentities = pendingEvents.Select(e => e.Metadata.IdempotencyIdentity).ToImmutableArray();
 
-            var conflicts = _idempotencyIdentities.Intersect(idempotencyIdentities).ToArray();
+            var conflicts = _idempotencyIdentities.Intersect(idempotencyIdentities).ToImmutableArray();
 
             if (conflicts.Any())
             {
@@ -103,13 +104,13 @@ namespace Nd.Aggregates.Persistence
 
             using var @lock = _locker.WaitAsync(cancellation);
 
-            var discardedEvents = _events.Where(e => e.Metadata.AggregateIdentity.Equals(identity)).ToArray();
+            var discardedEvents = _events.Where(e => e.Metadata.AggregateIdentity.Equals(identity)).ToImmutableArray();
 
             if (discardedEvents.Any())
             {
-                var existingEvents = _events.ToArray();
-                var existingIdempotencyIdentities = _idempotencyIdentities.ToArray();
-                var discardedIdempotencyIdentities = discardedEvents.Select(e => e.Metadata.IdempotencyIdentity).ToArray();
+                var existingEvents = _events.ToImmutableArray();
+                var existingIdempotencyIdentities = _idempotencyIdentities.ToImmutableArray();
+                var discardedIdempotencyIdentities = discardedEvents.Select(e => e.Metadata.IdempotencyIdentity).ToImmutableArray();
 
                 _events.Clear();
                 _events.AddRange(existingEvents.Except(discardedEvents));

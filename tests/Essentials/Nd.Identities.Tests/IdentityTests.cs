@@ -28,17 +28,21 @@ using Xunit.Categories;
 
 namespace Nd.Identities.Tests
 {
-    [Identity("sample")]
-    internal record class SampleIdentity : GuidIdentity
-    {
-        public SampleIdentity(Guid value) : base(value) { }
-
-        public SampleIdentity(IGuidFactory factory) : base(factory) { }
-    }
-
     [UnitTest]
     public class IdentityTests
     {
+        #region Test types definitions
+
+        [Identity("sample")]
+        internal record class SampleIdentity : GuidIdentity
+        {
+            public SampleIdentity(Guid value) : base(value) { }
+
+            public SampleIdentity(IGuidFactory factory) : base(factory) { }
+        }
+
+        #endregion
+
         [Theory]
         [InlineData("0b58cdd0-5220-4053-baf7-5dd9d15aa535", "5d819ee0-65b8-4afe-aaae-1849d439e217", -5)]
         [InlineData("5d819ee0-65b8-4afe-aaae-1849d439e217", "0b58cdd0-5220-4053-baf7-5dd9d15aa535", 5)]

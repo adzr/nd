@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -106,7 +107,7 @@ namespace Nd.Commands
                     }
                     catch (Exception e)
                     {
-                        throw new CommandHandlerConflictException(g.Key, g.Select(h => h.GetType()).ToArray(), e);
+                        throw new CommandHandlerConflictException(g.Key, g.Select(h => h.GetType()).ToImmutableArray(), e);
                     }
                 });
         }
